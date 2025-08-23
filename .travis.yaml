@@ -1,0 +1,36 @@
+language: java
+jdk:
+  - openjdk11
+
+# Only build on PR's and specific branches
+branches:
+  only:
+    - Dev
+    - main
+
+# Build matrix for different environments (optional)
+matrix:
+  include:
+    - jdk: openjdk8
+    - jdk: openjdk11
+
+cache:
+  directories:
+    - $HOME/.m2
+
+# Install dependencies
+install:
+  - mvn clean install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+
+# Run tests
+script:
+  - mvn test -B
+  - mvn verify -B
+
+# After success (optional - for code coverage, etc.)
+after_success:
+  - mvn clean test jacoco:report
+
+# Only build pull requests and main branches
+# This prevents building both PR and branch pushes
+if: type = pull_request OR branch = Dev OR branch = main
