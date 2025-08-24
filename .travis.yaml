@@ -1,36 +1,105 @@
 language: java
-jdk:
-  - openjdk11
 
-# Only build on PR's and specific branches
+# Java version
+jdk:
+  - openjdk8  # Change to openjdk8 or openjdk17 if needed
+
+# Build only these branches
 branches:
   only:
-    - Dev
+    - dev
     - main
+    - /^feature\/.*$/  # Also build feature branches for PRs
 
-# Build matrix for different environments (optional)
-matrix:
-  include:
-    - jdk: openjdk8
-    - jdk: openjdk11
-
+# Cache dependencies for faster builds
 cache:
   directories:
     - $HOME/.m2
+    - $HOME/.sonar/cache
 
-# Install dependencies
+# Environment variables
+env:
+  global:
+    - MAVEN_OPTS="-Xmx512m"
+
+# Install step
 install:
-  - mvn clean install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+  - mvn install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
 
-# Run tests
+# Build matrix for different stages
+jobs:
+  include:
+    # Stage 1: Quick validation
+    - stage: "Validation"
+      name: "Validate Project"
+      script:
+        - mvn clean validate
+        - echo "Checking code formatting..."
+        - mvn compile
+
+    # Stage 2: Test
+    - stage: "Test"
+      name: "Run Unit Tests"
+      script:
+        - mvn clean test
+        - mvn jacoco:report  # If you want code coverage
+      after_success:
+        - bash <(curl -s https://codecov.io/bash)  # Optional: Upload to Codecov
+
+    # Stage 3: Build
+    - stage: "Build"
+      name: "Build JAR"
+      script:
+        - mvn clean package
+        - ls -la target/
+      # Archive the JAR as a build artifact
+      after_success:
+        - mkdir -p artifacts
+        - cp target/*.jar artifacts/
+
+    # Stage 4: Integration Test (only for main branch PRs)
+    - stage: "Integration"
+      name: "Integration Tests"
+      if: branch = main AND type = pull_request
+      script:
+        - mvn clean verify
+        - echo "Running integration tests for main branch PR"
+
+    # Stage 5: Deploy (only on main branch, after merge)
+    - stage: "Deploy"
+      name: "Deploy to Production"
+      if: branch = main AND type = push
+      script:
+        - echo "Deploying to production..."
+        - mvn clean package
+        # Add your deployment commands here
+        # - ./deploy.sh production
+
+# Define stage order and conditions
+stages:
+  - name: "Validation"
+    if: type IN (push, pull_request)
+  - name: "Test"
+    if: type IN (push, pull_request)
+  - name: "Build"
+    if: type IN (push, pull_request)
+  - name: "Integration"
+    if: branch = main AND type = pull_request
+  - name: "Deploy"
+    if: branch = main AND type = push
+
+# Scripts to run for basic build (fallback)
 script:
-  - mvn test -B
-  - mvn verify -B
+  - mvn clean compile
+  - mvn test
+  - mvn package
 
-# After success (optional - for code coverage, etc.)
+# After success - run on successful builds
 after_success:
+  - echo "Build successful!"
   - mvn clean test jacoco:report
 
-# Only build pull requests and main branches
-# This prevents building both PR and branch pushes
-if: type = pull_request OR branch = Dev OR branch = main
+# After failure - run on failed builds
+after_failure:
+  - echo "Build failed!"
+  - cat target/surefire-reports/*.txt  # Show test failure details
