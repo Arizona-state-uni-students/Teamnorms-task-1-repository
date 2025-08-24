@@ -7,7 +7,7 @@ jdk:
 # Build only these branches
 branches:
   only:
-    - dev
+    - Dev
     - main
     - /^feature\/.*$/
 
