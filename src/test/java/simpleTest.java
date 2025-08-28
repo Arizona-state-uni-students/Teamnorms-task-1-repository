@@ -1,6 +1,3 @@
-package com.teamnorms;
-
-
 import org.junit.Test;
 
 import org.junit.Before;
