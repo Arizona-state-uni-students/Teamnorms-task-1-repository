@@ -20,7 +20,7 @@
         <maven.compiler.target>11</maven.compiler.target>
 
         <!-- JavaFX Version -->
-        <javafx.version>17.0.2</javafx.version>
+        <javafx.version>24.0.2</javafx.version>
         <javafx.maven.plugin.version>0.0.8</javafx.maven.plugin.version>
 
         <!-- Testing Versions -->
