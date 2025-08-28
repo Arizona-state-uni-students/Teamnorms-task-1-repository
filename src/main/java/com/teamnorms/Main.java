@@ -10,7 +10,7 @@ public class Main extends Application {
 
     @Override
     public void start(Stage primaryStage) {
-        Label label = new Label("Travis CI-CD Test Check 3");
+        Label label = new Label("Gui check");
         StackPane root = new StackPane(label);
         Scene scene = new Scene(root, 400, 300);
 
