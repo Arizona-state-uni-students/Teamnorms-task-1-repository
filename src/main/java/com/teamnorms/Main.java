@@ -13,8 +13,8 @@ public class Main extends Application {
         Label label = new Label("Gui check");
         StackPane root = new StackPane(label);
         Scene scene = new Scene(root, 400, 300);
-
-        primaryStage.setTitle("Teamnorms Task 1");
+        //hello world
+        primaryStage.setTitle("Teamnorms Task 111");
         primaryStage.setScene(scene);
         primaryStage.show();
     }
