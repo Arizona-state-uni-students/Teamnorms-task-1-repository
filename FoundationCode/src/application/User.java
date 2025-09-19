@@ -21,7 +21,10 @@ public class User {
     	this.role=role;
     }
     
-    
+    // Sets the password of the user
+    public void setPassword(String password) {
+    	this.password=password;
+    }
     
     public int getPrivileges() {
     	int privilege=0;
