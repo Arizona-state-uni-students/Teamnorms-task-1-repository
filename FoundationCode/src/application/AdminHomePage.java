@@ -1,5 +1,7 @@
 package application;
 
+import java.sql.SQLException;
+
 import databasePart1.DatabaseHelper;
 import javafx.application.Platform;
 import javafx.scene.Scene;
@@ -40,8 +42,22 @@ public class AdminHomePage {
 	    	Platform.exit();
 	    });
 	    
+	    // Button directory to traverse into the User Database Page
+	    Button userDatabase = new Button("User Database");
+	    userDatabase.setOnAction(a -> {
+	    		try {
+					new UserDatabaseUI(databaseHelper, user).show(primaryStage);
+				} catch (SQLException e) {
+					// TODO Auto-generated catch block. Need to adjust
+					e.printStackTrace();
+				}
+	    });	    
+	    
+	    Label userDisplay = new Label("User: "+user.getUserName()+", you have level "+user.getPrivileges()+" privileges as "+user.getRole());
+	    userDisplay.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
+	    
         Button inviteButton = new Button("Invite");
-            inviteButton.setOnAction(a -> {
+        inviteButton.setOnAction(a -> {
                 new InvitationPage().show(databaseHelper, primaryStage, user);
         });
         

@@ -4,7 +4,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.UUID;
+import java.util.*;
 
 import application.User;
 
@@ -108,6 +108,69 @@ public class DatabaseHelper {
 	        e.printStackTrace();
 	    }
 	    return false; // If an error occurs, assume user doesn't exist
+	}
+	
+	// Lists the users in the database
+	public List<User> getAllUsers() throws SQLException {
+		List<User>users = new ArrayList<>();
+		String sql = "SELECT username, role, password_hash FROM users ORDER BY username";
+		
+		try (PreparedStatement ps = connection.prepareStatement(sql);
+			 ResultSet rs = ps.executeQuery()) {
+			
+			while (rs.next()) {
+				String username = rs.getString("username");
+	            String role = rs.getString("role");
+	            String passwordHash = rs.getString("password_hash");
+	
+	            users.add(new User(username, passwordHash, role));
+	        }
+		}
+		return users;
+	}
+	
+	// Count for total users
+	public int getUserCount() throws SQLException {
+		String sql = "SELECT COUNT(*) AS count FROM users";
+        
+		try (PreparedStatement ps = connection.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            
+			if (rs.next()) {
+                return rs.getInt("count");
+            }
+        }
+        return 0;
+	}
+	
+	// Single user lookup via userName
+	public Optional<User> getUserByUsername(String username) throws SQLException {
+		String sql = "SELECT username, role, password_hash FROM users WHERE username = ?";
+        
+		try (PreparedStatement ps = connection.prepareStatement(sql)) {
+             ps.setString(1, username);
+            
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    String role = rs.getString("role");
+                    String passwordHash = rs.getString("password_hash");
+                    return Optional.of(new User(username, passwordHash, role));
+                }
+            }
+        }
+        return Optional.empty();
+	}
+	
+	// Update user's password
+	public boolean updateUserPassword(String username, String newPassword) throws SQLException {
+		String hashedPassword = Integer.toHexString(newPassword.hashCode());
+
+        String sql = "UPDATE users SET password_hash = ? WHERE username = ?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, hashedPassword);
+            ps.setString(2, username);
+            return ps.executeUpdate() == 1;
+        }
 	}
 	
 	// Retrieves the role of a user from the database using their UserName.
