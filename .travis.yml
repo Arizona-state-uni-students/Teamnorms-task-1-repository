@@ -3,7 +3,7 @@ language: java
 # Use Ubuntu 22.04 LTS
 dist: jammy
 
-# We'll manually install JDK since Travis doesn't support JDK 23 yet
+# Use JDK 21 (stable and well-supported)
 jdk:
   - openjdk21
 
@@ -15,10 +15,7 @@ cache:
     - $HOME/javafx-sdk-21
 
 before_install:
-  # Option 1: Use JDK 21 (recommended for stability)
-  # If you absolutely need JDK 23, see Option 2 below
-  
-  # Download and setup JavaFX 21 (compatible with JDK 21)
+  # Download and setup JavaFX 21
   - |
     if [ ! -d "$HOME/javafx-sdk-21" ]; then
       wget -q https://download2.gluonhq.com/openjfx/21/openjfx-21_linux-x64_bin-sdk.zip
@@ -31,145 +28,135 @@ before_install:
   - java -version
   - javac -version
 
-  # Option 2: If you MUST use JDK 23, uncomment below and comment out Option 1
-  # - |
-  #   if [ ! -d "$HOME/jdk-23" ]; then
-  #     wget -q https://download.java.net/java/GA/jdk23/3c5b90190c68498b986a97f276efd28a/37/GPL/openjdk-23_linux-x64_bin.tar.gz
-  #     tar -xzf openjdk-23_linux-x64_bin.tar.gz -C $HOME
-  #     mv $HOME/jdk-23* $HOME/jdk-23
-  #   fi
-  # - export JAVA_HOME=$HOME/jdk-23
-  # - export PATH=$JAVA_HOME/bin:$PATH
-  # - |
-  #   if [ ! -d "$HOME/javafx-sdk-23" ]; then
-  #     wget -q https://download2.gluonhq.com/openjfx/23/openjfx-23_linux-x64_bin-sdk.zip
-  #     unzip -q openjfx-23_linux-x64_bin-sdk.zip -d $HOME
-  #     mv $HOME/javafx-sdk-23* $HOME/javafx-sdk-23
-  #   fi
-  # - export PATH_TO_FX=$HOME/javafx-sdk-23/lib
-
 before_script:
   # Set up display for headless mode
   - export DISPLAY=:99.0
-  # Ensure H2 jar exists
-  - ls -la FoundationCode/lib/ || echo "H2 library directory not found"
   
 script:
-  # Create necessary directories for compiled classes
-  - mkdir -p build/classes
-  - mkdir -p build/test-classes
-  
-  # Debug: Show directory structure
-  - echo "=== Directory Structure ==="
+  # First, let's understand the repository structure
+  - echo "=== Current Directory ==="
+  - pwd
+  - echo "=== Repository Root Contents ==="
   - ls -la
-  - ls -la FoundationCode/src/ || echo "FoundationCode/src not found"
-  - ls -la passwordEvaluationTestbed/src/ || echo "passwordEvaluationTestbed/src not found"  
-  - ls -la userNameRecognizerTestbed/src/ || echo "userNameRecognizerTestbed/src not found"
   
-  # Find all Java files
-  - echo "=== Finding Java files ==="
-  - find . -name "*.java" -type f | head -20
+  # Find ALL directories
+  - echo "=== All Directories in Repository ==="
+  - find . -type d -name "*" | grep -v "\.git" | sort
   
-  # Compile FoundationCode with H2 database
-  - echo "=== Compiling FoundationCode with H2 database ==="
+  # Find ALL Java files with their full paths
+  - echo "=== All Java Files in Repository ==="
+  - find . -name "*.java" -type f | sort
+  
+  # Find specific important files
+  - echo "=== Looking for Main Classes ==="
+  - find . -name "StartCSE360.java" -o -name "PasswordEvaluationGUITestbed.java" -o -name "UserNameRecognizerTestbed.java"
+  
+  # Find JAR files (like H2 database)
+  - echo "=== Looking for JAR files ==="
+  - find . -name "*.jar" -type f
+  
+  # Check if maybe everything is in src directory at root
+  - echo "=== Checking common directory patterns ==="
+  - ls -la src/ 2>/dev/null || echo "No src/ directory at root"
+  - ls -la FoundationCode/ 2>/dev/null || echo "No FoundationCode/ directory"
+  - ls -la passwordEvaluationTestbed/ 2>/dev/null || echo "No passwordEvaluationTestbed/ directory"
+  - ls -la userNameRecognizerTestbed/ 2>/dev/null || echo "No userNameRecognizerTestbed/ directory"
+  
+  # Create build directories
+  - mkdir -p build/classes
+  
+  # Now let's try to compile based on what we find
+  - echo "=== Attempting Smart Compilation ==="
+  
+  # Find and compile all Java files in one go (brute force approach)
   - |
-    if [ -d "FoundationCode/src" ]; then
+    JAVA_FILES=$(find . -name "*.java" -type f | grep -v "\.git")
+    if [ ! -z "$JAVA_FILES" ]; then
+      echo "Found Java files, attempting compilation..."
+      
+      # First try: Compile everything together
+      echo "Attempting to compile all Java files together..."
+      
+      # Find H2 jar location
+      H2_JAR=$(find . -name "h2*.jar" -type f | head -1)
+      if [ ! -z "$H2_JAR" ]; then
+        echo "Found H2 JAR at: $H2_JAR"
+        CLASSPATH="$H2_JAR:$PATH_TO_FX/*"
+      else
+        echo "No H2 JAR found, using only JavaFX classpath"
+        CLASSPATH="$PATH_TO_FX/*"
+      fi
+      
+      # Try to compile all Java files
       javac -d build/classes \
-        -cp "FoundationCode/lib/h2-2.3.232.jar:$PATH_TO_FX/*" \
+        -cp "$CLASSPATH" \
         --module-path "$PATH_TO_FX" \
         --add-modules javafx.controls,javafx.fxml \
-        FoundationCode/src/application/*.java \
-        FoundationCode/src/databasePart1/*.java 2>&1 || echo "FoundationCode compilation had issues"
+        $(find . -name "*.java" -type f | grep -v "\.git" | tr '\n' ' ') 2>&1 | head -50
+      
+      # Check if compilation was successful
+      if [ $? -eq 0 ]; then
+        echo "Compilation successful!"
+      else
+        echo "Compilation failed. Trying file by file approach..."
+        
+        # Try compiling each directory separately
+        for dir in $(find . -type d -name "src" | grep -v "\.git"); do
+          echo "Trying to compile files in $dir..."
+          javac -d build/classes \
+            -cp "$CLASSPATH" \
+            --module-path "$PATH_TO_FX" \
+            --add-modules javafx.controls,javafx.fxml \
+            $dir/**/*.java 2>&1 | head -20 || true
+        done
+      fi
     else
-      echo "FoundationCode/src directory not found, checking alternative structure..."
-      find . -name "StartCSE360.java" -type f
-    fi
-  
-  # Compile PasswordEvaluationTestbed
-  - echo "=== Compiling PasswordEvaluationTestbed ==="
-  - |
-    if [ -d "passwordEvaluationTestbed/src" ]; then
-      javac -d build/classes \
-        -cp "$PATH_TO_FX/*" \
-        --module-path "$PATH_TO_FX" \
-        --add-modules javafx.controls,javafx.fxml \
-        passwordEvaluationTestbed/src/passwordEvaluationTestbed/*.java 2>&1 || echo "PasswordEvaluation compilation had issues"
-    else
-      echo "passwordEvaluationTestbed/src directory not found, checking alternative structure..."
-      find . -name "PasswordEvaluationGUITestbed.java" -type f
-    fi
-  
-  # Compile UserNameRecognizerTestbed (console-based, no JavaFX needed)
-  - echo "=== Compiling UserNameRecognizerTestbed ==="
-  - |
-    if [ -d "userNameRecognizerTestbed/src" ]; then
-      javac -d build/classes \
-        userNameRecognizerTestbed/src/userNameRecognizerTestbed/*.java 2>&1 || echo "UserNameRecognizer compilation had issues"
-    else
-      echo "userNameRecognizerTestbed/src directory not found, checking alternative structure..."
-      find . -name "UserNameRecognizerTestbed.java" -type f
-    fi
-  
-  # Alternative: Try to compile if structure is different
-  - echo "=== Attempting alternative compilation paths ==="
-  - |
-    # If files are directly in project folders without src subdirectory
-    if [ -f "FoundationCode/application/StartCSE360.java" ]; then
-      echo "Found alternative structure for FoundationCode"
-      javac -d build/classes \
-        -cp "FoundationCode/lib/h2-2.3.232.jar:$PATH_TO_FX/*" \
-        --module-path "$PATH_TO_FX" \
-        --add-modules javafx.controls,javafx.fxml \
-        FoundationCode/application/*.java \
-        FoundationCode/databasePart1/*.java 2>&1 || echo "Alternative FoundationCode compilation had issues"
-    fi
-  
-  - |
-    if [ -f "passwordEvaluationTestbed/PasswordEvaluationGUITestbed.java" ]; then
-      echo "Found alternative structure for passwordEvaluationTestbed"
-      javac -d build/classes \
-        -cp "$PATH_TO_FX/*" \
-        --module-path "$PATH_TO_FX" \
-        --add-modules javafx.controls,javafx.fxml \
-        passwordEvaluationTestbed/*.java 2>&1 || echo "Alternative PasswordEvaluation compilation had issues"
-    fi
-  
-  - |
-    if [ -f "userNameRecognizerTestbed/UserNameRecognizerTestbed.java" ]; then
-      echo "Found alternative structure for userNameRecognizerTestbed"
-      javac -d build/classes \
-        userNameRecognizerTestbed/*.java 2>&1 || echo "Alternative UserNameRecognizer compilation had issues"
-    fi
-  
-  # Test: Run UserNameRecognizerTestbed with test input (if successfully compiled)
-  - echo "=== Testing UserNameRecognizerTestbed (console application) ==="
-  - |
-    if [ -f "build/classes/userNameRecognizerTestbed/UserNameRecognizerTestbed.class" ]; then
-      echo -e "testuser123\ntest@user\n\n" | timeout 5s java -cp build/classes \
-        userNameRecognizerTestbed.UserNameRecognizerTestbed || echo "UserNameRecognizer test completed"
-    else
-      echo "UserNameRecognizerTestbed not compiled, skipping test"
+      echo "ERROR: No Java files found in repository!"
+      echo "Please ensure your code is properly committed to the repository"
+      exit 1
     fi
   
   # List compiled classes
-  - echo "=== Compiled Classes ==="
+  - echo "=== Checking Compiled Classes ==="
   - find build/classes -name "*.class" -type f | head -20 || echo "No classes compiled"
+  - echo "Total compiled classes: $(find build/classes -name '*.class' -type f | wc -l)"
   
-  # Final status
-  - echo "=== Build Process Completed ==="
+  # Try to run UserNameRecognizerTestbed if it was compiled
+  - echo "=== Attempting to run UserNameRecognizerTestbed ==="
   - |
-    if [ -z "$(find build/classes -name '*.class' -type f)" ]; then
-      echo "WARNING: No classes were compiled successfully"
-      echo "Please check your directory structure and ensure source files are in the expected locations"
+    # Find the actual package structure from compiled classes
+    USERNAME_CLASS=$(find build/classes -name "UserNameRecognizerTestbed.class" -type f | head -1)
+    if [ ! -z "$USERNAME_CLASS" ]; then
+      # Extract package path from file location
+      PACKAGE_PATH=$(echo $USERNAME_CLASS | sed 's|build/classes/||' | sed 's|/UserNameRecognizerTestbed.class||' | tr '/' '.')
+      echo "Found UserNameRecognizerTestbed in package: $PACKAGE_PATH"
+      echo -e "testuser123\ntest@user\n\n" | timeout 5s java -cp build/classes ${PACKAGE_PATH}.UserNameRecognizerTestbed || echo "Test completed"
+    else
+      echo "UserNameRecognizerTestbed.class not found"
+    fi
+  
+  # Final summary
+  - echo "=== Build Summary ==="
+  - |
+    TOTAL_JAVA=$(find . -name "*.java" -type f | grep -v "\.git" | wc -l)
+    TOTAL_CLASS=$(find build/classes -name "*.class" -type f 2>/dev/null | wc -l)
+    echo "Total Java source files found: $TOTAL_JAVA"
+    echo "Total compiled class files: $TOTAL_CLASS"
+    
+    if [ "$TOTAL_JAVA" -eq 0 ]; then
+      echo "ERROR: No Java source files found in the repository!"
+      echo "Please check that your files are committed and pushed to GitHub"
+      exit 1
+    elif [ "$TOTAL_CLASS" -eq 0 ]; then
+      echo "WARNING: Source files found but compilation failed"
+      echo "Check the compilation errors above"
       exit 1
     else
-      echo "Build completed with some compiled classes"
+      echo "Build successful: $TOTAL_CLASS classes compiled from $TOTAL_JAVA source files"
     fi
 
 # Matrix configuration
 matrix:
-  allow_failures:
-    - jdk: openjdk22
   fast_finish: true
 
 # Notifications
