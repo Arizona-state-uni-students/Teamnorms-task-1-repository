@@ -77,7 +77,6 @@ public class AdminHomePage {
 	    
 	    layout.getChildren().addAll(adminLabel, inviteButton, truncateButton, userDatabase, logoutButton, goBackButton, quitButton);
 	    Scene adminScene = new Scene(layout, 800, 400);
-
 	    // Set the scene to primary stage
 	    primaryStage.setScene(adminScene);
 	    primaryStage.setTitle("Admin Page");
