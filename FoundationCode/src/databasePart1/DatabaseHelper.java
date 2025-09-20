@@ -113,7 +113,7 @@ public class DatabaseHelper {
 	// Lists the users in the database
 	public List<User> getAllUsers() throws SQLException {
 		List<User>users = new ArrayList<>();
-		String sql = "SELECT username, role, password_hash FROM users ORDER BY username";
+		String sql = "SELECT username, role, password FROM cse360users ORDER BY role";
 		
 		try (PreparedStatement ps = connection.prepareStatement(sql);
 			 ResultSet rs = ps.executeQuery()) {
@@ -121,7 +121,7 @@ public class DatabaseHelper {
 			while (rs.next()) {
 				String username = rs.getString("username");
 	            String role = rs.getString("role");
-	            String passwordHash = rs.getString("password_hash");
+	            String passwordHash = rs.getString("password");
 	
 	            users.add(new User(username, passwordHash, role));
 	        }
