@@ -75,7 +75,7 @@ public class AdminHomePage {
 	    	Platform.exit(); // Exit the JavaFX application
 	    });
 	    
-	    layout.getChildren().addAll(adminLabel, inviteButton, truncateButton, logoutButton, goBackButton, quitButton);
+	    layout.getChildren().addAll(adminLabel, inviteButton, truncateButton, userDatabase, logoutButton, goBackButton, quitButton);
 	    Scene adminScene = new Scene(layout, 800, 400);
 
 	    // Set the scene to primary stage
