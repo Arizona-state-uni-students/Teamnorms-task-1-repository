@@ -1,90 +1,187 @@
 package application;
 
-import databasePart1.DatabaseHelper;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.PasswordField;
-import javafx.scene.control.TextField;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.HBox;
+import javafx.scene.control.*;
+import javafx.scene.layout.*;
 import javafx.stage.Stage;
+import javafx.scene.control.Alert.AlertType;
+
+import java.sql.SQLException;
+
+import databasePart1.*;
 
 /**
- * This page displays a simple welcome message for the user.
+ * User Page for managing user profile - allows users to update their password and email
  */
-
 public class UserHomePage {
-
-	private final DatabaseHelper databaseHelper;
-
+    
+    private final DatabaseHelper databaseHelper;
+    
     public UserHomePage(DatabaseHelper databaseHelper) {
         this.databaseHelper = databaseHelper;
     }
-
-    public void show(Stage primaryStage, User user) {
-    	
-    	GridPane grid = new GridPane(); // Create grid for placing UI elements
-    	grid.setPadding(new Insets(10)); // 10px padding on top, right, bottom, left of all elements in grid
-    	grid.setHgap(10); // 10px Horizontal gap between columns
-    	grid.setVgap(10); // 10px Vertical gap between rows
-    	
+    
+    public void show(Stage primaryStage, User currentUser) {
+        GridPane grid = new GridPane();
+        grid.setPadding(new Insets(20));
+        grid.setHgap(10);
+        grid.setVgap(15);
+        grid.setStyle("-fx-background-color: #f5f5f5;");
         
-        Label Header = new Label("User Page"); Header.setStyle("-fx-font-size: 22px; ");
-        Label userNameLabel = new Label("Username");userNameLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
-        TextField userNameField = new TextField();userNameField.setPromptText("Type your new username");userNameField.setMaxWidth(250);
-        Label passwordLabel = new Label("Password");passwordLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
-        PasswordField passwordField = new PasswordField();passwordField.setPromptText("Type your new password");passwordField.setMaxWidth(250);
+        // Title
+        Label titleLabel = new Label("User Page");
+        titleLabel.setStyle("-fx-font-size: 24px; -fx-font-weight: bold;");
         
-        // Populate user items
-        userNameField.setText(user.getUserName());
-        passwordField.setText(user.getPassword());
+        // Username section (read-only)
+        Label usernameLabel = new Label("Username");
+        usernameLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
         
-        // Label to display error messages
-        Label errorLabel = new Label();errorLabel.setStyle("-fx-text-fill: red; -fx-font-size: 12px;");
-
-        // Create Buttons
-        Button saveButton = new Button("Save Changes");
-        saveButton.setPrefWidth(150); // Set button width
-        saveButton.setStyle("-fx-font-size: 14px; -fx-padding: 5 20; -fx-background-color: #0099ff; -fx-text-fill: white;");
+        TextField usernameField = new TextField(currentUser.getUserName());
+        usernameField.setEditable(false);
+        usernameField.setMaxWidth(250);
+        usernameField.setStyle("-fx-background-color: #e0e0e0;");
+        
+        // Email section
+        Label emailLabel = new Label("Email");
+        emailLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
+        
+        TextField emailField = new TextField();
+        String currentEmail = currentUser.getEmail();
+        if (currentEmail != null && !currentEmail.isEmpty()) {
+            emailField.setText(currentEmail);
+        } else {
+            emailField.setPromptText("Add your email address");
+        }
+        emailField.setMaxWidth(250);
+        
+        Button updateEmailButton = new Button("Update Email");
+        updateEmailButton.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white;");
+        
+        HBox emailBox = new HBox(10, emailField, updateEmailButton);
+        
+        // Password section
+        Label passwordLabel = new Label("Password");
+        passwordLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
+        
+        PasswordField passwordField = new PasswordField();
+        passwordField.setPromptText("Enter new password");
+        passwordField.setMaxWidth(250);
+        
+        HBox passwordBox = new HBox(10);
         Button revertButton = new Button("Revert");
-        revertButton.setStyle("-fx-font-size: 14px; -fx-padding: 5 20; -fx-background-color: transparent; -fx-text-fill: #0099ff;");
-        HBox buttonBox = new HBox(10, revertButton, saveButton);
-        buttonBox.setAlignment(javafx.geometry.Pos.CENTER);
-        Button goBackButton = new Button("Go back"); goBackButton.setStyle("-fx-font-size: 14px; -fx-padding: 5 20; -fx-background-color: #666; -fx-text-fill: white;");
+        Button savePasswordButton = new Button("Save Changes");
+        savePasswordButton.setStyle("-fx-background-color: #0099ff; -fx-text-fill: white;");
         
-        Button quitButton = new Button("Quit");
-        quitButton.setStyle("-fx-font-size: 14px; -fx-padding: 0 20; -fx-background-color: transparent; -fx-text-fill: #2c2c2c;");
+        passwordBox.getChildren().addAll(revertButton, savePasswordButton);
         
-        grid.add(Header, 0, 0); // Column 0, Row 0
-        grid.add(userNameLabel, 0, 1); // Column 0, Row 1
-        grid.add(userNameField, 0, 2);
-        grid.add(passwordLabel, 0, 3);
-        grid.add(passwordField, 0, 4); 
-        grid.add(buttonBox, 0, 5);
-        grid.add(errorLabel, 0, 6);
-        grid.add(goBackButton, 2, 7);
-        grid.add(quitButton, 0, 20);
-        GridPane.setHalignment(errorLabel, javafx.geometry.HPos.RIGHT);
-        GridPane.setHalignment(quitButton, javafx.geometry.HPos.CENTER);
+        // Status/Error label
+        Label statusLabel = new Label();
+        statusLabel.setStyle("-fx-font-size: 12px;");
         
-	    goBackButton.setOnAction(a -> {
-	    	new WelcomeLoginPage(databaseHelper).show(primaryStage,user);
-	    });
-        revertButton.setOnAction(a -> {
-            userNameField.setText(user.getUserName());
-            passwordField.setText(user.getPassword());
+        // Go back button
+        Button goBackButton = new Button("Go back");
+        goBackButton.setStyle("-fx-font-size: 14px; -fx-padding: 5 20; -fx-background-color: #666; -fx-text-fill: white;");
+        
+        // Add components to grid
+        grid.add(titleLabel, 0, 0, 2, 1);
+        
+        grid.add(usernameLabel, 0, 1);
+        grid.add(usernameField, 0, 2);
+        
+        grid.add(emailLabel, 0, 3);
+        grid.add(emailBox, 0, 4);
+        
+        grid.add(passwordLabel, 0, 5);
+        grid.add(passwordField, 0, 6);
+        grid.add(passwordBox, 0, 7);
+        
+        grid.add(statusLabel, 0, 8, 2, 1);
+        grid.add(goBackButton, 0, 9);
+        
+        // Email update action
+        updateEmailButton.setOnAction(e -> {
+            String newEmail = emailField.getText().trim();
+            
+            // Basic email validation
+            if (!newEmail.isEmpty() && !newEmail.contains("@")) {
+                showAlert("Invalid Email", "Please enter a valid email address", AlertType.ERROR);
+                return;
+            }
+            
+            try {
+                if (databaseHelper.updateUserEmail(currentUser.getUserName(), newEmail)) {
+                    currentUser.setEmail(newEmail);
+                    statusLabel.setText("Email updated successfully!");
+                    statusLabel.setStyle("-fx-text-fill: green; -fx-font-size: 12px;");
+                    
+                    // Show success alert
+                    showAlert("Success", "Email updated successfully!", AlertType.INFORMATION);
+                } else {
+                    statusLabel.setText("Failed to update email");
+                    statusLabel.setStyle("-fx-text-fill: red; -fx-font-size: 12px;");
+                }
+            } catch (SQLException ex) {
+                statusLabel.setText("Database error: " + ex.getMessage());
+                statusLabel.setStyle("-fx-text-fill: red; -fx-font-size: 12px;");
+                ex.printStackTrace();
+            }
         });
-	    quitButton.setOnAction(a -> {
-	    	databaseHelper.closeConnection();
-	    	Platform.exit(); // Exit the JavaFX application
-	    });
-        Scene scene = new Scene(grid, 800, 400);    // GUI Container
-        primaryStage.setScene(scene);               // GUI Container
-        primaryStage.setTitle("sQaaS™");            // GUI Container
-        primaryStage.setResizable(false);           // GUI Container
-        primaryStage.show();                        // GUI Container
+        
+        // Password save action
+        savePasswordButton.setOnAction(e -> {
+            String newPassword = passwordField.getText();
+            
+            if (newPassword == null || newPassword.trim().isEmpty()) {
+                statusLabel.setText("Password cannot be empty!");
+                statusLabel.setStyle("-fx-text-fill: red; -fx-font-size: 12px;");
+                return;
+            }
+            
+            try {
+                if (databaseHelper.updateUserPassword(currentUser.getUserName(), newPassword)) {
+                    currentUser.setPassword(newPassword);
+                    passwordField.clear();
+                    statusLabel.setText("Password updated successfully!");
+                    statusLabel.setStyle("-fx-text-fill: green; -fx-font-size: 12px;");
+                    
+                    // Show success alert
+                    showAlert("Success", "Password updated successfully!", AlertType.INFORMATION);
+                } else {
+                    statusLabel.setText("Failed to update password");
+                    statusLabel.setStyle("-fx-text-fill: red; -fx-font-size: 12px;");
+                }
+            } catch (SQLException ex) {
+                statusLabel.setText("Database error: " + ex.getMessage());
+                statusLabel.setStyle("-fx-text-fill: red; -fx-font-size: 12px;");
+                ex.printStackTrace();
+            }
+        });
+        
+        // Revert password field
+        revertButton.setOnAction(e -> {
+            passwordField.clear();
+            statusLabel.setText("");
+        });
+        
+        // Go back action
+        goBackButton.setOnAction(e -> {
+            // Navigate back to welcome page
+            new WelcomeLoginPage(databaseHelper).show(primaryStage, currentUser);
+        });
+        
+        Scene scene = new Scene(grid, 500, 400);
+        primaryStage.setScene(scene);
+        primaryStage.setTitle("sQaaS™ - User Profile");
+        primaryStage.setResizable(false);
+        primaryStage.show();
+    }
+    
+    private void showAlert(String title, String content, AlertType type) {
+        Alert alert = new Alert(type);
+        alert.setTitle(title);
+        alert.setContentText(content);
+        alert.showAndWait();
     }
 }

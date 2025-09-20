@@ -8,22 +8,53 @@ public class User {
     private String userName;
     private String password;
     private String role;
+    private String email;
 
     // Constructor to initialize a new User object with userName, password, and role.
-    public User( String userName, String password, String role) {
+    public User(String userName, String password, String role) {
         this.userName = userName;
+        this.password = password;
+        this.role = role;
+        this.email = ""; // Default empty email
+    }
+    
+    public User(String userName, String email, String password, String role) {
+        this.userName = userName;
+        this.email = email;
         this.password = password;
         this.role = role;
     }
     
-    // Sets the role of the user.
-    public void setRole(String role) {
-    	this.role=role;
+    public String getUserName() {
+        return userName;
     }
     
-    // Sets the password of the user
+    public void setUserName(String userName) {
+        this.userName = userName;
+    }
+    
+    public String getEmail() {
+        return email;
+    }
+    
+    public void setEmail(String email) {
+        this.email = email;
+    }
+    
+    public String getPassword() {
+        return password;
+    }
+    
     public void setPassword(String password) {
-    	this.password=password;
+        this.password = password;
+    }
+    
+    public String getRole() {
+        return role;
+    }
+    
+    public void setRole(String role) {
+        this.role = role;
     }
     
     public int getPrivileges() {
@@ -53,7 +84,4 @@ public class User {
     	return privilege;
     }
 
-    public String getUserName() { return userName; }
-    public String getPassword() { return password; }
-    public String getRole() { return role; }
 }
