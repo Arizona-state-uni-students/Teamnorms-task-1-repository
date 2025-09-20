@@ -14,7 +14,7 @@ import databasePart1.*;
 public class WelcomeLoginPage {
 	
 	private final DatabaseHelper databaseHelper;
-
+	
     public WelcomeLoginPage(DatabaseHelper databaseHelper) {
         this.databaseHelper = databaseHelper;
     }
