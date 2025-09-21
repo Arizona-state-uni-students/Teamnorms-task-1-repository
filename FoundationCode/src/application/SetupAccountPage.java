@@ -65,7 +65,7 @@ public class SetupAccountPage {
         userNameField.setPromptText("Enter Username");
         userNameField.setMaxWidth(250);
         userNameField.textProperty().addListener((observable, oldValue, newValue) -> {
-            if (newValue.length() > 20) { // password max length 20
+            if (newValue.length() > 20) { // username max length 20
             	userNameField.setText(newValue.substring(0, 20));
             }
             	// username validating fsm
@@ -78,6 +78,9 @@ public class SetupAccountPage {
         emailField.setPromptText("Enter Email");
         emailField.setMaxWidth(250);
         emailField.textProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue.length() > 20) { // email max length 20
+            	emailField.setText(newValue.substring(0, 20));
+            }
         	// Regex pattern to validate email addresses on emailField change
         	String emailRegex = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$";
             Pattern pattern = Pattern.compile(emailRegex);
@@ -113,10 +116,10 @@ public class SetupAccountPage {
         firstNameField.setPromptText("Enter First Name");
         firstNameField.setMaxWidth(200);
         firstNameField.textProperty().addListener((observable, oldValue, newValue) -> {
-            if (newValue.length() > 20) { // password max length 20
+            if (newValue.length() > 20) { // first name max length 20
             	firstNameField.setText(newValue.substring(0, 20));
             }
-            if (newValue.length() >= 1) { // password max length 20
+            if (newValue.length() >= 1) { // first name min length 1
             	nameSet=true;
             }else {
             	nameSet=false;
@@ -132,11 +135,22 @@ public class SetupAccountPage {
                 middleNameField.setText(newValue.substring(0, 1));
             }
         });
-        Label LastNameLabel = new Label("Last Name");
-        LastNameLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
-        TextField LastNameField = new TextField();
-        LastNameField.setPromptText("Enter Last Name");
-        LastNameField.setMaxWidth(200);
+        
+        Label lastNameLabel = new Label("Last Name");
+        lastNameLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
+        TextField lastNameField = new TextField();
+        lastNameField.setPromptText("Enter Last Name");
+        lastNameField.setMaxWidth(200);
+        lastNameField.textProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue.length() > 20) { // last name max length 20
+            	lastNameField.setText(newValue.substring(0, 20));
+            }
+            if (newValue.length() >= 1) { // last name min length 1
+            	nameSet=true;
+            }else {
+            	nameSet=false;
+            }
+        });  
         
         // invite code fields
         Label inviteCodeLabel = new Label("Invitation Code");
@@ -224,8 +238,8 @@ public class SetupAccountPage {
         grid.add(firstNameField, 1, 5);
         grid.add(middleNameLabel, 0, 6);
         grid.add(middleNameField, 1, 6);
-        grid.add(LastNameLabel, 0, 7);
-        grid.add(LastNameField, 1, 7);
+        grid.add(lastNameLabel, 0, 7);
+        grid.add(lastNameField, 1, 7);
         grid.add(inviteCodeLabel, 0, 8);
         grid.add(inviteCodeField, 1, 8);
         grid.add(errorLabel, 1, 9);
@@ -236,8 +250,8 @@ public class SetupAccountPage {
         GridPane.setHalignment(emailLabel, javafx.geometry.HPos.RIGHT);
         GridPane.setHalignment(firstNameLabel, javafx.geometry.HPos.RIGHT);
         GridPane.setHalignment(middleNameLabel, javafx.geometry.HPos.RIGHT);
-        GridPane.setHalignment(LastNameLabel, javafx.geometry.HPos.RIGHT);
-	    Scene scene1 = new Scene(grid, 800, 400);
+        GridPane.setHalignment(lastNameLabel, javafx.geometry.HPos.RIGHT);
+	    Scene scene1 = new Scene(grid, 800, 500); 
         primaryStage.setScene(scene1);
         primaryStage.setTitle("Administrator Setup");
         primaryStage.show();
@@ -256,7 +270,7 @@ public class SetupAccountPage {
 			//updateFlags();
 			if (errMessage != "") {
 				System.out.println(errMessage);
-				label.setText("Failure! The username is not valid.");
+				label.setText("The username must be at least 4 characters long.\nCan only include: upper case and lower case letters and numbers.");
 				label.setStyle("-fx-text-fill: red; -fx-font-size: 12px;");
 				usernameSet=false;
 			}
@@ -284,7 +298,7 @@ public class SetupAccountPage {
 			String errMessage = PasswordEvaluator.evaluatePassword(inputText);
 			//updateFlags();
 			if (errMessage != "") {
-				label.setText("Failure! The password is not valid.");
+				label.setText("Password must be at least 6 characters long and include:\nUpper case letter, lower case letter, a digit and a special symbol.");
 				label.setStyle("-fx-text-fill: red; -fx-font-size: 12px;");
 				passwordSet=false;
 			}
@@ -302,3 +316,4 @@ public class SetupAccountPage {
 		}
 	}
 }
+
