@@ -12,9 +12,6 @@ import java.sql.SQLException;
 
 import databasePart1.*;
 
-/**
- * User Page for managing user profile - allows users to update their password and email
- */
 public class UserHomePage {
     
     private final DatabaseHelper databaseHelper;
@@ -49,17 +46,57 @@ public class UserHomePage {
         
         TextField emailField = new TextField();
         String currentEmail = currentUser.getEmail();
-        if (currentEmail != null && !currentEmail.isEmpty()) {
-            emailField.setText(currentEmail);
-        } else {
-            emailField.setPromptText("Add your email address");
-        }
-        emailField.setMaxWidth(250);
         
+        // Create the email update button first
         Button updateEmailButton = new Button("Update Email");
         updateEmailButton.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white;");
         
+        // Create the emailBox
         HBox emailBox = new HBox(10, emailField, updateEmailButton);
+        
+        // Now handle the email field setup and warning
+        if (currentEmail == null || currentEmail.isEmpty()) {
+            emailField.setPromptText("Please add your email address");
+            emailField.setStyle("-fx-border-color: orange; -fx-border-width: 1px;");
+            emailField.setMaxWidth(250);
+            
+            Label emailWarning = new Label("⚠ Email is required for all users");
+            emailWarning.setStyle("-fx-text-fill: orange; -fx-font-size: 10px;");
+            
+            VBox emailContainer = new VBox(5);
+            emailContainer.getChildren().addAll(emailBox, emailWarning);
+            
+            grid.add(emailLabel, 0, 3);
+            grid.add(emailContainer, 0, 4);
+        } else {
+            emailField.setText(currentEmail);
+            emailField.setMaxWidth(250);
+            grid.add(emailLabel, 0, 3);
+            grid.add(emailBox, 0, 4);
+        }
+        
+        // Middle Initial section
+        Label middleInitialLabel = new Label("Middle Initial");
+        middleInitialLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
+
+        TextField middleInitialField = new TextField();
+        String currentMiddleInitial = currentUser.getMiddleInitial();
+        if (currentMiddleInitial != null && !currentMiddleInitial.isEmpty()) {
+            middleInitialField.setText(currentMiddleInitial);
+        } else {
+            middleInitialField.setPromptText("Add middle initial");
+        }
+        middleInitialField.setMaxWidth(50);
+        middleInitialField.textProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue.length() > 1) {
+                middleInitialField.setText(newValue.substring(0, 1));
+            }
+        });
+
+        Button updateMiddleInitialButton = new Button("Update");
+        updateMiddleInitialButton.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white;");
+
+        HBox middleInitialBox = new HBox(10, middleInitialField, updateMiddleInitialButton);
         
         // Password section
         Label passwordLabel = new Label("Password");
@@ -90,22 +127,24 @@ public class UserHomePage {
         grid.add(usernameLabel, 0, 1);
         grid.add(usernameField, 0, 2);
         
-        grid.add(emailLabel, 0, 3);
-        grid.add(emailBox, 0, 4);
+        // Email section is already added in the conditional block above
         
-        grid.add(passwordLabel, 0, 5);
-        grid.add(passwordField, 0, 6);
-        grid.add(passwordBox, 0, 7);
+        grid.add(middleInitialLabel, 0, 5);
+        grid.add(middleInitialBox, 0, 6);
         
-        grid.add(statusLabel, 0, 8, 2, 1);
-        grid.add(goBackButton, 0, 9);
+        grid.add(passwordLabel, 0, 7);
+        grid.add(passwordField, 0, 8);
+        grid.add(passwordBox, 0, 9);
+        
+        grid.add(statusLabel, 0, 10, 2, 1);
+        grid.add(goBackButton, 0, 11);
         
         // Email update action
         updateEmailButton.setOnAction(e -> {
             String newEmail = emailField.getText().trim();
             
             // Basic email validation
-            if (!newEmail.isEmpty() && !newEmail.contains("@")) {
+            if (!newEmail.isEmpty() && (!newEmail.contains("@") || !newEmail.contains("."))) {
                 showAlert("Invalid Email", "Please enter a valid email address", AlertType.ERROR);
                 return;
             }
@@ -120,6 +159,28 @@ public class UserHomePage {
                     showAlert("Success", "Email updated successfully!", AlertType.INFORMATION);
                 } else {
                     statusLabel.setText("Failed to update email");
+                    statusLabel.setStyle("-fx-text-fill: red; -fx-font-size: 12px;");
+                }
+            } catch (SQLException ex) {
+                statusLabel.setText("Database error: " + ex.getMessage());
+                statusLabel.setStyle("-fx-text-fill: red; -fx-font-size: 12px;");
+                ex.printStackTrace();
+            }
+        });
+        
+        // Middle Initial update action
+        updateMiddleInitialButton.setOnAction(e -> {
+            String newMiddleInitial = middleInitialField.getText().trim();
+            
+            try {
+                if (databaseHelper.updateUserMiddleInitial(currentUser.getUserName(), newMiddleInitial)) {
+                    currentUser.setMiddleInitial(newMiddleInitial);
+                    statusLabel.setText("Middle initial updated successfully!");
+                    statusLabel.setStyle("-fx-text-fill: green; -fx-font-size: 12px;");
+                    
+                    showAlert("Success", "Middle initial updated successfully!", AlertType.INFORMATION);
+                } else {
+                    statusLabel.setText("Failed to update middle initial");
                     statusLabel.setStyle("-fx-text-fill: red; -fx-font-size: 12px;");
                 }
             } catch (SQLException ex) {
@@ -171,7 +232,7 @@ public class UserHomePage {
             new WelcomeLoginPage(databaseHelper).show(primaryStage, currentUser);
         });
         
-        Scene scene = new Scene(grid, 500, 400);
+        Scene scene = new Scene(grid, 500, 500);
         primaryStage.setScene(scene);
         primaryStage.setTitle("sQaaS™ - User Profile");
         primaryStage.setResizable(false);

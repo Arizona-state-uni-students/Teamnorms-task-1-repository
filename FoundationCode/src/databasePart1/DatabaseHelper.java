@@ -49,7 +49,8 @@ public class DatabaseHelper {
 	    String userTable = "CREATE TABLE IF NOT EXISTS cse360users ("
 	            + "id INT AUTO_INCREMENT PRIMARY KEY, "
 	            + "userName VARCHAR(255) UNIQUE, "
-	            + "email VARCHAR(255), "  // Add email field
+	            + "email VARCHAR(255), "
+	            + "middleInitial VARCHAR(1), "  // Add middle initial field (1 character max)
 	            + "password VARCHAR(255), "
 	            + "role VARCHAR(20))";
 	    statement.execute(userTable);
@@ -74,17 +75,24 @@ public class DatabaseHelper {
 
 	// Registers a new user in the database.
 	public void register(User user) throws SQLException {
-	    String insertUser = "INSERT INTO cse360users (userName, email, password, role) VALUES (?, ?, ?, ?)";
+	    String insertUser = "INSERT INTO cse360users (userName, email, middleInitial, password, role) VALUES (?, ?, ?, ?, ?)";
 	    try (PreparedStatement pstmt = connection.prepareStatement(insertUser)) {
 	        pstmt.setString(1, user.getUserName());
-	        // Handle null or empty email
+	        
 	        if (user.getEmail() == null || user.getEmail().trim().isEmpty()) {
 	            pstmt.setNull(2, java.sql.Types.VARCHAR);
 	        } else {
 	            pstmt.setString(2, user.getEmail());
 	        }
-	        pstmt.setString(3, user.getPassword());
-	        pstmt.setString(4, user.getRole());
+	        
+	        if (user.getMiddleInitial() == null || user.getMiddleInitial().trim().isEmpty()) {
+	            pstmt.setNull(3, java.sql.Types.VARCHAR);
+	        } else {
+	            pstmt.setString(3, user.getMiddleInitial().toUpperCase());
+	        }
+	        
+	        pstmt.setString(4, user.getPassword());
+	        pstmt.setString(5, user.getRole());
 	        pstmt.executeUpdate();
 	    }
 	}
@@ -113,8 +121,13 @@ public class DatabaseHelper {
 	        pstmt.setString(3, user.getRole());
 	        try (ResultSet rs = pstmt.executeQuery()) {
 	            if (rs.next()) {
-	                // Set the email from database
-	                user.setEmail(rs.getString("email"));
+	                // Set email and middle initial from database
+	                try {
+	                    user.setEmail(rs.getString("email"));
+	                    user.setMiddleInitial(rs.getString("middleInitial"));
+	                } catch (SQLException e) {
+	                    // Columns might not exist
+	                }
 	                return true;
 	            }
 	            return false;
@@ -154,7 +167,7 @@ public class DatabaseHelper {
 	// Lists the users in the database
 	public List<User> getAllUsers() throws SQLException {
 	    List<User> users = new ArrayList<>();
-	    String sql = "SELECT username, email, role, password FROM cse360users ORDER BY role";
+	    String sql = "SELECT username, email, middleInitial, role, password FROM cse360users ORDER BY role";
 	    
 	    try (PreparedStatement ps = connection.prepareStatement(sql);
 	         ResultSet rs = ps.executeQuery()) {
@@ -162,15 +175,36 @@ public class DatabaseHelper {
 	        while (rs.next()) {
 	            String username = rs.getString("username");
 	            String email = rs.getString("email");
+	            String middleInitial = rs.getString("middleInitial");
 	            String role = rs.getString("role");
 	            String passwordHash = rs.getString("password");
 
 	            User user = new User(username, passwordHash, role);
 	            user.setEmail(email);
+	            user.setMiddleInitial(middleInitial);
 	            users.add(user);
 	        }
 	    }
 	    return users;
+	}
+	
+	public boolean updateUserMiddleInitial(String username, String newMiddleInitial) throws SQLException {
+	    String sql = "UPDATE cse360users SET middleInitial = ? WHERE userName = ?";
+	    try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+	        if (newMiddleInitial == null || newMiddleInitial.trim().isEmpty()) {
+	            pstmt.setNull(1, java.sql.Types.VARCHAR);
+	        } else {
+	            // Ensure it's only 1 character
+	            String initial = newMiddleInitial.trim().toUpperCase();
+	            if (initial.length() > 1) {
+	                initial = initial.substring(0, 1);
+	            }
+	            pstmt.setString(1, initial);
+	        }
+	        pstmt.setString(2, username);
+	        int rowsAffected = pstmt.executeUpdate();
+	        return rowsAffected > 0;
+	    }
 	}
 
 	// Retrieves the role of a user from the database using their UserName.
@@ -351,16 +385,25 @@ public class DatabaseHelper {
 	        ResultSet rs = meta.getColumns(null, null, "CSE360USERS", "EMAIL");
 	        
 	        if (!rs.next()) {
-	            // Email column doesn't exist, add it
 	            System.out.println("Adding email column to database...");
 	            String alterTable = "ALTER TABLE cse360users ADD COLUMN email VARCHAR(255)";
 	            statement.execute(alterTable);
 	            System.out.println("Email column added successfully!");
 	        }
 	        rs.close();
+	        
+	        // Check if middleInitial column exists
+	        rs = meta.getColumns(null, null, "CSE360USERS", "MIDDLEINITIAL");
+	        if (!rs.next()) {
+	            System.out.println("Adding middleInitial column to database...");
+	            String alterTable = "ALTER TABLE cse360users ADD COLUMN middleInitial VARCHAR(1)";
+	            statement.execute(alterTable);
+	            System.out.println("Middle Initial column added successfully!");
+	        }
+	        rs.close();
+	        
 	    } catch (SQLException e) {
-	        System.out.println("Note: Could not add email column - it may already exist");
-	        // Not critical if it fails - might already exist
+	        System.out.println("Note: Could not add columns - they may already exist");
 	    }
 	}
 

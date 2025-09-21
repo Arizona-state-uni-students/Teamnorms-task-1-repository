@@ -127,10 +127,10 @@ public class UserDatabaseUI {
 
         
 
-        ScrollPane scrollPane = new ScrollPane(layout);
 
+        ScrollPane scrollPane = new ScrollPane(layout);
         scrollPane.setFitToWidth(true);
-        Scene userDBScene = new Scene(scrollPane, 900, 500);
+        Scene userDBScene = new Scene(scrollPane, 1000, 500);  // Increased width from 900 to 1000
 
         
 
@@ -142,197 +142,162 @@ public class UserDatabaseUI {
     
 
     private void loadUserData() throws SQLException {
-
         databaseTable.getChildren().clear();
-
         
-
         // Database table headers
-
         Label userNameLabel = new Label("Username");
         userNameLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
-
         
-
+        Label miLabel = new Label("M.I.");
+        miLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
+        
         Label emailLabel = new Label("Email");
         emailLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
-
         
-
         Label roleLabel = new Label("Role");
         roleLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
-
         
-
         Label actionsLabel = new Label("Actions");
         actionsLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
-
         
-
         databaseTable.add(userNameLabel, 0, 0);
-        databaseTable.add(emailLabel, 1, 0);
-        databaseTable.add(roleLabel, 2, 0);
-        databaseTable.add(actionsLabel, 3, 0);
-
+        databaseTable.add(miLabel, 1, 0);
+        databaseTable.add(emailLabel, 2, 0);
+        databaseTable.add(roleLabel, 3, 0);
+        databaseTable.add(actionsLabel, 4, 0);
         
-
         // Fetch users and render rows
-
         List<User> users = databaseHelper.getAllUsers();
-
         
-
         int rowIndex = 1;
-
         for (User u : users) {
-
             String targetUsername = u.getUserName();
-
             
-
             Label userNameCell = new Label(targetUsername);
             userNameCell.setMaxWidth(150);
-
             
-
+            // Middle Initial display
+            String middleInitial = u.getMiddleInitial();
+            Label miCell = new Label(middleInitial != null && !middleInitial.isEmpty() ? middleInitial : "-");
+            miCell.setStyle("-fx-font-weight: bold; -fx-text-fill: #333;");
+            miCell.setMaxWidth(30);
+            
+            // Email with edit button
             Label emailCell = new Label(u.getEmail() != null ? u.getEmail() : "Not set");
-
-            emailCell.setMaxWidth(200);
+            emailCell.setMaxWidth(180);
             emailCell.setStyle("-fx-text-fill: #666;");
+            
             Button editEmailBtn = new Button("Edit");
             editEmailBtn.setStyle("-fx-font-size: 10px;");
             editEmailBtn.setOnAction(e -> editUserEmail(targetUsername, u.getEmail()));
-
             
             HBox emailBox = new HBox(5);
             emailBox.getChildren().addAll(emailCell, editEmailBtn);
             
-
             // Role with change option
-
             HBox roleBox = new HBox(5);
             Label roleCell = new Label(u.getRole());
-
-            roleCell.setMaxWidth(80);
+            roleCell.setMaxWidth(60);
             roleCell.setStyle("-fx-font-weight: bold; -fx-text-fill: " + 
-
                 (u.getRole().equals("admin") ? "#FF6600;" : "#0066CC;"));
-
             
-
             Button changeRoleBtn = new Button("Change");
-
             changeRoleBtn.setStyle("-fx-font-size: 10px;");
             changeRoleBtn.setOnAction(e -> changeUserRole(targetUsername, u.getRole()));
-
             
-
             roleBox.getChildren().addAll(roleCell, changeRoleBtn);
-
             
-
             // Password reset controls
-
             HBox passwordControls = new HBox(5);
             passwordControls.setAlignment(Pos.CENTER_LEFT);
-
             
-
             Button resetButton = new Button("Reset Password");
-
             resetButton.setStyle("-fx-font-size: 11px;");
             passwordControls.getChildren().add(resetButton);
-
             
-
             resetButton.setOnAction(ev -> {
-
                 PasswordField passwordField = new PasswordField();
-
                 passwordField.setPromptText("New password");
                 passwordField.setMaxWidth(120);
-
                 
-
                 Button saveButton = new Button("Save");
                 saveButton.setStyle("-fx-font-size: 11px; -fx-background-color: #0099ff; -fx-text-fill: white;");
-
                 
-
                 Button cancelButton = new Button("Cancel");
-
                 cancelButton.setStyle("-fx-font-size: 11px;");
-                passwordControls.getChildren().setAll(passwordField, saveButton, cancelButton);
-
                 
-
+                passwordControls.getChildren().setAll(passwordField, saveButton, cancelButton);
+                
                 saveButton.setOnAction(ev2 -> {
-
                     String newPassword = passwordField.getText();
-
                     if (newPassword == null || newPassword.isBlank()) {
                         showAlert("Error", "Password cannot be empty!", AlertType.ERROR);
-
                         return;
-
                     }
-
                     
-
                     try {
-
                         if (databaseHelper.updateUserPassword(targetUsername, newPassword)) {
-
                             showAlert("Success", "Password updated for " + targetUsername, AlertType.INFORMATION);
                             passwordControls.getChildren().setAll(resetButton);
-
                         } else {
-
                             showAlert("Error", "Failed to update password", AlertType.ERROR);
-
                         }
-
                     } catch (SQLException ex) {
-
                         showAlert("Error", "Database error: " + ex.getMessage(), AlertType.ERROR);
-
                     }
-
                 });
-
                 
-
                 cancelButton.setOnAction(ev2 -> {
-                	
                     passwordControls.getChildren().setAll(resetButton);
-
                 });
-
             });
-
             
-
-            // Delete button with confirmation
-
+            // Delete button
             Button deleteUserBtn = new Button("Delete");
             deleteUserBtn.setStyle("-fx-font-size: 11px; -fx-background-color: #ff4444; -fx-text-fill: white;");
             deleteUserBtn.setOnAction(e -> deleteUser(targetUsername));
-
             
-
             // Add row to the grid
-
             databaseTable.add(userNameCell, 0, rowIndex);
-            databaseTable.add(roleBox, 2, rowIndex);
-            databaseTable.add(passwordControls, 3, rowIndex);
-            databaseTable.add(deleteUserBtn, 4, rowIndex);
-            databaseTable.add(emailBox, 1, rowIndex);
+            databaseTable.add(miCell, 1, rowIndex);
+            databaseTable.add(emailBox, 2, rowIndex);
+            databaseTable.add(roleBox, 3, rowIndex);
+            databaseTable.add(passwordControls, 4, rowIndex);
+            databaseTable.add(deleteUserBtn, 5, rowIndex);
+            
             rowIndex++;
-
         }
-
     }
 
+    private void editUserMiddleInitial(String username, String currentMI) {
+        TextInputDialog dialog = new TextInputDialog(currentMI != null ? currentMI : "");
+        dialog.setTitle("Edit Middle Initial");
+        dialog.setHeaderText("Edit middle initial for user: " + username);
+        dialog.setContentText("Enter middle initial (1 character):");
+        
+        Optional<String> result = dialog.showAndWait();
+        result.ifPresent(newMI -> {
+            // Ensure it's only 1 character
+            if (newMI.length() > 1) {
+                showAlert("Invalid Input", "Middle initial must be 1 character only", AlertType.ERROR);
+                return;
+            }
+            
+            try {
+                if (databaseHelper.updateUserMiddleInitial(username, newMI.trim())) {
+                    showAlert("Success", "Middle initial updated successfully for " + username, AlertType.INFORMATION);
+                    loadUserData(); // Refresh the display
+                } else {
+                    showAlert("Error", "Failed to update middle initial", AlertType.ERROR);
+                }
+            } catch (SQLException ex) {
+                showAlert("Database Error", "Failed to update middle initial: " + ex.getMessage(), AlertType.ERROR);
+                ex.printStackTrace();
+            }
+        });
+    }
+    
+    
     private void editUserEmail(String username, String currentEmail) {
         TextInputDialog dialog = new TextInputDialog(currentEmail != null ? currentEmail : "");
         dialog.setTitle("Edit Email");
