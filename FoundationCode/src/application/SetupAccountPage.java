@@ -137,6 +137,11 @@ public class SetupAccountPage {
         TextField LastNameField = new TextField();
         LastNameField.setPromptText("Enter Last Name");
         LastNameField.setMaxWidth(200);
+		LastNameField.textProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue.length() > 20) { // password max length 20
+            	LastNameField.setText(newValue.substring(0, 20));
+            }
+        });
         
         // invite code fields
         Label inviteCodeLabel = new Label("Invitation Code");
@@ -302,3 +307,4 @@ public class SetupAccountPage {
 		}
 	}
 }
+

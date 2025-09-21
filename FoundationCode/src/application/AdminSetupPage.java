@@ -138,7 +138,11 @@ public class AdminSetupPage {
         TextField LastNameField = new TextField();
         LastNameField.setPromptText("Enter Last Name");
         LastNameField.setMaxWidth(200);
-     
+     	LastNameField.textProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue.length() > 20) { // password max length 20
+            	LastNameField.setText(newValue.substring(0, 20));
+            }
+        });
 
         Button setupButton = new Button("Continue as Admin");
         setupButton.setStyle("-fx-font-size: 14px; -fx-padding: 5 20; -fx-background-color: #0099ff; -fx-text-fill: white;");
@@ -267,3 +271,4 @@ public class AdminSetupPage {
 		}
 	}
 }
+
