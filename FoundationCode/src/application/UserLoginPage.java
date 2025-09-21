@@ -32,14 +32,14 @@ public class UserLoginPage {
     }
 
     public void show(Stage primaryStage) {
-    	
+    	// Establish GUI Grid
     	GridPane grid = new GridPane();
     	grid.setPadding(new Insets(10));
     	grid.setHgap(10); // Horizontal gap between columns
     	grid.setVgap(10); // Vertical gap between rows
     	
     	// set background image
-    	Image backgroundImage = new Image(getClass().getResource("/solutions.png").toExternalForm());
+    	Image backgroundImage = new Image(getClass().getResource("/titlescreen.png").toExternalForm());
     	BackgroundImage backgroundImg = new BackgroundImage(
     			backgroundImage,
     			BackgroundRepeat.NO_REPEAT,
@@ -81,6 +81,13 @@ public class UserLoginPage {
         HBox buttonBox = new HBox(10, setupButton, loginButton); // 10px spacing between buttons
         buttonBox.setAlignment(javafx.geometry.Pos.CENTER); // Center align buttons
         
+        Button truncateButton = new Button("Reset DB");
+        truncateButton.setOnAction(a -> {
+            databaseHelper.truncate();
+	    	databaseHelper.closeConnection();
+	    	Platform.exit(); // Exit the JavaFX application
+        });
+        
         Button quitButton = new Button("Quit");
         quitButton.setStyle("-fx-font-size: 14px; -fx-padding: 0 20; -fx-background-color: transparent; -fx-text-fill: #2c2c2c;");
         
@@ -91,7 +98,8 @@ public class UserLoginPage {
         grid.add(passwordField, 0, 4); 
         grid.add(buttonBox, 0, 5);
         grid.add(errorLabel, 0, 6);
-        grid.add(quitButton, 0, 20);
+        grid.add(truncateButton, 0, 7);
+        grid.add(quitButton, 0, 17);
         GridPane.setHalignment(errorLabel, javafx.geometry.HPos.RIGHT);
         GridPane.setHalignment(quitButton, javafx.geometry.HPos.CENTER);
         
@@ -108,7 +116,11 @@ public class UserLoginPage {
             	if(role!=null) {
             		user.setRole(role);
             		if(databaseHelper.login(user)) {
-            			new WelcomeLoginPage(databaseHelper).show(primaryStage,user);
+            	        if (!role.equals("user")) {
+            	            new WelcomeLoginPage(databaseHelper).show(primaryStage, user);
+            	        } else {
+            	            new UserHomePage(databaseHelper).show(primaryStage, user);
+            	        }
             			//errorLabel.setText(user.getRole());
             		}
             		else {

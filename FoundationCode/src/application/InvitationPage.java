@@ -44,7 +44,7 @@ public class InvitationPage {
         });
         Button goBackButton = new Button("Go back"); goBackButton.setStyle("-fx-font-size: 14px; -fx-padding: 5 20; -fx-background-color: #666; -fx-text-fill: white;");
 	    goBackButton.setOnAction(a -> {
-	    	new WelcomeLoginPage(databaseHelper).show(primaryStage,user);
+	    	new AdminHomePage(databaseHelper).show(primaryStage,user);
 	    });
 
         layout.getChildren().addAll(userLabel, showCodeButton, inviteCodeLabel, goBackButton);

@@ -50,8 +50,11 @@ public class DatabaseHelper {
 	            + "id INT AUTO_INCREMENT PRIMARY KEY, "
 	            + "userName VARCHAR(255) UNIQUE, "
 	            + "email VARCHAR(255), "
+	            + "firstName VARCHAR(20), "
 	            + "middleInitial VARCHAR(1), "  // Add middle initial field (1 character max)
+	            + "lastName VARCHAR(20), "
 	            + "password VARCHAR(255), "
+	            + "tempPassword VARCHAR(4), "
 	            + "role VARCHAR(20))";
 	    statement.execute(userTable);
 	    
