@@ -157,6 +157,7 @@ public class PasswordEvaluator {
 		return errMessage + "conditions were not satisfied";
 
 	}
+	
 	public static String evaluateUsername(String input) {
 		// The following are the local variable used to perform the Directed Graph simulation
 		passwordErrorMessage = "";

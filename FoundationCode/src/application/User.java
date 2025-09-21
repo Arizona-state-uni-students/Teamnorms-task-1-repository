@@ -11,6 +11,8 @@ public class User {
     private String password;
     private String role;
     private int privileges = 99; // Default privileges
+    private String firstName;
+    private String lastName;
     
     public User(String userName, String password, String role) {
         this.userName = userName;
@@ -20,12 +22,14 @@ public class User {
         this.middleInitial = "";
     }
     
-    public User(String userName, String email, String password, String role) {
+    public User(String userName, String email, String password, String role, String firstName, String lastName, String middleInitial) {
         this.userName = userName;
         this.email = email;
         this.password = password;
         this.role = role;
         this.middleInitial = "";
+        this.firstName = "";
+        this.lastName = "";
     }
     
     // Getters and setters
@@ -71,6 +75,22 @@ public class User {
      
     public void setPrivileges(int privileges) {
         this.privileges = privileges;
+    }
+    
+    public String getFirstName(String firstName) {
+        return firstName;
+    }
+    
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+    
+    public String getLastName(String lastName) {
+        return lastName;
+    }
+    
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
     }
 
     

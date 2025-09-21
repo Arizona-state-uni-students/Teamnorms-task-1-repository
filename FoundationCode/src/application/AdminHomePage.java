@@ -105,3 +105,4 @@ public class AdminHomePage {
 	    primaryStage.setTitle("Admin Page");
     }
 }
+
