@@ -207,50 +207,81 @@ public class UserDatabaseUI {
             
             roleBox.getChildren().addAll(roleCell, changeRoleBtn);
             
-            // Password reset controls
+            // Password reset controls (admin-issued one-time password)
             HBox passwordControls = new HBox(5);
             passwordControls.setAlignment(Pos.CENTER_LEFT);
-            
-            Button resetButton = new Button("Reset Password");
-            resetButton.setStyle("-fx-font-size: 11px;");
-            passwordControls.getChildren().add(resetButton);
-            
-            resetButton.setOnAction(ev -> {
-                PasswordField passwordField = new PasswordField();
-                passwordField.setPromptText("New password");
-                passwordField.setMaxWidth(120);
-                
-                Button saveButton = new Button("Save");
-                saveButton.setStyle("-fx-font-size: 11px; -fx-background-color: #0099ff; -fx-text-fill: white;");
-                
-                Button cancelButton = new Button("Cancel");
-                cancelButton.setStyle("-fx-font-size: 11px;");
-                
-                passwordControls.getChildren().setAll(passwordField, saveButton, cancelButton);
-                
-                saveButton.setOnAction(ev2 -> {
-                    String newPassword = passwordField.getText();
-                    if (newPassword == null || newPassword.isBlank()) {
-                        showAlert("Error", "Password cannot be empty!", AlertType.ERROR);
-                        return;
-                    }
-                    
-                    try {
-                        if (databaseHelper.updateUserPassword(targetUsername, newPassword)) {
-                            showAlert("Success", "Password updated for " + targetUsername, AlertType.INFORMATION);
-                            passwordControls.getChildren().setAll(resetButton);
-                        } else {
-                            showAlert("Error", "Failed to update password", AlertType.ERROR);
-                        }
-                    } catch (SQLException ex) {
-                        showAlert("Error", "Database error: " + ex.getMessage(), AlertType.ERROR);
-                    }
-                });
-                
-                cancelButton.setOnAction(ev2 -> {
-                    passwordControls.getChildren().setAll(resetButton);
-                });
+
+            Button issueOtpBtn = new Button("Issue One-Time Password");
+            issueOtpBtn.setStyle("-fx-font-size: 11px;");
+            passwordControls.getChildren().setAll(issueOtpBtn);
+
+            issueOtpBtn.setOnAction(ev -> {
+            	// Dialog for OTP generation/entry
+            	Dialog<String> dlg = new Dialog<>();
+            	dlg.setTitle("One-Time Password");
+            	dlg.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+
+            	TextField otpField = new TextField();
+            	otpField.setPromptText("Leave blank to auto-generate");
+            	otpField.setMaxWidth(180);
+
+            	// TTL (minutes)
+            	TextField ttlField = new TextField("30");   // default 30 min
+            	ttlField.setMaxWidth(80);
+            	HBox ttlRow = new HBox(6, new Label("Expires in (min):"), ttlField);
+            	ttlRow.setAlignment(Pos.CENTER_LEFT);
+
+            	CheckBox showCode = new CheckBox("Show code after save"); // optional convenience
+            	VBox box = new VBox(8,
+            	        new Label("Temporary password for " + targetUsername + ":"),
+            	        otpField,
+            	        ttlRow,
+            	        showCode);
+            	box.setPadding(new Insets(10));
+            	dlg.getDialogPane().setContent(box);
+
+            	dlg.setResultConverter(bt -> bt == ButtonType.OK ? otpField.getText().trim() : null);
+            	Optional<String> result = dlg.showAndWait();
+
+            	result.ifPresent(code -> {
+            	    String raw = code == null ? "" : code.trim();
+            	    String otp = raw.isEmpty()
+            	            ? java.util.UUID.randomUUID().toString().substring(0, 6).toUpperCase()
+            	            : raw;
+
+            	    try {
+            	        boolean ok;
+            	        String ttlText = ttlField.getText() == null ? "" : ttlField.getText().trim();
+            	        if (!ttlText.isEmpty()) {
+            	            int ttl;
+            	            try {
+            	                ttl = Integer.parseInt(ttlText);
+            	            } catch (NumberFormatException nfe) {
+            	                ttl = 30; // fallback
+            	            }
+            	            if (ttl <= 0) ttl = 30; // guard against 0 or negatives
+
+            	            ok = databaseHelper.setOtp(targetUsername, otp, ttl); // <-- uses expiry
+            	        } else {
+            	            ok = databaseHelper.setOtp(targetUsername, otp);      // <-- no expiry
+            	        }
+
+            	        if (ok) {
+            	            if (showCode.isSelected()) {
+            	                showAlert("Success", "One-Time Password for " + targetUsername + ": " + otp, AlertType.INFORMATION);
+            	            } else {
+            	                showAlert("Success", "One-Time Password set. Share it with the user.", AlertType.INFORMATION);
+            	            }
+            	        } else {
+            	            showAlert("Error", "Failed to set One-Time Password", AlertType.ERROR);
+            	        }
+            	    } catch (SQLException e1) {
+            	        showAlert("Error", "Database error: " + e1.getMessage(), AlertType.ERROR);
+            	    }
+            	});
+
             });
+
             
             // Delete button
             Button deleteUserBtn = new Button("Delete");
