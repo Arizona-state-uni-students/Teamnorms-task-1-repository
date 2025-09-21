@@ -6,16 +6,18 @@ package application;
  */
 public class User {
     private String userName;
+    private String email;
+    private String middleInitial;
     private String password;
     private String role;
-    private String email;
-
-    // Constructor to initialize a new User object with userName, password, and role.
+    private int privileges = 99; // Default privileges
+    
     public User(String userName, String password, String role) {
         this.userName = userName;
         this.password = password;
         this.role = role;
-        this.email = ""; // Default empty email
+        this.email = "";
+        this.middleInitial = "";
     }
     
     public User(String userName, String email, String password, String role) {
@@ -23,8 +25,10 @@ public class User {
         this.email = email;
         this.password = password;
         this.role = role;
+        this.middleInitial = "";
     }
     
+    // Getters and setters
     public String getUserName() {
         return userName;
     }
@@ -39,6 +43,14 @@ public class User {
     
     public void setEmail(String email) {
         this.email = email;
+    }
+    
+    public String getMiddleInitial() {
+        return middleInitial;
+    }
+    
+    public void setMiddleInitial(String middleInitial) {
+        this.middleInitial = middleInitial;
     }
     
     public String getPassword() {
@@ -56,6 +68,11 @@ public class User {
     public void setRole(String role) {
         this.role = role;
     }
+     
+    public void setPrivileges(int privileges) {
+        this.privileges = privileges;
+    }
+
     
     public int getPrivileges() {
     	int privilege=0;
