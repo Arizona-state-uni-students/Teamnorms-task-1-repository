@@ -2,9 +2,17 @@ package application;
 
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.BackgroundImage;
+import javafx.scene.layout.BackgroundPosition;
+import javafx.scene.layout.BackgroundRepeat;
+import javafx.scene.layout.BackgroundSize;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.application.Platform;
+import javafx.geometry.Insets;
 import databasePart1.*;
 
 /**
@@ -19,52 +27,61 @@ public class WelcomeLoginPage {
         this.databaseHelper = databaseHelper;
     }
     public void show( Stage primaryStage, User user) {
+   
+    	// Establish GUI Grid
+    	GridPane grid = new GridPane();
+    	//grid.setGridLinesVisible(true); // for testing
+    	grid.setPadding(new Insets(10));
+    	grid.setHgap(10); // Horizontal gap between columns
+    	grid.setVgap(10); // Vertical gap between rows
+    	grid.setAlignment(javafx.geometry.Pos.TOP_CENTER);
     	
-    	VBox layout = new VBox(5);
-	    layout.setStyle("-fx-alignment: center; -fx-padding: 20;");
-	    // variable privileges 
-	    int privilege = user.getPrivileges();
+    	// set background image
+    	Image backgroundImage = new Image(getClass().getResource("/blank.png").toExternalForm());
+    	BackgroundImage backgroundImg = new BackgroundImage(
+    			backgroundImage,
+    			BackgroundRepeat.NO_REPEAT,
+    			BackgroundRepeat.NO_REPEAT,
+    			BackgroundPosition.CENTER,
+    			new BackgroundSize(BackgroundSize.AUTO, BackgroundSize.AUTO, true, true, true, true)
+    			);
+    	grid.setBackground(new Background(backgroundImg));
 	    
-	    Label welcomeLabel = new Label("Welcome "+user.getUserName()+", you have level "+user.getPrivileges()+" privileges as "+user.getRole());
+	    Label welcomeLabel = new Label("Hello, "+user.getUserName()+"!");
 	    welcomeLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
-
-	    
 	    
 	    Button userButton = new Button("Continue to User Page");
+	    userButton.setStyle("-fx-font-size: 14px; -fx-padding: 5 20; -fx-background-color: #0099ff; -fx-text-fill: white;");
 	    userButton.setOnAction(a -> {
 	    		new UserHomePage(databaseHelper).show(primaryStage, user);
 	    });
+	    if ("user".equals(user.getRole())) {
+		    Button reviewerButton = new Button("You are not a star reviewer... Yet!");
+		    reviewerButton.setStyle("-fx-font-size: 14px; -fx-padding: 5 20; -fx-background-color: #ffdd00; -fx-text-fill: black;");
+		    reviewerButton.setOnAction(a -> {
+		    		
+		    });
+		    grid.add(reviewerButton, 0, 1); 
+	    }
+	    
+	    if ("admin".equals(user.getRole())) {
 	    Button adminButton = new Button("Continue to Admin Page");
+	    adminButton.setStyle("-fx-font-size: 14px; -fx-padding: 5 20; -fx-background-color: #ff9900; -fx-text-fill: black;");
 	    adminButton.setOnAction(a -> {
 	    		new AdminHomePage(databaseHelper).show(primaryStage, user);
 	    });
-	    
-	    // Button to quit the application
-	    Button quitButton = new Button("Quit");
-	    quitButton.setOnAction(a -> {
-	    	databaseHelper.closeConnection();
-	    	Platform.exit(); // Exit the JavaFX application
-	    });
+	    grid.add(adminButton, 0, 1); 
+	    }
 	    
 	    Button logout = new Button("logout");
+	    logout.setStyle("-fx-font-size: 14px; -fx-padding: 5 20; -fx-background-color: #666; -fx-text-fill: white;");
 	    logout.setOnAction(a -> {
 	            new UserLoginPage(databaseHelper).show(primaryStage);
 	    });
-	    
-	    // "Invite" button for admin to generate invitation codes
-	    if ("admin".equals(user.getRole())) {
-            Button inviteButton = new Button("Invite");
-            inviteButton.setOnAction(a -> {
-                new InvitationPage().show(databaseHelper, primaryStage, user);
-            });
-            layout.getChildren().add(inviteButton);
-        }
-	    if("admin".equals(user.getRole())) {
-		layout.getChildren().addAll(welcomeLabel, userButton, adminButton, quitButton, logout);
-		}else {
-	    layout.getChildren().addAll(welcomeLabel, userButton, quitButton, logout);
-		}
-	    Scene welcomeScene = new Scene(layout, 800, 400);
+	    grid.add(welcomeLabel, 0, 0);
+        grid.add(userButton, 0, 2);     
+        grid.add(logout, 0, 3);
+	    Scene welcomeScene = new Scene(grid, 800, 400);
 
 	    // Set the scene to primary stage
 	    primaryStage.setScene(welcomeScene);

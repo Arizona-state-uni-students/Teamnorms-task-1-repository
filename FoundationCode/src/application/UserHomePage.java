@@ -121,6 +121,11 @@ public class UserHomePage {
         Button goBackButton = new Button("Go back");
         goBackButton.setStyle("-fx-font-size: 14px; -fx-padding: 5 20; -fx-background-color: #666; -fx-text-fill: white;");
         
+        Button logoutButton = new Button("Logout");
+        logoutButton.setStyle("-fx-font-size: 14px; -fx-padding: 5 20; -fx-background-color: #666; -fx-text-fill: white;");
+        logoutButton.setOnAction(a -> {
+            new UserLoginPage(databaseHelper).show(primaryStage);
+        });
         // Add components to grid
         grid.add(titleLabel, 0, 0, 2, 1);
         
@@ -138,6 +143,7 @@ public class UserHomePage {
         
         grid.add(statusLabel, 0, 10, 2, 1);
         grid.add(goBackButton, 0, 11);
+        grid.add(logoutButton, 1, 11);
         
         // Email update action
         updateEmailButton.setOnAction(e -> {
