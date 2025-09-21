@@ -50,7 +50,6 @@ public class DatabaseHelper {
 			 createTables();  // Create the necessary tables if they don't exist
 		        updateDatabaseSchema();  // Update schema for existing databases
 			
-			createTables();  // Create the necessary tables if they don't exist
 		} catch (ClassNotFoundException e) {
 			System.err.println("JDBC Driver not found: " + e.getMessage());
 		}
@@ -59,12 +58,12 @@ public class DatabaseHelper {
 	private void createTables() throws SQLException {
 	    String userTable = "CREATE TABLE IF NOT EXISTS cse360users ("
 	            + "id INT AUTO_INCREMENT PRIMARY KEY, "
-	            + "userName VARCHAR(255) UNIQUE, "
+	            + "userName VARCHAR(20) UNIQUE, "
 	            + "email VARCHAR(255), "
 	            + "firstName VARCHAR(20), "
 	            + "middleInitial VARCHAR(1), "  // Add middle initial field (1 character max)
 	            + "lastName VARCHAR(20), "
-	            + "password VARCHAR(255), "
+	            + "password VARCHAR(20), "
 	            + "otp VARCHAR(16), "
 	            + "role VARCHAR(20))";
 	    statement.execute(userTable);
