@@ -15,6 +15,8 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 import java.sql.SQLException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import databasePart1.*;
 
@@ -29,7 +31,10 @@ public class AdminSetupPage {
     public AdminSetupPage(DatabaseHelper databaseHelper) {
         this.databaseHelper = databaseHelper;
     }
-
+    private boolean usernameSet = false;
+    private boolean passwordSet = false;
+    private boolean emailSet = false;
+    private boolean nameSet = false;
     public void show(Stage primaryStage) {
     	// Establish GUI Grid
     	GridPane grid = new GridPane();
@@ -50,34 +55,74 @@ public class AdminSetupPage {
     			);
     	grid.setBackground(new Background(backgroundImg));
     	
-    	
+        // Label to display error messages
+        Label errorLabel = new Label();
+        errorLabel.setStyle("-fx-text-fill: red; -fx-font-size: 12px;");
+        
     	// username field
         Label userNameLabel = new Label("Username");
         userNameLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
         TextField userNameField = new TextField();
         userNameField.setPromptText("Enter Username");
         userNameField.setMaxWidth(250);
-        
+        userNameField.textProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue.length() > 20) { // password max length 20
+            	userNameField.setText(newValue.substring(0, 20));
+            }
+            	// username validating fsm
+                validateUsername(newValue, errorLabel);
+        });
         // email field
         Label emailLabel = new Label("Email");
         emailLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
         TextField emailField = new TextField();
         emailField.setPromptText("Enter Email");
         emailField.setMaxWidth(250);
-        
+        emailField.textProperty().addListener((observable, oldValue, newValue) -> {
+        	String emailRegex = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$";
+            Pattern pattern = Pattern.compile(emailRegex);
+            Matcher matcher = pattern.matcher(newValue);
+
+            if (matcher.find()) {
+                //System.out.println("Found email: " + matcher.group());
+                errorLabel.setText("Valid Email");
+                errorLabel.setStyle("-fx-text-fill: green; -fx-font-size: 12px;");
+                emailSet=true;
+            }else {
+	            errorLabel.setText("Invalid Email");
+	            errorLabel.setStyle("-fx-text-fill: red; -fx-font-size: 12px;");
+	            emailSet=false;
+            }
+        });
         // password field
         Label passwordLabel = new Label("Password");
         passwordLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
         PasswordField passwordField = new PasswordField();
         passwordField.setPromptText("Enter Password");
         passwordField.setMaxWidth(250);
-        
+        passwordField.textProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue.length() > 20) { // password max length 20
+            	passwordField.setText(newValue.substring(0, 20));
+            }
+            	// password validating fsm
+                validatePassword(newValue, errorLabel);
+        });
         // name fields
         Label firstNameLabel = new Label("First Name");
         firstNameLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
         TextField firstNameField = new TextField();
         firstNameField.setPromptText("Enter First Name");
         firstNameField.setMaxWidth(200);
+        firstNameField.textProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue.length() > 20) { // password max length 20
+            	firstNameField.setText(newValue.substring(0, 20));
+            }
+            if (newValue.length() >= 1) { // password max length 20
+            	nameSet=true;
+            }else {
+            	nameSet=false;
+            }
+        });
         Label middleNameLabel = new Label("Middle Initial");
         middleNameLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
         TextField middleNameField = new TextField();
@@ -93,10 +138,7 @@ public class AdminSetupPage {
         TextField LastNameField = new TextField();
         LastNameField.setPromptText("Enter Last Name");
         LastNameField.setMaxWidth(200);
-        
-        // Label to display error messages
-        Label errorLabel = new Label();
-        errorLabel.setStyle("-fx-text-fill: red; -fx-font-size: 12px;");
+     
 
         Button setupButton = new Button("Continue as Admin");
         setupButton.setStyle("-fx-font-size: 14px; -fx-padding: 5 20; -fx-background-color: #0099ff; -fx-text-fill: white;");
@@ -105,21 +147,11 @@ public class AdminSetupPage {
             // Retrieve user input
             String userName = userNameField.getText();
             String email = emailField.getText();
+            String firstName = firstNameField.getText();
             String middleInitial = middleNameField.getText();
             String password = passwordField.getText();
-            
-            // Validation
-            if (userName.trim().isEmpty() || password.trim().isEmpty() || email.trim().isEmpty()) {
-                errorLabel.setText("Fields cannot be empty.");
-                return;
-            }
-            
-            // Basic email validation if provided
-            if (!email.trim().isEmpty() && !email.contains("@")) {
-                errorLabel.setText("Please enter a valid email address");
-                return;
-            }
-            
+       
+            if(usernameSet && passwordSet && emailSet && nameSet) {
             try {
                 // Create a new User object with admin role and register in the database
             	User user = new User(userName, password, "admin");
@@ -132,8 +164,13 @@ public class AdminSetupPage {
                 new WelcomeLoginPage(databaseHelper).show(primaryStage, user);
             } catch (SQLException e) {
                 errorLabel.setText("Database error: " + e.getMessage());
+                errorLabel.setStyle("-fx-text-fill: red; -fx-font-size: 12px;");
                 System.err.println("Database error: " + e.getMessage());
                 e.printStackTrace();
+            }
+            }else {
+         	   errorLabel.setText("Fields cannot be left blank: Username, Password, Email, Name");
+               errorLabel.setStyle("-fx-text-fill: red; -fx-font-size: 12px;");
             }
         });
 	    
@@ -170,4 +207,63 @@ public class AdminSetupPage {
         primaryStage.setTitle("Administrator Setup");
         primaryStage.show();
     }
+    // FSM for username validation
+	private void validateUsername(String input, Label label) {
+		//TODO: 
+		//		GUI elements to let user know password requirements/restrictions
+		// Current Requirements: 4+ length, No Special Characters
+		// (Is that what we want?)
+		String inputText = input;
+		if (input.isEmpty()) {}
+		else
+		{
+			String errMessage = PasswordEvaluator.evaluateUsername(inputText);
+			//updateFlags();
+			if (errMessage != "") {
+				System.out.println(errMessage);
+				label.setText("Failure! The username is not valid.");
+				label.setStyle("-fx-text-fill: red; -fx-font-size: 12px;");
+				usernameSet=false;
+			}
+			else if (PasswordEvaluator.UfoundLongEnough) {
+				label.setText("Success! The username satisfies the requirements.");
+				label.setStyle("-fx-text-fill: green; -fx-font-size: 12px;");
+				usernameSet=true;
+			} else {
+				label.setText("This username does not yet satisfy requirements.");
+				label.setStyle("-fx-text-fill: red; -fx-font-size: 12px;");
+				usernameSet=false;
+			}
+		}
+	}
+    // FSM for password validation
+	private void validatePassword(String input, Label label) {
+		//TODO: 
+		//		GUI elements to let user know password requirements/restrictions
+		// Current Requirements: 6+ length, OneCapital, OneLowerCase, OneDigit, OneSpecialChar
+		// (Is that what we want?)
+		String inputText = input;
+		if (input.isEmpty()) {}
+		else
+		{
+			String errMessage = PasswordEvaluator.evaluatePassword(inputText);
+			//updateFlags();
+			if (errMessage != "") {
+				label.setText("Failure! The password is not valid.");
+				label.setStyle("-fx-text-fill: red; -fx-font-size: 12px;");
+				passwordSet=false;
+			}
+			else if (PasswordEvaluator.PfoundUpperCase && PasswordEvaluator.PfoundLowerCase &&
+					PasswordEvaluator.PfoundNumericDigit && PasswordEvaluator.PfoundSpecialChar &&
+					PasswordEvaluator.PfoundLongEnough) {
+				label.setText("Success! The password satisfies the requirements.");
+				label.setStyle("-fx-text-fill: green; -fx-font-size: 12px;");
+				passwordSet=true;
+			} else {
+				label.setText("The password as currently entered is not yet valid.");
+				label.setStyle("-fx-text-fill: red; -fx-font-size: 12px;");
+				passwordSet=false;
+			}
+		}
+	}
 }

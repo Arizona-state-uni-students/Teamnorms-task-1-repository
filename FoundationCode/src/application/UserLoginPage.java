@@ -13,6 +13,7 @@ import javafx.scene.layout.BackgroundSize;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
 import java.sql.SQLException;
@@ -80,23 +81,22 @@ public class UserLoginPage {
             info.setContentText(fsmHelp);
             info.showAndWait();
         });
-
-        
-        // Input field for password
-        PasswordField passwordField = new PasswordField();
-        passwordField.setPromptText("Type your password");
-        passwordField.setMaxWidth(250);
-        passwordField.setTooltip(new Tooltip("Enter your permanent password or a one-time password (OTP) from an admin"));
-
-        // Put label and (?) on one line
-        HBox passwordHeader = new HBox(6, passwordLabel, helpBtn);
-        passwordHeader.setAlignment(javafx.geometry.Pos.BASELINE_LEFT);
-
         
         // Label to display error messages
         Label errorLabel = new Label();
         errorLabel.setStyle("-fx-text-fill: red; -fx-font-size: 12px;");
 
+        // Input field for password
+        PasswordField passwordField = new PasswordField();
+        passwordField.setPromptText("Type your password");
+        passwordField.setMaxWidth(250);
+        passwordField.setTooltip(new Tooltip("Enter your permanent password or a one-time password (OTP) from an admin"));
+        
+        // Put label and (?) on one line
+        HBox passwordHeader = new HBox(6, passwordLabel, helpBtn);
+        passwordHeader.setAlignment(javafx.geometry.Pos.BASELINE_LEFT);
+
+     
         // Create Buttons
         Button loginButton = new Button("Login");
         loginButton.setPrefWidth(150); // Set button width
@@ -107,6 +107,7 @@ public class UserLoginPage {
         HBox buttonBox = new HBox(10, setupButton, loginButton); // 10px spacing between buttons
         buttonBox.setAlignment(javafx.geometry.Pos.CENTER); // Center align buttons
         
+        // Button for "fresh reset." Deletes and rebuilds database
         Button truncateButton = new Button("Reset DB");
         truncateButton.setOnAction(a -> {
             databaseHelper.truncate();
