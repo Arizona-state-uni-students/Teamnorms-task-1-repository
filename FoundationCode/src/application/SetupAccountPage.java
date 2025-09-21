@@ -135,7 +135,7 @@ public class SetupAccountPage {
                 middleNameField.setText(newValue.substring(0, 1));
             }
         });
-        
+
         Label lastNameLabel = new Label("Last Name");
         lastNameLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
         TextField lastNameField = new TextField();

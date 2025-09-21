@@ -136,7 +136,7 @@ public class AdminSetupPage {
                 middleNameField.setText(newValue.substring(0, 1));
             }
         });
-        
+
         Label lastNameLabel = new Label("Last Name");
         lastNameLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
         TextField lastNameField = new TextField();
@@ -152,7 +152,7 @@ public class AdminSetupPage {
             	nameSet=false;
             }
         });        
-     
+
 
         Button setupButton = new Button("Continue as Admin");
         setupButton.setStyle("-fx-font-size: 14px; -fx-padding: 5 20; -fx-background-color: #0099ff; -fx-text-fill: white;");
@@ -282,3 +282,4 @@ public class AdminSetupPage {
 		}
 	}
 }
+
