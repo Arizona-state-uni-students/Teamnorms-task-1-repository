@@ -4,8 +4,16 @@ import java.sql.SQLException;
 
 import databasePart1.DatabaseHelper;
 import javafx.application.Platform;
+import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.BackgroundImage;
+import javafx.scene.layout.BackgroundPosition;
+import javafx.scene.layout.BackgroundRepeat;
+import javafx.scene.layout.BackgroundSize;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
@@ -26,11 +34,25 @@ public class AdminHomePage {
         this.databaseHelper = databaseHelper;
     }
     public void show(Stage primaryStage, User user) {
-    	VBox layout = new VBox();
+    	// Establish GUI Grid
+    	GridPane grid = new GridPane();
+    	//grid.setGridLinesVisible(true); // for testing
+    	grid.setPadding(new Insets(10));
+    	grid.setHgap(10); // Horizontal gap between columns
+    	grid.setVgap(10); // Vertical gap between rows
+    	grid.setAlignment(javafx.geometry.Pos.TOP_CENTER);
     	
-	    layout.setStyle("-fx-alignment: center; -fx-padding: 20;");
-	    
-	    // label to display the welcome message for the admin
+    	// set background image
+    	Image backgroundImage = new Image(getClass().getResource("/blankadmin.png").toExternalForm());
+    	BackgroundImage backgroundImg = new BackgroundImage(
+    			backgroundImage,
+    			BackgroundRepeat.NO_REPEAT,
+    			BackgroundRepeat.NO_REPEAT,
+    			BackgroundPosition.CENTER,
+    			new BackgroundSize(BackgroundSize.AUTO, BackgroundSize.AUTO, true, true, true, true)
+    			);
+    	grid.setBackground(new Background(backgroundImg));
+    	
 	    Label adminLabel = new Label("Hello, Admin!");
 	    adminLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
 	    
@@ -44,6 +66,7 @@ public class AdminHomePage {
 	    
 	    // Button directory to traverse into the User Database Page
 	    Button userDatabase = new Button("User Database");
+	    userDatabase.setStyle("-fx-font-size: 14px; -fx-padding: 5 20; -fx-background-color: #ff9900; -fx-text-fill: black;");
 	    userDatabase.setOnAction(a -> {
 	    		try {
 					new UserDatabaseUI(databaseHelper, user).show(primaryStage);
@@ -53,31 +76,31 @@ public class AdminHomePage {
 				}
 	    });	    
 	    
-	    Label userDisplay = new Label("User: "+user.getUserName()+", you have level "+user.getPrivileges()+" privileges as "+user.getRole());
-	    userDisplay.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
-	    
-        Button inviteButton = new Button("Invite");
+        Button inviteButton = new Button("Generate Invitations");
+        inviteButton.setStyle("-fx-font-size: 14px; -fx-padding: 5 20; -fx-background-color: #ff9900; -fx-text-fill: black;");
         inviteButton.setOnAction(a -> {
                 new InvitationPage().show(databaseHelper, primaryStage, user);
         });
         
-	    Button logoutButton = new Button("logout");
+	    Button logoutButton = new Button("Logout");
+	    logoutButton.setStyle("-fx-font-size: 14px; -fx-padding: 5 20; -fx-background-color: #666; -fx-text-fill: white;");
 	    logoutButton.setOnAction(a -> {
 	            new UserLoginPage(databaseHelper).show(primaryStage);
 	    });
-	    Button goBackButton = new Button("Go back"); goBackButton.setStyle("-fx-font-size: 14px; -fx-padding: 5 20; -fx-background-color: #666; -fx-text-fill: white;");
-	    goBackButton.setOnAction(a -> {
+	    Button switchRoleButton = new Button("Pick Role"); 
+	    switchRoleButton.setStyle("-fx-font-size: 14px; -fx-padding: 5 20; -fx-background-color: #0099ff; -fx-text-fill: white;");
+	    switchRoleButton.setOnAction(a -> {
 	    	new WelcomeLoginPage(databaseHelper).show(primaryStage,user);
 	    });
-	    Button quitButton = new Button("Quit");
-	    quitButton.setOnAction(a -> {
-	    	databaseHelper.closeConnection();
-	    	Platform.exit(); // Exit the JavaFX application
-	    });
+
+	    grid.add(adminLabel, 0, 0);    // Column 1, Row 0
+        grid.add(userDatabase, 0, 1);     // Column 1, Row 1
+	    grid.add(inviteButton, 0, 2); // Column 0, Row 2
+        grid.add(switchRoleButton, 0, 3); // Column 0, Row 3
+        grid.add(logoutButton, 0, 4);
 	    
-	    layout.getChildren().addAll(adminLabel, inviteButton, truncateButton, userDatabase, logoutButton, goBackButton, quitButton);
-	    Scene adminScene = new Scene(layout, 800, 400);
-	    // Set the scene to primary stage
+	    
+	    Scene adminScene = new Scene(grid, 800, 400);
 	    primaryStage.setScene(adminScene);
 	    primaryStage.setTitle("Admin Page");
     }
