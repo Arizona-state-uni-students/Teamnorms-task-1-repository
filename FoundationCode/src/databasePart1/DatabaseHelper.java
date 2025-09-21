@@ -7,6 +7,8 @@ import java.sql.Statement;
 import java.util.*;
 
 import application.User;
+import javafx.application.Platform;
+import javafx.scene.control.Alert;
 
 
 /**
@@ -31,8 +33,17 @@ public class DatabaseHelper {
 		try {
 			Class.forName(JDBC_DRIVER); // Load the JDBC driver
 			System.out.println("Connecting to database...");
-			connection = DriverManager.getConnection(DB_URL, USER, PASS);
-			statement = connection.createStatement(); 
+			try {
+				connection = DriverManager.getConnection(DB_URL, USER, PASS);
+				statement = connection.createStatement(); 
+			} catch (SQLException e) {
+			    Platform.runLater(() ->
+			        new Alert(Alert.AlertType.ERROR,
+			            "Couldn’t open the database.\nClose any other running copy and try again.\n\n" + e.getMessage()
+			        ).showAndWait()
+			    );
+			    return; // bail before building the rest of the UI
+			}
 			// You can use this command to clear the database and restart from fresh.
 			//statement.execute("DROP ALL OBJECTS");
 
@@ -54,14 +65,15 @@ public class DatabaseHelper {
 	            + "middleInitial VARCHAR(1), "  // Add middle initial field (1 character max)
 	            + "lastName VARCHAR(20), "
 	            + "password VARCHAR(255), "
-	            + "tempPassword VARCHAR(4), "
+	            + "otp VARCHAR(16), "
 	            + "role VARCHAR(20))";
 	    statement.execute(userTable);
 	    
 	    // Create the invitation codes table
 	    String invitationCodesTable = "CREATE TABLE IF NOT EXISTS InvitationCodes ("
 	            + "code VARCHAR(10) PRIMARY KEY, "
-	            + "isUsed BOOLEAN DEFAULT FALSE)";
+	            + "isUsed BOOLEAN DEFAULT FALSE, "
+	            + "expiresAt TIMESTAMP)";
 	    statement.execute(invitationCodesTable);
 	}
 
@@ -312,6 +324,61 @@ public class DatabaseHelper {
 	    }
 	}
 	
+	// --- Admin issued One-Time Password  ---
+
+	// Existing behavior (no expiration)
+	public boolean setOtp(String username, String otp) throws SQLException {
+	    String sql = "UPDATE cse360users SET otp = ?, otpIsUsed = FALSE, otpExpiresAt = NULL WHERE userName = ?";
+	    try (PreparedStatement ps = connection.prepareStatement(sql)) {
+	        ps.setString(1, otp);
+	        ps.setString(2, username);
+	        return ps.executeUpdate() > 0;
+	    }
+	}
+
+	// Set OTP with TTL (minutes). We compute the expiry in Java for portability.
+	public boolean setOtp(String username, String otp, int ttlMinutes) throws SQLException {
+	    String sql = "UPDATE cse360users SET otp = ?, otpIsUsed = FALSE, otpExpiresAt = ? WHERE userName = ?";
+	    java.sql.Timestamp expiresAt = new java.sql.Timestamp(System.currentTimeMillis() + ttlMinutes * 60L * 1000L);
+	    try (PreparedStatement ps = connection.prepareStatement(sql)) {
+	        ps.setString(1, otp);
+	        ps.setTimestamp(2, expiresAt);
+	        ps.setString(3, username);
+	        return ps.executeUpdate() > 0;
+	    }
+	}
+	// Validate OTP: must match value, not used, and not expired
+	public boolean isOtpValid(String username, String otp) throws SQLException {
+	    String q = "SELECT 1 FROM cse360users " +
+	               "WHERE userName = ? AND otp = ? " +
+	               "AND (otpIsUsed = FALSE OR otpIsUsed IS NULL) " +
+	               "AND (otpExpiresAt IS NULL OR otpExpiresAt > CURRENT_TIMESTAMP)";
+	    try (PreparedStatement ps = connection.prepareStatement(q)) {
+	        ps.setString(1, username);
+	        ps.setString(2, otp);
+	        try (ResultSet rs = ps.executeQuery()) {
+	            return rs.next();
+	        }
+	    }
+	}
+
+	// Consume OTP after successful password change
+	public boolean consumeOtp(String username) throws SQLException {
+	    String q = "UPDATE cse360users SET otp = NULL, otpIsUsed = TRUE, otpExpiresAt = NULL WHERE userName = ?";
+	    try (PreparedStatement ps = connection.prepareStatement(q)) {
+	        ps.setString(1, username);
+	        return ps.executeUpdate() > 0;
+	    }
+	}
+
+	// Optional: clear any expired OTPs (housekeeping, not required for flow)
+	public int purgeExpiredOtps() throws SQLException {
+	    String q = "UPDATE cse360users SET otp = NULL, otpIsUsed = TRUE WHERE otpExpiresAt IS NOT NULL AND otpExpiresAt <= CURRENT_TIMESTAMP";
+	    try (PreparedStatement ps = connection.prepareStatement(q)) {
+	        return ps.executeUpdate();
+	    }
+	}
+	
 	public boolean resetUserPassword(String username, String newPassword) throws SQLException {
 	    String sql = "UPDATE cse360users SET password = ? WHERE userName = ?";  // Changed from "users" to "cse360users"
 	    try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
@@ -338,37 +405,58 @@ public class DatabaseHelper {
 	    }
 	}
 	
-	// Generates a new invitation code and inserts it into the database.
-	public String generateInvitationCode() {
-	    String code = UUID.randomUUID().toString().substring(0, 4); // Generate a random 4-character code
-	    String query = "INSERT INTO InvitationCodes (code) VALUES (?)";
+	// --- Invitation codes with expiration ---
 
-	    try (PreparedStatement pstmt = connection.prepareStatement(query)) {
-	        pstmt.setString(1, code);
-	        pstmt.executeUpdate();
+	// Backwards-compatible (no expiry)
+	public String generateInvitationCode() {
+	    return generateInvitationCode(0); // 0 = no expiry (NULL)
+	}
+
+	// Generate with TTL (minutes); returns the code
+	public String generateInvitationCode(int ttlMinutes) {
+	    String code = java.util.UUID.randomUUID().toString().substring(0, 4); // 4-char style
+	    String sql = "INSERT INTO InvitationCodes (code, isUsed, expiresAt) VALUES (?, FALSE, ?)";
+	    java.sql.Timestamp expiresAt = (ttlMinutes > 0)
+	            ? new java.sql.Timestamp(System.currentTimeMillis() + ttlMinutes * 60L * 1000L)
+	            : null;
+	    try (PreparedStatement ps = connection.prepareStatement(sql)) {
+	        ps.setString(1, code);
+	        if (expiresAt == null) ps.setNull(2, java.sql.Types.TIMESTAMP);
+	        else ps.setTimestamp(2, expiresAt);
+	        ps.executeUpdate();
 	    } catch (SQLException e) {
 	        e.printStackTrace();
 	    }
-
 	    return code;
 	}
-	
-	// Validates an invitation code to check if it is unused.
+
+	// Validate: must be unused and not expired
 	public boolean validateInvitationCode(String code) {
-	    String query = "SELECT * FROM InvitationCodes WHERE code = ? AND isUsed = FALSE";
-	    try (PreparedStatement pstmt = connection.prepareStatement(query)) {
-	        pstmt.setString(1, code);
-	        ResultSet rs = pstmt.executeQuery();
-	        if (rs.next()) {
-	            // Mark the code as used
-	            markInvitationCodeAsUsed(code);
-	            return true;
+	    String q = "SELECT 1 FROM InvitationCodes " +
+	               "WHERE code = ? AND isUsed = FALSE " +
+	               "AND (expiresAt IS NULL OR expiresAt > CURRENT_TIMESTAMP)";
+	    try (PreparedStatement ps = connection.prepareStatement(q)) {
+	        ps.setString(1, code);
+	        try (ResultSet rs = ps.executeQuery()) {
+	            if (rs.next()) {
+	                markInvitationCodeAsUsed(code); // keep your existing behavior
+	                return true;
+	            }
 	        }
 	    } catch (SQLException e) {
 	        e.printStackTrace();
 	    }
 	    return false;
 	}
+
+	// Optional: housekeeping
+	public int purgeExpiredInvitationCodes() throws SQLException {
+	    String q = "UPDATE InvitationCodes SET isUsed = TRUE WHERE expiresAt IS NOT NULL AND expiresAt <= CURRENT_TIMESTAMP AND isUsed = FALSE";
+	    try (PreparedStatement ps = connection.prepareStatement(q)) {
+	        return ps.executeUpdate();
+	    }
+	}
+
 	
 	// Marks the invitation code as used in the database.
 	private void markInvitationCodeAsUsed(String code) {
@@ -383,32 +471,67 @@ public class DatabaseHelper {
 	
 	public void updateDatabaseSchema() {
 	    try {
-	        // Check if email column exists
+	        // Use metadata to detect columns one-by-one
 	        DatabaseMetaData meta = connection.getMetaData();
-	        ResultSet rs = meta.getColumns(null, null, "CSE360USERS", "EMAIL");
-	        
-	        if (!rs.next()) {
-	            System.out.println("Adding email column to database...");
-	            String alterTable = "ALTER TABLE cse360users ADD COLUMN email VARCHAR(255)";
-	            statement.execute(alterTable);
-	            System.out.println("Email column added successfully!");
+
+	        // EMAIL
+	        try (ResultSet rs = meta.getColumns(null, null, "CSE360USERS", "EMAIL")) {
+	            if (!rs.next()) {
+	                System.out.println("Adding email column to database...");
+	                statement.execute("ALTER TABLE cse360users ADD COLUMN email VARCHAR(255)");
+	                System.out.println("Email column added successfully!");
+	            }
 	        }
-	        rs.close();
-	        
-	        // Check if middleInitial column exists
-	        rs = meta.getColumns(null, null, "CSE360USERS", "MIDDLEINITIAL");
-	        if (!rs.next()) {
-	            System.out.println("Adding middleInitial column to database...");
-	            String alterTable = "ALTER TABLE cse360users ADD COLUMN middleInitial VARCHAR(1)";
-	            statement.execute(alterTable);
-	            System.out.println("Middle Initial column added successfully!");
+
+	        // MIDDLEINITIAL
+	        try (ResultSet rs = meta.getColumns(null, null, "CSE360USERS", "MIDDLEINITIAL")) {
+	            if (!rs.next()) {
+	                System.out.println("Adding middleInitial column to database...");
+	                statement.execute("ALTER TABLE cse360users ADD COLUMN middleInitial VARCHAR(1)");
+	                System.out.println("Middle Initial column added successfully!");
+	            }
 	        }
-	        rs.close();
-	        
+
+	        // otpIsUsed (boolean flag)
+	        try (ResultSet rs = meta.getColumns(null, null, "CSE360USERS", "OTPISUSED")) {
+	            if (!rs.next()) {
+	                boolean hasOld;
+	                try (ResultSet rsOld = meta.getColumns(null, null, "CSE360USERS", "TEMPPASSWORD_ISUSED")) {
+	                    hasOld = rsOld.next();
+	                }
+	                System.out.println("Adding otpIsUsed column to database...");
+	                statement.execute("ALTER TABLE cse360users ADD COLUMN otpIsUsed BOOLEAN DEFAULT FALSE");
+	                if (hasOld) {
+	                    statement.execute("UPDATE cse360users SET otpIsUsed = tempPassword_IsUsed WHERE tempPassword_IsUsed IS NOT NULL");
+	                    System.out.println("otpIsUsed backfilled from tempPassword_IsUsed.");
+	                }
+	            }
+	        }
+
+	        // otpExpiresAt (timestamp)
+	        try (ResultSet rs = meta.getColumns(null, null, "CSE360USERS", "OTPEXPIRESAT")) {
+	            if (!rs.next()) {
+	                System.out.println("Adding otpExpiresAt column to database...");
+	                statement.execute("ALTER TABLE cse360users ADD COLUMN otpExpiresAt TIMESTAMP");
+	                System.out.println("otpExpiresAt column added successfully!");
+	            }
+	        }
+
+	        // InvitationCodes.expiresAt
+	        try (ResultSet rs = meta.getColumns(null, null, "INVITATIONCODES", "EXPIRESAT")) {
+	            if (!rs.next()) {
+	                System.out.println("Adding expiresAt column to InvitationCodes...");
+	                statement.execute("ALTER TABLE InvitationCodes ADD COLUMN expiresAt TIMESTAMP");
+	                System.out.println("expiresAt column added successfully!");
+	            }
+	        }
+
+
 	    } catch (SQLException e) {
-	        System.out.println("Note: Could not add columns - they may already exist");
+	        System.out.println("Note: Could not add columns — they may already exist: " + e.getMessage());
 	    }
 	}
+
 
 
 	// Closes the database connection and statement.
