@@ -8,6 +8,14 @@
 # BlueJ files
 *.ctxt
 
+# Ecplipse specific build files
+ bin/
+
+
+#Macintosh specific build files
+.DS_Store
+
+
 # Mobile Tools for Java (J2ME)
 .mtj.tmp/
 

@@ -5,6 +5,8 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.*;
+import application.Question;  
+import application.Answer;    
 
 import application.User;
 import javafx.application.Platform;
@@ -68,6 +70,7 @@ public class DatabaseHelper {
 	            + "role VARCHAR(20))";
 	    statement.execute(userTable);
 	    
+	    createQATables();  // Create Q&A system tables
 	    // Create the invitation codes table
 	    String invitationCodesTable = "CREATE TABLE IF NOT EXISTS InvitationCodes ("
 	            + "code VARCHAR(10) PRIMARY KEY, "
@@ -530,8 +533,667 @@ public class DatabaseHelper {
 	        System.out.println("Note: Could not add columns — they may already exist: " + e.getMessage());
 	    }
 	}
+	
+	// ============ Q&A System Database Methods ============
 
 
+	/**
+
+	 * Creates tables for the Q&A system if they don't exist
+
+	 */
+
+	private void createQATables() throws SQLException {
+
+	    // Questions table
+
+	    String questionsTable = "CREATE TABLE IF NOT EXISTS questions ("
+	            + "id INT AUTO_INCREMENT PRIMARY KEY, "
+	            + "title VARCHAR(100) NOT NULL, "  // CHANGED FROM 200
+	            + "content VARCHAR(500) NOT NULL, "  // CHANGED FROM 2000
+	            + "askedBy VARCHAR(20) NOT NULL, "
+	            + "createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP, "
+	            + "isResolved BOOLEAN DEFAULT FALSE, "
+	            + "resolvedAnswerId INT DEFAULT -1, "
+	            + "FOREIGN KEY (askedBy) REFERENCES cse360users(userName))";
+	    statement.execute(questionsTable);
+
+	    
+
+	    // Answers table
+
+	    String answersTable = "CREATE TABLE IF NOT EXISTS answers ("
+	            + "id INT AUTO_INCREMENT PRIMARY KEY, "
+	            + "questionId INT NOT NULL, "
+	            + "content VARCHAR(500) NOT NULL, "  // CHANGED FROM 2000
+	            + "answeredBy VARCHAR(20) NOT NULL, "
+	            + "createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP, "
+	            + "isRead BOOLEAN DEFAULT FALSE, "
+	            + "upvotes INT DEFAULT 0, "
+	            + "FOREIGN KEY (questionId) REFERENCES questions(id) ON DELETE CASCADE, "
+	            + "FOREIGN KEY (answeredBy) REFERENCES cse360users(userName))";
+	    statement.execute(answersTable);
+
+	}
+
+
+	// Update the existing createTables() method to call createQATables()
+
+	// Add this line inside createTables():
+
+//	     createQATables();
+
+
+	// ============ CRUD Operations for Questions ============
+
+
+	/**
+
+	 * Creates a new question in the database
+
+	 */
+
+	public int createQuestion(Question question) throws SQLException {
+
+	    String sql = "INSERT INTO questions (title, content, askedBy, createdAt) VALUES (?, ?, ?, ?)";
+
+	    try (PreparedStatement pstmt = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+
+	        pstmt.setString(1, question.getTitle());
+
+	        pstmt.setString(2, question.getContent());
+
+	        pstmt.setString(3, question.getAskedBy());
+
+	        pstmt.setTimestamp(4, Timestamp.valueOf(question.getCreatedAt()));
+
+	        
+
+	        int affectedRows = pstmt.executeUpdate();
+
+	        if (affectedRows == 0) {
+
+	            throw new SQLException("Creating question failed, no rows affected.");
+
+	        }
+
+	        
+
+	        try (ResultSet generatedKeys = pstmt.getGeneratedKeys()) {
+
+	            if (generatedKeys.next()) {
+
+	                int generatedId = generatedKeys.getInt(1);
+
+	                question.setId(generatedId);
+
+	                return generatedId;
+
+	            } else {
+
+	                throw new SQLException("Creating question failed, no ID obtained.");
+
+	            }
+
+	        }
+
+	    }
+
+	}
+
+
+	/**
+
+	 * Retrieves a single question by ID
+
+	 */
+
+	public Question getQuestionById(int id) throws SQLException {
+
+	    String sql = "SELECT * FROM questions WHERE id = ?";
+
+	    try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+
+	        pstmt.setInt(1, id);
+
+	        try (ResultSet rs = pstmt.executeQuery()) {
+
+	            if (rs.next()) {
+
+	                Question q = new Question(
+
+	                    rs.getInt("id"),
+
+	                    rs.getString("title"),
+
+	                    rs.getString("content"),
+
+	                    rs.getString("askedBy"),
+
+	                    rs.getTimestamp("createdAt").toLocalDateTime(),
+
+	                    rs.getBoolean("isResolved"),
+
+	                    rs.getInt("resolvedAnswerId")
+
+	                );
+
+	                // Load answers for this question
+
+	                q.setAnswers(getAnswersForQuestion(id));
+
+	                return q;
+
+	            }
+
+	        }
+
+	    }
+
+	    return null;
+
+	}
+
+
+	/**
+
+	 * Retrieves all questions (optionally filtered by user)
+
+	 */
+
+	public List<Question> getAllQuestions(String username) throws SQLException {
+
+	    List<Question> questions = new ArrayList<>();
+
+	    String sql = username == null ? 
+
+	        "SELECT * FROM questions ORDER BY createdAt DESC" :
+
+	        "SELECT * FROM questions WHERE askedBy = ? ORDER BY createdAt DESC";
+
+	    
+
+	    try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+
+	        if (username != null) {
+
+	            pstmt.setString(1, username);
+
+	        }
+
+	        
+
+	        try (ResultSet rs = pstmt.executeQuery()) {
+
+	            while (rs.next()) {
+
+	                Question q = new Question(
+
+	                    rs.getInt("id"),
+
+	                    rs.getString("title"),
+
+	                    rs.getString("content"),
+
+	                    rs.getString("askedBy"),
+
+	                    rs.getTimestamp("createdAt").toLocalDateTime(),
+
+	                    rs.getBoolean("isResolved"),
+
+	                    rs.getInt("resolvedAnswerId")
+
+	                );
+
+	                // Load answers for each question
+
+	                q.setAnswers(getAnswersForQuestion(q.getId()));
+
+	                questions.add(q);
+
+	            }
+
+	        }
+
+	    }
+
+	    return questions;
+
+	}
+
+
+	/**
+
+	 * Retrieves only unresolved questions
+
+	 */
+
+	public List<Question> getUnresolvedQuestions() throws SQLException {
+
+	    List<Question> questions = new ArrayList<>();
+
+	    String sql = "SELECT * FROM questions WHERE isResolved = FALSE ORDER BY createdAt DESC";
+
+	    
+
+	    try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+
+	        try (ResultSet rs = pstmt.executeQuery()) {
+
+	            while (rs.next()) {
+
+	                Question q = new Question(
+
+	                    rs.getInt("id"),
+
+	                    rs.getString("title"),
+
+	                    rs.getString("content"),
+
+	                    rs.getString("askedBy"),
+
+	                    rs.getTimestamp("createdAt").toLocalDateTime(),
+
+	                    rs.getBoolean("isResolved"),
+
+	                    rs.getInt("resolvedAnswerId")
+
+	                );
+
+	                q.setAnswers(getAnswersForQuestion(q.getId()));
+
+	                questions.add(q);
+
+	            }
+
+	        }
+
+	    }
+
+	    return questions;
+
+	}
+
+
+	/**
+
+	 * Searches for questions containing keywords
+
+	 */
+
+	public List<Question> searchQuestions(String keyword) throws SQLException {
+
+	    List<Question> questions = new ArrayList<>();
+
+	    String sql = "SELECT * FROM questions WHERE LOWER(title) LIKE ? OR LOWER(content) LIKE ? ORDER BY createdAt DESC";
+
+	    
+
+	    try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+
+	        String searchPattern = "%" + keyword.toLowerCase() + "%";
+
+	        pstmt.setString(1, searchPattern);
+
+	        pstmt.setString(2, searchPattern);
+
+	        
+
+	        try (ResultSet rs = pstmt.executeQuery()) {
+
+	            while (rs.next()) {
+
+	                Question q = new Question(
+
+	                    rs.getInt("id"),
+
+	                    rs.getString("title"),
+
+	                    rs.getString("content"),
+
+	                    rs.getString("askedBy"),
+
+	                    rs.getTimestamp("createdAt").toLocalDateTime(),
+
+	                    rs.getBoolean("isResolved"),
+
+	                    rs.getInt("resolvedAnswerId")
+
+	                );
+
+	                q.setAnswers(getAnswersForQuestion(q.getId()));
+
+	                questions.add(q);
+
+	            }
+
+	        }
+
+	    }
+
+	    return questions;
+
+	}
+
+
+	/**
+
+	 * Updates an existing question
+
+	 */
+
+	public boolean updateQuestion(Question question) throws SQLException {
+
+	    String sql = "UPDATE questions SET title = ?, content = ? WHERE id = ? AND askedBy = ?";
+
+	    try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+
+	        pstmt.setString(1, question.getTitle());
+
+	        pstmt.setString(2, question.getContent());
+
+	        pstmt.setInt(3, question.getId());
+
+	        pstmt.setString(4, question.getAskedBy());
+
+	        
+
+	        int rowsAffected = pstmt.executeUpdate();
+
+	        return rowsAffected > 0;
+
+	    }
+
+	}
+
+
+	/**
+
+	 * Deletes a question (and its answers via CASCADE)
+
+	 */
+
+	public boolean deleteQuestion(int questionId, String username) throws SQLException {
+
+	    String sql = "DELETE FROM questions WHERE id = ? AND askedBy = ?";
+
+	    try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+
+	        pstmt.setInt(1, questionId);
+
+	        pstmt.setString(2, username);
+
+	        
+
+	        int rowsAffected = pstmt.executeUpdate();
+
+	        return rowsAffected > 0;
+
+	    }
+
+	}
+
+
+	/**
+
+	 * Marks a question as resolved with a specific answer
+
+	 */
+
+	public boolean markQuestionResolved(int questionId, int answerId, String username) throws SQLException {
+
+	    String sql = "UPDATE questions SET isResolved = TRUE, resolvedAnswerId = ? WHERE id = ? AND askedBy = ?";
+
+	    try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+
+	        pstmt.setInt(1, answerId);
+
+	        pstmt.setInt(2, questionId);
+
+	        pstmt.setString(3, username);
+
+	        
+
+	        int rowsAffected = pstmt.executeUpdate();
+
+	        return rowsAffected > 0;
+
+	    }
+
+	}
+
+
+	// ============ CRUD Operations for Answers ============
+
+
+	/**
+
+	 * Creates a new answer for a question
+
+	 */
+
+	public int createAnswer(Answer answer) throws SQLException {
+
+	    String sql = "INSERT INTO answers (questionId, content, answeredBy, createdAt) VALUES (?, ?, ?, ?)";
+
+	    try (PreparedStatement pstmt = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+
+	        pstmt.setInt(1, answer.getQuestionId());
+
+	        pstmt.setString(2, answer.getContent());
+
+	        pstmt.setString(3, answer.getAnsweredBy());
+
+	        pstmt.setTimestamp(4, Timestamp.valueOf(answer.getCreatedAt()));
+
+	        
+
+	        int affectedRows = pstmt.executeUpdate();
+
+	        if (affectedRows == 0) {
+
+	            throw new SQLException("Creating answer failed, no rows affected.");
+
+	        }
+
+	        
+
+	        try (ResultSet generatedKeys = pstmt.getGeneratedKeys()) {
+
+	            if (generatedKeys.next()) {
+
+	                int generatedId = generatedKeys.getInt(1);
+
+	                answer.setId(generatedId);
+
+	                return generatedId;
+
+	            } else {
+
+	                throw new SQLException("Creating answer failed, no ID obtained.");
+
+	            }
+
+	        }
+
+	    }
+
+	}
+
+
+	/**
+
+	 * Retrieves all answers for a specific question
+
+	 */
+
+	public List<Answer> getAnswersForQuestion(int questionId) throws SQLException {
+
+	    List<Answer> answers = new ArrayList<>();
+
+	    String sql = "SELECT * FROM answers WHERE questionId = ? ORDER BY upvotes DESC, createdAt ASC";
+
+	    
+
+	    try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+
+	        pstmt.setInt(1, questionId);
+
+	        
+
+	        try (ResultSet rs = pstmt.executeQuery()) {
+
+	            while (rs.next()) {
+
+	                Answer a = new Answer(
+
+	                    rs.getInt("id"),
+
+	                    rs.getInt("questionId"),
+
+	                    rs.getString("content"),
+
+	                    rs.getString("answeredBy"),
+
+	                    rs.getTimestamp("createdAt").toLocalDateTime(),
+
+	                    rs.getBoolean("isRead"),
+
+	                    rs.getInt("upvotes")
+
+	                );
+
+	                answers.add(a);
+
+	            }
+
+	        }
+
+	    }
+
+	    return answers;
+
+	}
+
+
+	/**
+
+	 * Updates an existing answer
+
+	 */
+
+	public boolean updateAnswer(Answer answer) throws SQLException {
+
+	    String sql = "UPDATE answers SET content = ? WHERE id = ? AND answeredBy = ?";
+
+	    try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+
+	        pstmt.setString(1, answer.getContent());
+
+	        pstmt.setInt(2, answer.getId());
+
+	        pstmt.setString(3, answer.getAnsweredBy());
+
+	        
+
+	        int rowsAffected = pstmt.executeUpdate();
+
+	        return rowsAffected > 0;
+
+	    }
+
+	}
+
+
+	/**
+
+	 * Deletes an answer
+
+	 */
+
+	public boolean deleteAnswer(int answerId, String username) throws SQLException {
+
+	    String sql = "DELETE FROM answers WHERE id = ? AND answeredBy = ?";
+
+	    try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+
+	        pstmt.setInt(1, answerId);
+
+	        pstmt.setString(2, username);
+
+	        
+
+	        int rowsAffected = pstmt.executeUpdate();
+
+	        return rowsAffected > 0;
+
+	    }
+
+	}
+
+
+	/**
+
+	 * Marks an answer as read
+
+	 */
+
+	public boolean markAnswerAsRead(int answerId) throws SQLException {
+
+	    String sql = "UPDATE answers SET isRead = TRUE WHERE id = ?";
+
+	    try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+
+	        pstmt.setInt(1, answerId);
+
+	        
+
+	        int rowsAffected = pstmt.executeUpdate();
+
+	        return rowsAffected > 0;
+
+	    }
+
+	}
+
+
+	/**
+
+	 * Increments upvotes for an answer
+
+	 */
+
+	public boolean upvoteAnswer(int answerId) throws SQLException {
+
+	    String sql = "UPDATE answers SET upvotes = upvotes + 1 WHERE id = ?";
+
+	    try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+
+	        pstmt.setInt(1, answerId);
+
+	        
+
+	        int rowsAffected = pstmt.executeUpdate();
+
+	        return rowsAffected > 0;
+
+	    }
+
+	}
+
+	/**
+	 * Closes a question (marks as resolved without specifying an answer)
+	 */
+	public boolean closeQuestion(int questionId, String username) throws SQLException {
+	    String sql = "UPDATE questions SET isResolved = TRUE WHERE id = ? AND askedBy = ?";
+	    try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+	        pstmt.setInt(1, questionId);
+	        pstmt.setString(2, username);
+	        
+	        int rowsAffected = pstmt.executeUpdate();
+	        return rowsAffected > 0;
+	    }
+	}
 
 	// Closes the database connection and statement.
 	public void closeConnection() {
