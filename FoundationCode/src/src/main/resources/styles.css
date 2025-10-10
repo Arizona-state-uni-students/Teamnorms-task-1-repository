@@ -1,0 +1,19 @@
+.tab-pane {
+    -fx-background-color: transparent;
+}
+
+.tab-pane .tab-header-area .tab-header-background {
+    -fx-background-color: transparent;
+}
+
+.tab {
+    -fx-background-color: transparent;
+}
+
+.tab .tab-label {
+    -fx-text-fill: #fff; 
+}
+
+.tab-pane .tab-content-area {
+    -fx-background-color: transparent;
+}
