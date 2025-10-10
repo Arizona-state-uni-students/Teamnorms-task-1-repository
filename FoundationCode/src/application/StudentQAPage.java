@@ -8,6 +8,8 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import javafx.scene.control.Alert.AlertType;
+import javafx.scene.image.Image;
+
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
@@ -26,87 +28,75 @@ public class StudentQAPage {
     
 
     private final DatabaseHelper databaseHelper;
-
     private final User currentUser;
-
     private Stage primaryStage;
-
-    
-
     private VBox mainLayout;
-
     private TabPane tabPane;
-
-    
-
     // Tabs
-
     private Tab myQuestionsTab;
-
     private Tab allQuestionsTab;
-
     private Tab askQuestionTab;
-
     
-
     public StudentQAPage(DatabaseHelper databaseHelper, User currentUser) {
-
         this.databaseHelper = databaseHelper;
-
         this.currentUser = currentUser;
-
     }
-
-    
 
     public void show(Stage primaryStage) {
         this.primaryStage = primaryStage;
-        
-        mainLayout = new VBox(10);
-        mainLayout.setPadding(new Insets(15));
-        mainLayout.setStyle("-fx-background-color: #f5f5f5;");
-        
+        mainLayout = new VBox(-2);
+        mainLayout.setPadding(new Insets(21));
+        mainLayout.setPrefSize(900, 600);
+
+       Image backgroundImage = new Image(getClass().getResource("/QAbg.png").toExternalForm());
+       BackgroundImage backgroundImg = new BackgroundImage(
+                backgroundImage,
+                BackgroundRepeat.NO_REPEAT,
+                BackgroundRepeat.NO_REPEAT,
+                BackgroundPosition.CENTER,
+                new BackgroundSize(900, 600, false, false, true, false)
+            );
+        mainLayout.setBackground(new Background(backgroundImg));
+
         // Header
         Label titleLabel = new Label("Student Q&A System");
-        titleLabel.setStyle("-fx-font-size: 24px; -fx-font-weight: bold;");
-        
-        Label welcomeLabel = new Label("Welcome, " + currentUser.getUserName() + "!");
-        welcomeLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #666;");
-        
+        titleLabel.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #000");
+        Label welcomeLabel = new Label("\tWelcome, " + currentUser.getUserName() + "!");
+        welcomeLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #fff;");
+
         // Create tab pane
         tabPane = new TabPane();
-        tabPane.setMinHeight(400); // ADD THIS LINE - ensures content is visible
-        
+        tabPane.setMinHeight(400);
+
         // Create tabs
         askQuestionTab = createAskQuestionTab();
         myQuestionsTab = createMyQuestionsTab();
         allQuestionsTab = createAllQuestionsTab();
-        
         tabPane.getTabs().addAll(askQuestionTab, myQuestionsTab, allQuestionsTab);
-        
+        tabPane.setStyle("-fx-background-color: transparent; -fx-background: transparent; -fx-tab-header-background-color: transparent;");
+
         // Bottom buttons
         Button backButton = new Button("Back to Home");
         backButton.setStyle("-fx-background-color: #666; -fx-text-fill: white; -fx-padding: 8 16;");
         backButton.setOnAction(e -> {
             new WelcomeLoginPage(databaseHelper).show(primaryStage, currentUser);
         });
-        
         Button refreshButton = new Button("Refresh");
         refreshButton.setStyle("-fx-background-color: #0099ff; -fx-text-fill: white; -fx-padding: 8 16;");
         refreshButton.setOnAction(e -> refreshAllTabs());
-        
         HBox buttonBox = new HBox(10, backButton, refreshButton);
         buttonBox.setAlignment(Pos.CENTER);
         buttonBox.setPadding(new Insets(10, 0, 0, 0));
-        
+
         mainLayout.getChildren().addAll(titleLabel, welcomeLabel, tabPane, buttonBox);
-        
+
         ScrollPane scrollPane = new ScrollPane(mainLayout);
         scrollPane.setFitToWidth(true);
-        scrollPane.setFitToHeight(true); // ADD THIS LINE
-        
+        scrollPane.setFitToHeight(true);
+        scrollPane.setStyle("-fx-background-color: transparent; -fx-background: transparent;");
+
         Scene scene = new Scene(scrollPane, 900, 600);
-        
+        scene.getStylesheets().add(getClass().getResource("/styles.css").toExternalForm());
         primaryStage.setScene(scene);
         primaryStage.setTitle("sQaaS™ - Q&A System");
         primaryStage.show();
@@ -115,15 +105,13 @@ public class StudentQAPage {
     
 
     // ========== ASK QUESTION TAB ==========
-
-    
-
     private Tab createAskQuestionTab() {
         Tab tab = new Tab("Ask Question");
+        tab.setStyle("-fx-background-color: transparent; -fx-background: transparent;");
         tab.setClosable(false);
         
-        VBox content = new VBox(15);
-        content.setPadding(new Insets(20));
+        VBox content = new VBox(5);
+        content.setPadding(new Insets(8));
         content.setStyle("-fx-background-color: white;");
         
         Label infoLabel = new Label("Ask a new question to get help from other students");
@@ -131,8 +119,7 @@ public class StudentQAPage {
         
         // Search for similar questions
         Label searchLabel = new Label("Search existing questions first:");
-        searchLabel.setStyle("-fx-font-weight: bold;");
-        
+        searchLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 14px; -fx-text-fill: #2c2c2c;");
         TextField searchField = new TextField();
         searchField.setPromptText("Enter keywords to search...");
         searchField.setMaxWidth(400);
@@ -140,7 +127,6 @@ public class StudentQAPage {
         VBox searchResultsBox = new VBox(5);
         searchResultsBox.setStyle("-fx-border-color: #ddd; -fx-border-width: 1; -fx-padding: 10;");
         searchResultsBox.setVisible(false);
-        
         Button searchButton = new Button("Search");
         searchButton.setStyle("-fx-background-color: #0099ff; -fx-text-fill: white;");
         searchButton.setOnAction(e -> {
@@ -163,7 +149,7 @@ public class StudentQAPage {
         
         // Question input form
         Label titleLabel = new Label("Question Title:*");
-        titleLabel.setStyle("-fx-font-weight: bold;");
+        titleLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 14px; -fx-text-fill: #2c2c2c;");
         
         TextField titleField = new TextField();
         titleField.setPromptText("Enter a clear, concise title (5-100 characters)");
@@ -207,7 +193,7 @@ public class StudentQAPage {
         });
         
         Label contentLabel = new Label("Question Details:*");
-        contentLabel.setStyle("-fx-font-weight: bold;");
+        contentLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 14px; -fx-text-fill: #2c2c2c;");
         
         TextArea contentArea = new TextArea();
         contentArea.setPromptText("Describe your question in detail (10-500 characters)");
@@ -344,24 +330,20 @@ public class StudentQAPage {
             try {
                 Question question = new Question(finalTitle, finalContent, currentUser.getUserName());
                 databaseHelper.createQuestion(question);
-                
                 // Show success message
                 Alert successAlert = new Alert(AlertType.INFORMATION);
                 successAlert.setTitle("Success");
                 successAlert.setHeaderText("Question Posted!");
                 successAlert.setContentText("Your question has been posted successfully.");
                 successAlert.showAndWait();
-                
                 // Clear fields
                 titleField.clear();
                 contentArea.clear();
                 errorLabel.setText("");
                 titleValidation.setText("");
                 contentValidation.setText("");
-                
                 // Refresh tabs to show the new question
                 refreshAllTabs();
-                
                 // Switch to "My Questions" tab to show the posted question
                 tabPane.getSelectionModel().select(1); // Index 1 is My Questions
                 
@@ -390,89 +372,42 @@ public class StudentQAPage {
         ScrollPane scrollPane = new ScrollPane(content);
         scrollPane.setFitToWidth(true);
         tab.setContent(scrollPane);
-        
         return tab;
     }
-    
 
     private void displaySearchResults(VBox container, List<Question> results) {
-
         container.getChildren().clear();
-
-        
-
         if (results.isEmpty()) {
-
             Label noResults = new Label("No similar questions found. You can proceed to ask your question.");
-
             noResults.setStyle("-fx-text-fill: #666; -fx-font-style: italic;");
-
             container.getChildren().add(noResults);
-
         } else {
-
             Label header = new Label("Similar questions found (" + results.size() + "):");
-
             header.setStyle("-fx-font-weight: bold; -fx-text-fill: #ff6600;");
-
             container.getChildren().add(header);
-
-            
-
             for (Question q : results) {
-
                 VBox questionBox = new VBox(5);
-
                 questionBox.setStyle("-fx-background-color: #f9f9f9; -fx-padding: 8; -fx-border-color: #ddd; -fx-border-width: 1;");
-
-                
-
                 Label titleLbl = new Label(q.getTitle());
-
-                titleLbl.setStyle("-fx-font-weight: bold;");
-
-                
-
+                titleLbl.setStyle("-fx-font-weight: bold; -fx-text-fill: #2c2c2c;");
                 Label metaLbl = new Label(q.getAnswers().size() + " answers • " + 
-
                                          (q.isResolved() ? "✓ Resolved" : "Unresolved") + 
-
                                          " • by " + q.getAskedBy());
-
-                metaLbl.setStyle("-fx-font-size: 10px; -fx-text-fill: #666;");
-
-                
+                metaLbl.setStyle("-fx-font-size: 10px; -fx-text-fill: #666; ");
 
                 Button viewBtn = new Button("View");
-
                 viewBtn.setStyle("-fx-font-size: 10px;");
-
                 viewBtn.setOnAction(e -> {
-
                     // Switch to all questions tab and show this question
-
                     tabPane.getSelectionModel().select(allQuestionsTab);
 
                 });
-
-                
-
                 questionBox.getChildren().addAll(titleLbl, metaLbl, viewBtn);
-
                 container.getChildren().add(questionBox);
-
             }
-
         }
-
     }
-
-    
-
     // ========== MY QUESTIONS TAB ==========
-
-    
-
     private Tab createMyQuestionsTab() {
         Tab tab = new Tab("My Questions");
         tab.setClosable(false);
@@ -505,59 +440,36 @@ public class StudentQAPage {
         return tab;
     }
 
-    
 
     private void displayMyQuestions(VBox container, List<Question> questions) {
-
         container.getChildren().clear();
-
-        
-
         if (questions.isEmpty()) {
-
             Label emptyLabel = new Label("You haven't asked any questions yet.");
-
             emptyLabel.setStyle("-fx-text-fill: #999; -fx-font-style: italic;");
-
             container.getChildren().add(emptyLabel);
-
             return;
-
         }
-
-        
 
         for (Question q : questions) {
-
             VBox questionCard = createMyQuestionCard(q);
-
             container.getChildren().add(questionCard);
-
         }
-
     }
-
-    
 
     private VBox createMyQuestionCard(Question question) {
         VBox card = new VBox(10);
         card.setPadding(new Insets(15));
         card.setStyle("-fx-border-color: #ddd; -fx-border-width: 1; -fx-background-color: #fafafa;");
-        
         // Title and status
         HBox headerBox = new HBox(10);
         headerBox.setAlignment(Pos.CENTER_LEFT);
-        
         Label titleLabel = new Label(question.getTitle());
-        titleLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
-        
+        titleLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #2c2c2c;");
         Label statusLabel = new Label(question.isResolved() ? "✓ RESOLVED" : "UNRESOLVED");
         statusLabel.setStyle(question.isResolved() ? 
             "-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-padding: 3 8; -fx-font-size: 10px;" :
             "-fx-background-color: #ff9800; -fx-text-fill: white; -fx-padding: 3 8; -fx-font-size: 10px;");
-        
         headerBox.getChildren().addAll(titleLabel, statusLabel);
-        
         // Content preview
         String contentPreview = question.getContent().length() > 150 ? 
             question.getContent().substring(0, 150) + "..." : 
@@ -565,7 +477,6 @@ public class StudentQAPage {
         Label contentLabel = new Label(contentPreview);
         contentLabel.setWrapText(true);
         contentLabel.setStyle("-fx-text-fill: #333;");
-        
         // Metadata
         int unreadCount = question.getUnreadAnswerCount();
         Label metaLabel = new Label(
@@ -574,31 +485,24 @@ public class StudentQAPage {
             " • Posted: " + question.getFormattedDate()
         );
         metaLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #666;");
-        
         // Buttons
         Button viewAnswersBtn = new Button("View Answers (" + question.getAnswers().size() + ")");
         viewAnswersBtn.setStyle("-fx-background-color: #0099ff; -fx-text-fill: white;");
         viewAnswersBtn.setOnAction(e -> showAnswersDialog(question));
-        
         Button editBtn = new Button("Edit");
         editBtn.setStyle("-fx-background-color: #ff9800; -fx-text-fill: white;");
         editBtn.setOnAction(e -> editQuestion(question));
         editBtn.setDisable(question.isResolved()); // Can't edit resolved questions
-        
         Button deleteBtn = new Button("Delete");
         deleteBtn.setStyle("-fx-background-color: #f44336; -fx-text-fill: white;");
         deleteBtn.setOnAction(e -> deleteQuestion(question));
-        
         // ADD CLOSE QUESTION BUTTON
         Button closeBtn = new Button("Close Question");
         closeBtn.setStyle("-fx-background-color: #9C27B0; -fx-text-fill: white;");
         closeBtn.setOnAction(e -> closeQuestion(question));
         closeBtn.setVisible(!question.isResolved() && question.getAnswers().size() > 0); // Only show if unresolved and has answers
-        
         HBox buttonBox = new HBox(10, viewAnswersBtn, editBtn, closeBtn, deleteBtn);
-        
         card.getChildren().addAll(headerBox, contentLabel, metaLabel, buttonBox);
-        
         return card;
     }
     
@@ -625,17 +529,10 @@ public class StudentQAPage {
             }
         }
     }
-
-    
-
     // ========== ALL QUESTIONS TAB ==========
-
-    
-
     private Tab createAllQuestionsTab() {
         Tab tab = new Tab("All Questions");
         tab.setClosable(false);
-        
         VBox content = new VBox(10);
         content.setPadding(new Insets(20));
         content.setStyle("-fx-background-color: white;");
@@ -643,8 +540,8 @@ public class StudentQAPage {
         // Filter controls
         HBox filterBox = new HBox(10);
         filterBox.setAlignment(Pos.CENTER_LEFT);
-        
         Label filterLabel = new Label("Show:");
+        filterLabel.setStyle("-fx-text-fill: #000;");
         ComboBox<String> filterCombo = new ComboBox<>();
         filterCombo.getItems().addAll("All Questions", "Unresolved Only", "Resolved Only");
         filterCombo.setValue("Unresolved Only");
@@ -701,437 +598,195 @@ public class StudentQAPage {
     
 
     private void displayAllQuestions(VBox container, List<Question> questions) {
-
         container.getChildren().clear();
-
-        
-
         if (questions.isEmpty()) {
-
             Label emptyLabel = new Label("No questions found.");
-
-            emptyLabel.setStyle("-fx-text-fill: #999; -fx-font-style: italic;");
-
+            emptyLabel.setStyle("-fx-text-fill: #2c2c2c; -fx-font-style: italic;");
             container.getChildren().add(emptyLabel);
-
             return;
-
         }
-
-        
 
         for (Question q : questions) {
-
             VBox questionCard = createAllQuestionCard(q);
-
             container.getChildren().add(questionCard);
-
         }
-
     }
-
-    
 
     private VBox createAllQuestionCard(Question question) {
-
         VBox card = new VBox(10);
-
         card.setPadding(new Insets(15));
-
         card.setStyle("-fx-border-color: #ddd; -fx-border-width: 1; -fx-background-color: white;");
-
-        
-
         // Header
-
         HBox headerBox = new HBox(10);
-
         headerBox.setAlignment(Pos.CENTER_LEFT);
-
-        
-
         Label titleLabel = new Label(question.getTitle());
-
-        titleLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
-
-        
-
+        titleLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #2c2c2c;");
         Label statusLabel = new Label(question.isResolved() ? "✓ RESOLVED" : "");
-
         statusLabel.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-padding: 3 8; -fx-font-size: 10px;");
-
         statusLabel.setVisible(question.isResolved());
-
-        
-
         headerBox.getChildren().addAll(titleLabel, statusLabel);
-
-        
-
         // Content
-
         Label contentLabel = new Label(question.getContent());
-
         contentLabel.setWrapText(true);
-
         contentLabel.setStyle("-fx-text-fill: #333;");
-
-        
-
         // Metadata
-
         Label metaLabel = new Label(
-
             "Asked by: " + question.getAskedBy() + 
-
             " • " + question.getAnswers().size() + " answers" +
-
             " • " + question.getFormattedDate()
-
         );
-
         metaLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #666;");
-
-        
-
         // Show resolved answer if exists
-
         if (question.isResolved()) {
-
             Optional<Answer> resolvedAnswer = question.getAnswers().stream()
-
                 .filter(a -> a.getId() == question.getResolvedAnswerId())
-
                 .findFirst();
-
-            
-
             if (resolvedAnswer.isPresent()) {
-
                 VBox resolvedBox = new VBox(5);
-
                 resolvedBox.setStyle("-fx-background-color: #e8f5e9; -fx-padding: 10; -fx-border-color: #4CAF50; -fx-border-width: 1;");
-
-                
-
                 Label resolvedLabel = new Label("✓ Accepted Answer:");
-
                 resolvedLabel.setStyle("-fx-font-weight: bold; -fx-text-fill: #2e7d32;");
-
-                
-
                 Label answerContent = new Label(resolvedAnswer.get().getContent());
-
                 answerContent.setWrapText(true);
-
-                
-
+                answerContent.setStyle(" -fx-text-fill: #2c2c2c;");
                 Label answerMeta = new Label("by " + resolvedAnswer.get().getAnsweredBy() + 
-
                                             " • " + resolvedAnswer.get().getUpvotes() + " upvotes");
-
                 answerMeta.setStyle("-fx-font-size: 10px; -fx-text-fill: #666;");
-
-                
-
                 resolvedBox.getChildren().addAll(resolvedLabel, answerContent, answerMeta);
-
                 card.getChildren().add(resolvedBox);
-
             }
-
         }
-
-        
-
         // Buttons
-
         Button viewBtn = new Button("View All Answers");
-
         viewBtn.setStyle("-fx-background-color: #0099ff; -fx-text-fill: white;");
-
         viewBtn.setOnAction(e -> showAnswersDialog(question));
-
-        
-
         Button answerBtn = new Button("Provide Answer");
-
         answerBtn.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white;");
-
         answerBtn.setOnAction(e -> provideAnswer(question));
-
-        
-
         HBox buttonBox = new HBox(10, viewBtn, answerBtn);
-
-        
-
         card.getChildren().addAll(headerBox, contentLabel, metaLabel, buttonBox);
-
-        
-
         return card;
-
     }
-
-    
-
     // ========== DIALOG METHODS ==========
-
-    
-
     private void showAnswersDialog(Question question) {
-
         Dialog<Void> dialog = new Dialog<>();
-
         dialog.setTitle("Answers for: " + question.getTitle());
-
         dialog.setHeaderText(question.getAnswers().size() + " answer(s)");
-
-        
-
         VBox content = new VBox(10);
-
         content.setPadding(new Insets(15));
-
         content.setMaxWidth(600);
 
-        
-
         if (question.getAnswers().isEmpty()) {
-
             Label noAnswers = new Label("No answers yet. Be the first to answer!");
-
             noAnswers.setStyle("-fx-text-fill: #999; -fx-font-style: italic;");
-
             content.getChildren().add(noAnswers);
-
         } else {
-
             for (Answer answer : question.getAnswers()) {
-
                 VBox answerBox = new VBox(5);
-
                 answerBox.setPadding(new Insets(10));
-
-                
-
                 boolean isResolved = question.isResolved() && answer.getId() == question.getResolvedAnswerId();
-
                 answerBox.setStyle(isResolved ? 
-
                     "-fx-border-color: #4CAF50; -fx-border-width: 2; -fx-background-color: #e8f5e9;" :
-
                     "-fx-border-color: #ddd; -fx-border-width: 1; -fx-background-color: #fafafa;");
 
-                
-
                 if (isResolved) {
-
                     Label acceptedLabel = new Label("✓ Accepted Answer");
-
                     acceptedLabel.setStyle("-fx-font-weight: bold; -fx-text-fill: #2e7d32;");
-
                     answerBox.getChildren().add(acceptedLabel);
-
                 }
 
-                
-
                 Label contentLabel = new Label(answer.getContent());
-
                 contentLabel.setWrapText(true);
-
-                
-
+                contentLabel.setStyle("-fx-text-fill: #2c2c2c;");
                 Label metaLabel = new Label(
-
                     "by " + answer.getAnsweredBy() + 
-
                     " • " + answer.getUpvotes() + " upvotes" +
-
                     " • " + answer.getFormattedDate()
-
                 );
-
                 metaLabel.setStyle("-fx-font-size: 10px; -fx-text-fill: #666;");
-
-                
-
                 HBox actionBox = new HBox(5);
 
                 
 
                 // Upvote button
-
                 Button upvoteBtn = new Button("👍 Upvote");
-
                 upvoteBtn.setStyle("-fx-font-size: 10px;");
-
                 upvoteBtn.setOnAction(e -> {
-
                     try {
-
                         databaseHelper.upvoteAnswer(answer.getId());
-
                         showAlert("Success", "Upvoted!", AlertType.INFORMATION);
-
                         dialog.close();
-
                         refreshAllTabs();
-
                     } catch (SQLException ex) {
-
                         showAlert("Error", "Failed to upvote: " + ex.getMessage(), AlertType.ERROR);
-
                     }
-
                 });
 
-                
-
                 actionBox.getChildren().add(upvoteBtn);
-
-                
-
                 // If this is the question owner and question is not resolved
-
                 if (question.getAskedBy().equals(currentUser.getUserName()) && !question.isResolved()) {
-
                     Button markResolvedBtn = new Button("✓ Mark as Solution");
-
                     markResolvedBtn.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-size: 10px;");
-
                     markResolvedBtn.setOnAction(e -> {
-
                         try {
-
                             databaseHelper.markQuestionResolved(question.getId(), answer.getId(), currentUser.getUserName());
-
                             showAlert("Success", "Question marked as resolved!", AlertType.INFORMATION);
-
                             dialog.close();
-
                             refreshAllTabs();
-
                         } catch (SQLException ex) {
-
                             showAlert("Error", "Failed to mark as resolved: " + ex.getMessage(), AlertType.ERROR);
-
                         }
-
                     });
-
                     actionBox.getChildren().add(markResolvedBtn);
-
                 }
-
-                
-
                 // If this is the answer owner
-
                 if (answer.getAnsweredBy().equals(currentUser.getUserName())) {
-
                     Button editBtn = new Button("Edit");
-
                     editBtn.setStyle("-fx-font-size: 10px;");
-
                     editBtn.setOnAction(e -> {
-
                         dialog.close();
-
                         editAnswer(answer);
-
                     });
-
-                    
-
                     Button deleteBtn = new Button("Delete");
-
                     deleteBtn.setStyle("-fx-background-color: #f44336; -fx-text-fill: white; -fx-font-size: 10px;");
-
                     deleteBtn.setOnAction(e -> {
-
                         try {
-
                             databaseHelper.deleteAnswer(answer.getId(), currentUser.getUserName());
-
                             showAlert("Success", "Answer deleted!", AlertType.INFORMATION);
-
                             dialog.close();
-
                             refreshAllTabs();
-
                         } catch (SQLException ex) {
-
                             showAlert("Error", "Failed to delete answer: " + ex.getMessage(), AlertType.ERROR);
-
                         }
-
                     });
-
-                    
 
                     actionBox.getChildren().addAll(editBtn, deleteBtn);
-
                 }
-
-                
-
                 answerBox.getChildren().addAll(contentLabel, metaLabel, actionBox);
-
                 content.getChildren().add(answerBox);
-
             }
-
         }
-
         
-
         // Mark answers as read if this is the question owner
-
         if (question.getAskedBy().equals(currentUser.getUserName())) {
-
             for (Answer answer : question.getAnswers()) {
-
                 if (!answer.isRead()) {
-
                     try {
-
                         databaseHelper.markAnswerAsRead(answer.getId());
-
                     } catch (SQLException e) {
-
                         // Silently fail
-
                     }
-
                 }
-
             }
-
         }
-
-        
 
         ScrollPane scrollPane = new ScrollPane(content);
-
         scrollPane.setFitToWidth(true);
-
         scrollPane.setPrefHeight(400);
-
-        
-
         dialog.getDialogPane().setContent(scrollPane);
-
         dialog.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
-
-        
-
         dialog.showAndWait();
-
         refreshAllTabs();
-
     }
 
     
@@ -1283,73 +938,36 @@ public class StudentQAPage {
     
 
     private void editQuestion(Question question) {
-
         Dialog<Question> dialog = new Dialog<>();
-
         dialog.setTitle("Edit Question");
-
         dialog.setHeaderText("Update your question");
-
-        
-
         VBox content = new VBox(10);
-
         content.setPadding(new Insets(15));
-
-        
-
         Label titleLabel = new Label("Title:");
-
         TextField titleField = new TextField(question.getTitle());
-
         titleField.setMaxWidth(500);
-
-        
-
         Label contentLabel = new Label("Content:");
-
         TextArea contentArea = new TextArea(question.getContent());
-
         contentArea.setWrapText(true);
-
         contentArea.setPrefRowCount(8);
-
         contentArea.setMaxWidth(500);
-
-        
-
         content.getChildren().addAll(titleLabel, titleField, contentLabel, contentArea);
-
-        
-
         dialog.getDialogPane().setContent(content);
-
         dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
 
         
 
         dialog.setResultConverter(button -> {
-
             if (button == ButtonType.OK) {
-
                 try {
-
                     question.setTitle(titleField.getText());
-
                     question.setContent(contentArea.getText());
-
                     return question;
-
                 } catch (IllegalArgumentException e) {
-
                     showAlert("Error", e.getMessage(), AlertType.ERROR);
-
                 }
-
             }
-
             return null;
-
         });
 
         
@@ -1357,95 +975,47 @@ public class StudentQAPage {
         Optional<Question> result = dialog.showAndWait();
 
         result.ifPresent(updatedQuestion -> {
-
             try {
-
                 databaseHelper.updateQuestion(updatedQuestion);
-
                 showAlert("Success", "Question updated!", AlertType.INFORMATION);
-
                 refreshAllTabs();
-
             } catch (SQLException ex) {
-
                 showAlert("Error", "Failed to update question: " + ex.getMessage(), AlertType.ERROR);
-
             }
-
         });
-
     }
 
     
 
     private void deleteQuestion(Question question) {
-
         Alert confirm = new Alert(AlertType.CONFIRMATION);
-
         confirm.setTitle("Delete Question");
-
         confirm.setHeaderText("Are you sure?");
-
         confirm.setContentText("This will permanently delete your question and all its answers.");
-
-        
-
         Optional<ButtonType> result = confirm.showAndWait();
-
         if (result.isPresent() && result.get() == ButtonType.OK) {
-
             try {
-
                 databaseHelper.deleteQuestion(question.getId(), currentUser.getUserName());
-
                 showAlert("Success", "Question deleted!", AlertType.INFORMATION);
-
                 refreshAllTabs();
-
             } catch (SQLException ex) {
-
                 showAlert("Error", "Failed to delete question: " + ex.getMessage(), AlertType.ERROR);
-
             }
-
         }
-
     }
 
-    
-
     private void editAnswer(Answer answer) {
-
         Dialog<String> dialog = new Dialog<>();
-
         dialog.setTitle("Edit Answer");
-
         dialog.setHeaderText("Update your answer");
-
-        
-
         VBox content = new VBox(10);
-
         content.setPadding(new Insets(15));
-
-        
-
         TextArea answerArea = new TextArea(answer.getContent());
-
         answerArea.setWrapText(true);
-
         answerArea.setPrefRowCount(8);
-
         answerArea.setMaxWidth(500);
-
-        
-
         content.getChildren().add(answerArea);
-
-        
-
         dialog.getDialogPane().setContent(content);
-
         dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
 
         
@@ -1453,41 +1023,23 @@ public class StudentQAPage {
         dialog.setResultConverter(button -> {
 
             if (button == ButtonType.OK) {
-
                 return answerArea.getText().trim();
-
             }
-
             return null;
-
         });
 
-        
-
         Optional<String> result = dialog.showAndWait();
-
         result.ifPresent(newContent -> {
-
             try {
-
                 answer.setContent(newContent);
-
                 databaseHelper.updateAnswer(answer);
-
                 showAlert("Success", "Answer updated!", AlertType.INFORMATION);
-
                 refreshAllTabs();
-
             } catch (IllegalArgumentException ex) {
-
                 showAlert("Error", ex.getMessage(), AlertType.ERROR);
-
             } catch (SQLException ex) {
-
                 showAlert("Error", "Failed to update answer: " + ex.getMessage(), AlertType.ERROR);
-
             }
-
         });
 
     }
@@ -1495,27 +1047,20 @@ public class StudentQAPage {
     
 
     // ========== UTILITY METHODS ==========
-
-    
-
     private void refreshAllTabs() {
         // Store current selection
         int selectedIndex = tabPane.getSelectionModel().getSelectedIndex();
-        
         // Recreate the tabs
         Tab newAskTab = createAskQuestionTab();
         Tab newMyQuestionsTab = createMyQuestionsTab();
         Tab newAllQuestionsTab = createAllQuestionsTab();
-        
         // Replace tabs
         tabPane.getTabs().clear();
         tabPane.getTabs().addAll(newAskTab, newMyQuestionsTab, newAllQuestionsTab);
-        
         // Restore selection
         if (selectedIndex >= 0 && selectedIndex < tabPane.getTabs().size()) {
             tabPane.getSelectionModel().select(selectedIndex);
         }
-        
         // Update references
         askQuestionTab = newAskTab;
         myQuestionsTab = newMyQuestionsTab;
@@ -1525,15 +1070,9 @@ public class StudentQAPage {
     
 
     private void showAlert(String title, String content, AlertType type) {
-
         Alert alert = new Alert(type);
-
         alert.setTitle(title);
-
         alert.setContentText(content);
-
         alert.showAndWait();
-
     }
-
 }
