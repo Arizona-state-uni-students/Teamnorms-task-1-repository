@@ -60,10 +60,12 @@ public class UserLoginPage {
         TextField userNameField = new TextField();
         userNameField.setPromptText("Type your username");
         userNameField.setMaxWidth(250);
+        userNameField.setText("admin");
+        
         // Label for password field
         Label passwordLabel = new Label("Password");
         passwordLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
-        
+      
         // Small (?) button to explain FSM + dual-use password field
         Button helpBtn = new Button("?");
         helpBtn.setStyle("-fx-font-size: 10px; -fx-background-color: transparent; -fx-text-fill: #0099ff; -fx-padding: 0 4;");
@@ -91,7 +93,7 @@ public class UserLoginPage {
         passwordField.setPromptText("Type your password");
         passwordField.setMaxWidth(250);
         passwordField.setTooltip(new Tooltip("Enter your permanent password or a one-time password (OTP) from an admin"));
-        
+        passwordField.setText("Password1!");
         // Put label and (?) on one line
         HBox passwordHeader = new HBox(6, passwordLabel, helpBtn);
         passwordHeader.setAlignment(javafx.geometry.Pos.BASELINE_LEFT);
@@ -170,6 +172,7 @@ public class UserLoginPage {
 	    	databaseHelper.closeConnection();
 	    	Platform.exit(); // Exit the JavaFX application
 	    });
+	    
         Scene scene = new Scene(grid, 800, 400);    // GUI Container
         primaryStage.setScene(scene);               // GUI Container
         primaryStage.setTitle("sQaaS™");            // GUI Container
