@@ -8,7 +8,30 @@ Preston Roser
 Max Gushchin  
 Tanner Urness  
 
-# SCREENCASTS
+# DOCUMENTS
+### [Phase 1 Submission Document](https://docs.google.com/document/d/14wqnznDZ5PcifIVyaA14czP5GYDa2WvjKiTzikE76FY/edit?usp=sharing)
+### [Phase 2 Submission Document](https://docs.google.com/document/d/1llOriFrgakeg_eskGuElmqV3B5nS_eDJ0IAuScePs9A/edit?usp=sharing)
+
+# Code Files
+  ### [Database](FoundationCode/src/databasePart1)
+  ### [Application](FoundationCode/src/application)
+  <br/>
+
+# Phase 2
+## Screencasts
+  Required passcodes included below links
+  ### [Stand Up Meeting 1]()
+  ### [Stand Up Meeting 2]()
+  ### [Stand Up Meeting 3]()
+  ### [Stand Up Meeting 4]()
+  ### [Stand Up Meeting 5]()
+  ### [Stand Up Meeting 6]()
+  ### [Requirements Code / Automated Testing]()
+  ### [Manual Test]()
+ <br/>
+ 
+# Phase 1
+## Screencasts
 
   Required passcodes included below links
 
@@ -28,15 +51,11 @@ Tanner Urness
     22z4^&lC
   <br/>
   
-# CODE FILES
-  ### [Database](FoundationCode/src/databasePart1)
-  ### [Application](FoundationCode/src/application)
-  <br/>
 
-# DOCUMENTS
-### [Phase 1 Submission Document](https://docs.google.com/document/d/14wqnznDZ5PcifIVyaA14czP5GYDa2WvjKiTzikE76FY/edit?usp=sharing)
+
+
   
-### MEETING NOTES
+### Meeting Notes
   [09/16](https://docs.google.com/document/d/1vCtNPmaECGbodicpcUyhe3aNaatwFgugQZRCIvWDzg8/edit?usp=drive_link)  
   [09/17](https://docs.google.com/document/d/1VacifkkNHZYkXCdSV5KWakFC9_aH_InTU6hKIsYo9Qc/edit?usp=drive_link)  
   [09/18](https://docs.google.com/document/d/1UibDY8UoYu-wbA9s8DdI92A4KjxG4YbabHJ5LZpmXco/edit?usp=drive_link)  
