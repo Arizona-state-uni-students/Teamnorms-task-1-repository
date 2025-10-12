@@ -184,7 +184,7 @@ public class SetupAccountPage {
 	                    // Check if database is empty (first user becomes admin)
 	                    if(databaseHelper.isDatabaseEmpty()) {
 	                        // First user becomes admin automatically
-	                    	User user = new User(userName, password, "admin");
+	                    	User user = new User(userName, password, "Admin");
 	                        user.setEmail(email);
 	                        user.setMiddleInitial(middleInitial);
 	                        databaseHelper.register(user);
@@ -193,7 +193,7 @@ public class SetupAccountPage {
 	                        
 	                    } else if(databaseHelper.validateInvitationCode(code)) {
 	                        // Regular user with valid invitation code
-	                    	 User user = new User(userName, password, "user");
+	                    	 User user = new User(userName, password, "User");
 	                         user.setEmail(email);
 	                         user.setMiddleInitial(middleInitial);
 	                         databaseHelper.register(user);

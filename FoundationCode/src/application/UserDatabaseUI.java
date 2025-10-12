@@ -60,111 +60,58 @@ public class UserDatabaseUI {
 
         Label Header = new Label("Welcome to the User Database.");
         Header.setStyle("-fx-font-size: 22px; -fx-font-weight: bold;");
-
-        
-
         Button goBackButton = new Button("Go back");
         goBackButton.setStyle("-fx-font-size: 14px; -fx-padding: 5 20; -fx-background-color: #666; -fx-text-fill: white;");
-
-        
-
         Button refreshButton = new Button("Refresh");
         refreshButton.setStyle("-fx-font-size: 14px; -fx-padding: 5 20; -fx-background-color: #0099ff; -fx-text-fill: white;");
-
-        
-
         Button quitButton = new Button("Quit");
         quitButton.setStyle("-fx-font-size: 14px; -fx-padding: 0 20; -fx-background-color: transparent; -fx-text-fill: #2c2c2c;");
-
-        
-
         HBox buttonBox = new HBox(10, goBackButton, refreshButton, quitButton);
         buttonBox.setAlignment(javafx.geometry.Pos.CENTER);
-
-        
-
         layout.getChildren().addAll(Header, databaseTable, buttonBox);
-
-        
-
         // Load the user data
-
         loadUserData();
-
-        
-
         goBackButton.setOnAction(a -> {
-
             new AdminHomePage(databaseHelper).show(primaryStage, user);
-
         });
-
-        
-
         refreshButton.setOnAction(a -> {
-
             try {
-
                 loadUserData();
-
             } catch (SQLException e) {
-
                 showAlert("Error", "Failed to refresh data: " + e.getMessage(), AlertType.ERROR);
-
             }
-
         });
-
-        
-
         quitButton.setOnAction(a -> {
-
             databaseHelper.closeConnection();
-
             Platform.exit();
-
         });
-
-        
-
-
         ScrollPane scrollPane = new ScrollPane(layout);
         scrollPane.setFitToWidth(true);
         Scene userDBScene = new Scene(scrollPane, 1000, 500);  // Increased width from 900 to 1000
-
-        
-
         primaryStage.setScene(userDBScene);
         primaryStage.setTitle("User Database Page");
-
     }
-
-    
-
     private void loadUserData() throws SQLException {
         databaseTable.getChildren().clear();
-        
         // Database table headers
         Label userNameLabel = new Label("Username");
         userNameLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
-        
         Label miLabel = new Label("M.I.");
         miLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
-        
         Label emailLabel = new Label("Email");
         emailLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
-        
         Label roleLabel = new Label("Role");
         roleLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
-        
+        Label weightLabel = new Label("Weight");
+        weightLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
         Label actionsLabel = new Label("Actions");
         actionsLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
-        
         databaseTable.add(userNameLabel, 0, 0);
         databaseTable.add(miLabel, 1, 0);
         databaseTable.add(emailLabel, 2, 0);
         databaseTable.add(roleLabel, 3, 0);
-        databaseTable.add(actionsLabel, 4, 0);
+        databaseTable.add(weightLabel, 4, 0);
+        databaseTable.add(actionsLabel, 5, 0);
         
         // Fetch users and render rows
         List<User> users = databaseHelper.getAllUsers();
@@ -172,65 +119,55 @@ public class UserDatabaseUI {
         int rowIndex = 1;
         for (User u : users) {
             String targetUsername = u.getUserName();
-            
             Label userNameCell = new Label(targetUsername);
             userNameCell.setMaxWidth(150);
-            
             // Middle Initial display
             String middleInitial = u.getMiddleInitial();
             Label miCell = new Label(middleInitial != null && !middleInitial.isEmpty() ? middleInitial : "-");
             miCell.setStyle("-fx-font-weight: bold; -fx-text-fill: #333;");
             miCell.setMaxWidth(30);
-            
             // Email with edit button
             Label emailCell = new Label(u.getEmail() != null ? u.getEmail() : "Not set");
             emailCell.setMaxWidth(180);
             emailCell.setStyle("-fx-text-fill: #666;");
-            
             Button editEmailBtn = new Button("Edit");
             editEmailBtn.setStyle("-fx-font-size: 10px;");
             editEmailBtn.setOnAction(e -> editUserEmail(targetUsername, u.getEmail()));
-            
             HBox emailBox = new HBox(5);
             emailBox.getChildren().addAll(emailCell, editEmailBtn);
-            
             // Role with change option
             HBox roleBox = new HBox(5);
             Label roleCell = new Label(u.getRole());
             roleCell.setMaxWidth(60);
             roleCell.setStyle("-fx-font-weight: bold; -fx-text-fill: " + 
                 (u.getRole().equals("admin") ? "#FF6600;" : "#0066CC;"));
-            
             Button changeRoleBtn = new Button("Change");
             changeRoleBtn.setStyle("-fx-font-size: 10px;");
             changeRoleBtn.setOnAction(e -> changeUserRole(targetUsername, u.getRole()));
-            
             roleBox.getChildren().addAll(roleCell, changeRoleBtn);
             
+            Label weightCell = new Label(String.valueOf(u.getWeight()));
+            weightCell.setMaxWidth(60);
+
             // Password reset controls (admin-issued one-time password)
             HBox passwordControls = new HBox(5);
             passwordControls.setAlignment(Pos.CENTER_LEFT);
-
             Button issueOtpBtn = new Button("Issue One-Time Password");
             issueOtpBtn.setStyle("-fx-font-size: 11px;");
             passwordControls.getChildren().setAll(issueOtpBtn);
-
             issueOtpBtn.setOnAction(ev -> {
             	// Dialog for OTP generation/entry
             	Dialog<String> dlg = new Dialog<>();
             	dlg.setTitle("One-Time Password");
             	dlg.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
-
             	TextField otpField = new TextField();
             	otpField.setPromptText("Leave blank to auto-generate");
             	otpField.setMaxWidth(180);
-
             	// TTL (minutes)
             	TextField ttlField = new TextField("30");   // default 30 min
             	ttlField.setMaxWidth(80);
             	HBox ttlRow = new HBox(6, new Label("Expires in (min):"), ttlField);
             	ttlRow.setAlignment(Pos.CENTER_LEFT);
-
             	CheckBox showCode = new CheckBox("Show code after save"); // optional convenience
             	VBox box = new VBox(8,
             	        new Label("Temporary password for " + targetUsername + ":"),
@@ -239,10 +176,8 @@ public class UserDatabaseUI {
             	        showCode);
             	box.setPadding(new Insets(10));
             	dlg.getDialogPane().setContent(box);
-
             	dlg.setResultConverter(bt -> bt == ButtonType.OK ? otpField.getText().trim() : null);
             	Optional<String> result = dlg.showAndWait();
-
             	result.ifPresent(code -> {
             	    String raw = code == null ? "" : code.trim();
             	    String otp = raw.isEmpty()
@@ -293,8 +228,9 @@ public class UserDatabaseUI {
             databaseTable.add(miCell, 1, rowIndex);
             databaseTable.add(emailBox, 2, rowIndex);
             databaseTable.add(roleBox, 3, rowIndex);
-            databaseTable.add(passwordControls, 4, rowIndex);
-            databaseTable.add(deleteUserBtn, 5, rowIndex);
+            databaseTable.add(weightCell, 4, rowIndex);
+            databaseTable.add(passwordControls, 5, rowIndex);
+            databaseTable.add(deleteUserBtn, 6, rowIndex);
             
             rowIndex++;
         }
@@ -360,7 +296,7 @@ public class UserDatabaseUI {
 
     private void changeUserRole(String username, String currentRole) {
 
-        ChoiceDialog<String> dialog = new ChoiceDialog<>(currentRole, "admin", "user");
+        ChoiceDialog<String> dialog = new ChoiceDialog<>(currentRole, "User", "Student", "Reviewer", "Instructor", "Staff", "Admin");
 
         dialog.setTitle("Change User Role");
         dialog.setHeaderText("Change role for: " + username);

@@ -81,16 +81,7 @@ public class AdminHomePage {
         inviteButton.setOnAction(a -> {
                 new InvitationPage().show(databaseHelper, primaryStage, user);
         });
-
-		// Go back button
-        Button goBackButton = new Button("Go back");
-        goBackButton.setStyle("-fx-font-size: 14px; -fx-padding: 5 20; -fx-background-color: #666; -fx-text-fill: white;");
-        // Go back action
-        goBackButton.setOnAction(e -> {
-            // Navigate back to welcome page
-            new WelcomeLoginPage(databaseHelper).show(primaryStage, user);
-        });
-		
+        
 	    Button logoutButton = new Button("Logout");
 	    logoutButton.setStyle("-fx-font-size: 14px; -fx-padding: 5 20; -fx-background-color: #666; -fx-text-fill: white;");
 	    logoutButton.setOnAction(a -> {
@@ -106,8 +97,7 @@ public class AdminHomePage {
         grid.add(userDatabase, 0, 1);     // Column 1, Row 1
 	    grid.add(inviteButton, 0, 2); // Column 0, Row 2
         grid.add(switchRoleButton, 0, 3); // Column 0, Row 3
-		grid.add(goBackButton, 0, 4);
-        grid.add(logoutButton, 0, 5);
+        grid.add(logoutButton, 0, 4);
 	    
 	    
 	    Scene adminScene = new Scene(grid, 800, 400);
@@ -115,5 +105,4 @@ public class AdminHomePage {
 	    primaryStage.setTitle("Admin Page");
     }
 }
-
 
