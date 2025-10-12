@@ -60,7 +60,7 @@ public class UserLoginPage {
         TextField userNameField = new TextField();
         userNameField.setPromptText("Type your username");
         userNameField.setMaxWidth(250);
-        
+        userNameField.setText("admin");
         
         // Label for password field
         Label passwordLabel = new Label("Password");
@@ -93,7 +93,7 @@ public class UserLoginPage {
         passwordField.setPromptText("Type your password");
         passwordField.setMaxWidth(250);
         passwordField.setTooltip(new Tooltip("Enter your permanent password or a one-time password (OTP) from an admin"));
-        
+        passwordField.setText("Password1!");
         // Put label and (?) on one line
         HBox passwordHeader = new HBox(6, passwordLabel, helpBtn);
         passwordHeader.setAlignment(javafx.geometry.Pos.BASELINE_LEFT);
@@ -228,4 +228,3 @@ public class UserLoginPage {
     }
 
 }
-

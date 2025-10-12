@@ -168,7 +168,7 @@ public class AdminSetupPage {
             if(usernameSet && passwordSet && emailSet && nameSet) {
             try {
                 // Create a new User object with admin role and register in the database
-            	User user = new User(userName, password, "admin");
+            	User user = new User(userName, password, "Admin");
                 user.setEmail(email);
                 user.setMiddleInitial(middleInitial);
                 databaseHelper.register(user);

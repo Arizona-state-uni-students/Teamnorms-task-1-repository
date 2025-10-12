@@ -713,7 +713,7 @@ public class StudentQAPage {
                 upvoteBtn.setStyle("-fx-font-size: 10px;");
                 upvoteBtn.setOnAction(e -> {
                     try {
-                        databaseHelper.upvoteAnswer(answer.getId());
+                        databaseHelper.upvoteAnswer(answer.getId(), answer.getAnsweredBy());
                         showAlert("Success", "Upvoted!", AlertType.INFORMATION);
                         dialog.close();
                         refreshAllTabs();

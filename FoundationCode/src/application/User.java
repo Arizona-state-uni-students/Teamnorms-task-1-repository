@@ -2,7 +2,7 @@ package application;
 
 /**
  * The User class represents a user entity in the system.
- * It contains the user's details such as userName, password, and role.
+ * It contains the user's details such as userName, password, role, and other attributes.
  */
 public class User {
     private String userName;
@@ -10,115 +10,121 @@ public class User {
     private String middleInitial;
     private String password;
     private String role;
-    private int privileges = 99; // Default privileges
+    private int privileges = 99; // Default privileges (for admin)
     private String firstName;
     private String lastName;
-    
+    private int weight;
+
+    // Constructor for minimal user creation
     public User(String userName, String password, String role) {
         this.userName = userName;
         this.password = password;
         this.role = role;
         this.email = "";
         this.middleInitial = "";
-    }
-    
-    public User(String userName, String email, String password, String role, String firstName, String lastName, String middleInitial) {
-        this.userName = userName;
-        this.email = email;
-        this.password = password;
-        this.role = role;
-        this.middleInitial = "";
         this.firstName = "";
         this.lastName = "";
+        this.weight = 0;
     }
-    
+
+    // Constructor for full user creation
+    public User(String userName, String email, String password, String role, 
+                String firstName, String lastName, String middleInitial, int weight) {
+        this.userName = userName;
+        this.email = email != null ? email : "";
+        this.password = password;
+        this.role = role;
+        this.firstName = firstName != null ? firstName : "";
+        this.lastName = lastName != null ? lastName : "";
+        this.middleInitial = middleInitial != null ? middleInitial : "";
+        this.weight = weight;
+    }
+
     // Getters and setters
     public String getUserName() {
         return userName;
     }
-    
+
     public void setUserName(String userName) {
         this.userName = userName;
     }
-    
+
     public String getEmail() {
         return email;
     }
-    
+
     public void setEmail(String email) {
-        this.email = email;
+        this.email = email != null ? email : "";
     }
-    
+
     public String getMiddleInitial() {
         return middleInitial;
     }
-    
+
     public void setMiddleInitial(String middleInitial) {
-        this.middleInitial = middleInitial;
+        this.middleInitial = middleInitial != null ? middleInitial : "";
     }
-    
+
     public String getPassword() {
         return password;
     }
-    
+
     public void setPassword(String password) {
         this.password = password;
     }
-    
+
     public String getRole() {
         return role;
     }
-    
+
     public void setRole(String role) {
         this.role = role;
     }
-     
+
     public void setPrivileges(int privileges) {
         this.privileges = privileges;
     }
-    
-    public String getFirstName(String firstName) {
+
+    public int getPrivileges() {
+        switch (role) {
+            case "user":
+                return 0;
+            case "student":
+                return 1;
+            case "reviewer":
+                return 2;
+            case "instructor":
+                return 3;
+            case "staff":
+                return 4;
+            case "admin":
+                return 99;
+            default:
+                return 0;
+        }
+    }
+
+    public String getFirstName() {
         return firstName;
     }
-    
+
     public void setFirstName(String firstName) {
-        this.firstName = firstName;
+        this.firstName = firstName != null ? firstName : "";
     }
-    
-    public String getLastName(String lastName) {
+
+    public String getLastName() {
         return lastName;
     }
-    
+
     public void setLastName(String lastName) {
-        this.lastName = lastName;
+        this.lastName = lastName != null ? lastName : "";
     }
 
-    
-    public int getPrivileges() {
-    	int privilege=0;
-    	switch(getRole()) {
-    		case "user":
-    			privilege = 0;
-    			break;
-	    	case "student":
-	    		privilege = 1;
-	    		break;
-	    	case "reviewer":
-	    		privilege = 2;
-	    		break;
-	    	case "instructor":
-	    		privilege = 3;
-	    		break;
-	    	case "staff":
-	    		privilege = 4;
-	    		break;
-	    	case "admin":
-	    		privilege = 99;
-	    		break;
-	    	default:
-	    		privilege = 0;
-    	}
-    	return privilege;
+    public int getWeight() {
+        return weight;
     }
 
+    public void setWeight(int weight) {
+        this.weight = weight;
+    }
 }

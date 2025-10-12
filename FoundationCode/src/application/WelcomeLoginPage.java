@@ -47,7 +47,7 @@ public class WelcomeLoginPage {
                 );
         grid.setBackground(new Background(backgroundImg));
         
-        Label welcomeLabel = new Label("Hello, "+user.getUserName()+"!");
+        Label welcomeLabel = new Label("Hello, "+user.getRole()+"!");
         welcomeLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
         
         Button userButton = new Button("Continue to User Page");
@@ -63,7 +63,7 @@ public class WelcomeLoginPage {
             new StudentQAPage(databaseHelper, user).show(primaryStage);
         });
         
-        if ("user".equals(user.getRole())) {
+        if (("user".equals(user.getRole().toLowerCase()))||"student".equals(user.getRole().toLowerCase())) {
             Button reviewerButton = new Button("You are not a star reviewer... Yet!");
             reviewerButton.setStyle("-fx-font-size: 14px; -fx-padding: 5 20; -fx-background-color: #ffdd00; -fx-text-fill: black;");
             reviewerButton.setOnAction(a -> {
@@ -71,8 +71,15 @@ public class WelcomeLoginPage {
             });
             grid.add(reviewerButton, 0, 1); 
         }
-        
-        if ("admin".equals(user.getRole())) {
+        if (("reviewer".equals(user.getRole().toLowerCase()))) {
+            Button reviewerButton = new Button("You are a star reviewer!");
+            reviewerButton.setStyle("-fx-font-size: 14px; -fx-padding: 5 20; -fx-background-color: #ff7700; -fx-text-fill: white;");
+            reviewerButton.setOnAction(a -> {
+                    
+            });
+            grid.add(reviewerButton, 0, 1); 
+        }
+        if ("admin".equals(user.getRole().toLowerCase())) {
             Button adminButton = new Button("Continue to Admin Page");
             adminButton.setStyle("-fx-font-size: 14px; -fx-padding: 5 20; -fx-background-color: #ff9900; -fx-text-fill: black;");
             adminButton.setOnAction(a -> {
