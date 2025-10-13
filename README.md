@@ -20,13 +20,20 @@ Tanner Urness
 # Phase 2
 ## Screencasts
   Required passcodes included below links
-  ### [Stand Up Meeting 1]()
-  ### [Stand Up Meeting 2]()
-  ### [Stand Up Meeting 3]()
+  ### [Stand Up Meeting 1](https://us06web.zoom.us/rec/share/H4GUck1dck1ELfL4z9UhylxOKKNewSDEi0patNZSZlCXAOJRmr3KoaSYIihQ7VAA.MP0yu5kbCx-hPlkp?startTime=1759629406000)
+    9p*m*6yT
+  ### [Stand Up Meeting 2](https://us06web.zoom.us/rec/share/lKTGt0rq2TDAIH-_MYjCObKLIPcCMGGSgG3BkHZOMUfRDHW_3pHzkJs4IvSJIa1i.upiUtisKfrAKxX9H?startTime=1760314765000)
+    0.KsuF0r
+  ### [Stand Up Meeting 3](https://us06web.zoom.us/rec/share/lKTGt0rq2TDAIH-_MYjCObKLIPcCMGGSgG3BkHZOMUfRDHW_3pHzkJs4IvSJIa1i.upiUtisKfrAKxX9H?startTime=1760317355000)
+    0.KsuF0r
   ### [Stand Up Meeting 4]()
+  
   ### [Stand Up Meeting 5]()
+  
   ### [Stand Up Meeting 6]()
+  
   ### [Requirements Code / Automated Testing]()
+  
   ### [Manual Test]()
  <br/>
  
