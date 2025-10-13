@@ -478,7 +478,13 @@ public class StudentQAPage {
         contentLabel.setWrapText(true);
         contentLabel.setStyle("-fx-text-fill: #333;");
         // Metadata
-        int unreadCount = question.getUnreadAnswerCount();
+        int unreadCount = 0 ;
+		try {
+			unreadCount = databaseHelper.getUnreadAnswersCount(question.getId());
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
         Label metaLabel = new Label(
             question.getAnswers().size() + " answers" + 
             (unreadCount > 0 ? " (" + unreadCount + " unread)" : "") +
@@ -630,12 +636,21 @@ public class StudentQAPage {
         contentLabel.setWrapText(true);
         contentLabel.setStyle("-fx-text-fill: #333;");
         // Metadata
+        int unreadCount = 0 ;
+		try {
+			unreadCount = databaseHelper.getUnreadAnswersCount(question.getId());
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
         Label metaLabel = new Label(
             "Asked by: " + question.getAskedBy() + 
             " • " + question.getAnswers().size() + " answers" +
+            (unreadCount > 0 ? " (" + unreadCount + " unread)" : "") +
             " • " + question.getFormattedDate()
         );
         metaLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #666;");
+        
         // Show resolved answer if exists
         if (question.isResolved()) {
             Optional<Answer> resolvedAnswer = question.getAnswers().stream()
