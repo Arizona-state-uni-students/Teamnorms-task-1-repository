@@ -671,7 +671,19 @@ public class DatabaseHelper {
             }
         }
     }
-
+    public int getUnreadAnswersCount(int questionId) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM answers WHERE questionId = ? AND isRead = false";
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setInt(1, questionId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        }
+        return 0; 
+    }
+    
     public List<Answer> getAnswersForQuestion(int questionId) throws SQLException {
         List<Answer> answers = new ArrayList<>();
         String sql = "SELECT * FROM answers WHERE questionId = ? ORDER BY upvotes DESC, createdAt ASC";
