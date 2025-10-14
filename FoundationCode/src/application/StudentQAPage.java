@@ -24,9 +24,6 @@ import java.util.Optional;
  */
 
 public class StudentQAPage {
-
-    
-
     private final DatabaseHelper databaseHelper;
     private final User currentUser;
     private Stage primaryStage;
@@ -48,6 +45,7 @@ public class StudentQAPage {
         mainLayout.setPadding(new Insets(21));
         mainLayout.setPrefSize(900, 600);
 
+		// Page background image
        Image backgroundImage = new Image(getClass().getResource("/QAbg.png").toExternalForm());
        BackgroundImage backgroundImg = new BackgroundImage(
                 backgroundImage,
@@ -58,7 +56,7 @@ public class StudentQAPage {
             );
         mainLayout.setBackground(new Background(backgroundImg));
 
-        // Header
+        // Header label
         Label titleLabel = new Label("Student Q&A System");
         titleLabel.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #000");
         Label welcomeLabel = new Label("\tWelcome, " + currentUser.getUserName() + "!");
@@ -75,21 +73,26 @@ public class StudentQAPage {
         tabPane.getTabs().addAll(askQuestionTab, myQuestionsTab, allQuestionsTab);
         tabPane.setStyle("-fx-background-color: transparent; -fx-background: transparent; -fx-tab-header-background-color: transparent;");
 
-        // Bottom buttons
+        // ======= Bottom Buttons =======
+		// Back button
         Button backButton = new Button("Back to Home");
         backButton.setStyle("-fx-background-color: #666; -fx-text-fill: white; -fx-padding: 8 16;");
         backButton.setOnAction(e -> {
             new WelcomeLoginPage(databaseHelper).show(primaryStage, currentUser);
         });
+
+		// Button to refresh page
         Button refreshButton = new Button("Refresh");
         refreshButton.setStyle("-fx-background-color: #0099ff; -fx-text-fill: white; -fx-padding: 8 16;");
         refreshButton.setOnAction(e -> refreshAllTabs());
+
         HBox buttonBox = new HBox(10, backButton, refreshButton);
         buttonBox.setAlignment(Pos.CENTER);
         buttonBox.setPadding(new Insets(10, 0, 0, 0));
-
+		
         mainLayout.getChildren().addAll(titleLabel, welcomeLabel, tabPane, buttonBox);
 
+		// Make page scrollable
         ScrollPane scrollPane = new ScrollPane(mainLayout);
         scrollPane.setFitToWidth(true);
         scrollPane.setFitToHeight(true);
@@ -109,24 +112,27 @@ public class StudentQAPage {
         Tab tab = new Tab("Ask Question");
         tab.setStyle("-fx-background-color: transparent; -fx-background: transparent;");
         tab.setClosable(false);
-        
+		
         VBox content = new VBox(5);
         content.setPadding(new Insets(8));
         content.setStyle("-fx-background-color: white;");
-        
+
+		// Info label
         Label infoLabel = new Label("Ask a new question to get help from other students");
         infoLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #666;");
         
-        // Search for similar questions
+        // Search field for questions
         Label searchLabel = new Label("Search existing questions first:");
         searchLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 14px; -fx-text-fill: #2c2c2c;");
+
         TextField searchField = new TextField();
         searchField.setPromptText("Enter keywords to search...");
         searchField.setMaxWidth(400);
-        
+
         VBox searchResultsBox = new VBox(5);
         searchResultsBox.setStyle("-fx-border-color: #ddd; -fx-border-width: 1; -fx-padding: 10;");
         searchResultsBox.setVisible(false);
+		
         Button searchButton = new Button("Search");
         searchButton.setStyle("-fx-background-color: #0099ff; -fx-text-fill: white;");
         searchButton.setOnAction(e -> {
@@ -368,23 +374,31 @@ public class StudentQAPage {
             errorLabel,
             buttonBox
         );
-        
+
+		// Make scrollable
         ScrollPane scrollPane = new ScrollPane(content);
         scrollPane.setFitToWidth(true);
         tab.setContent(scrollPane);
         return tab;
     }
 
+	
+	// Method to display searched question
     private void displaySearchResults(VBox container, List<Question> results) {
         container.getChildren().clear();
         if (results.isEmpty()) {
+			// Label if no results are found
             Label noResults = new Label("No similar questions found. You can proceed to ask your question.");
             noResults.setStyle("-fx-text-fill: #666; -fx-font-style: italic;");
             container.getChildren().add(noResults);
+			
         } else {
+			// Label for if results are found
             Label header = new Label("Similar questions found (" + results.size() + "):");
             header.setStyle("-fx-font-weight: bold; -fx-text-fill: #ff6600;");
             container.getChildren().add(header);
+			
+			// Loop over all questions to display them
             for (Question q : results) {
                 VBox questionBox = new VBox(5);
                 questionBox.setStyle("-fx-background-color: #f9f9f9; -fx-padding: 8; -fx-border-color: #ddd; -fx-border-width: 1;");
@@ -394,7 +408,7 @@ public class StudentQAPage {
                                          (q.isResolved() ? "✓ Resolved" : "Unresolved") + 
                                          " • by " + q.getAskedBy());
                 metaLbl.setStyle("-fx-font-size: 10px; -fx-text-fill: #666; ");
-
+				
                 Button viewBtn = new Button("View");
                 viewBtn.setStyle("-fx-font-size: 10px;");
                 viewBtn.setOnAction(e -> {
@@ -407,20 +421,21 @@ public class StudentQAPage {
             }
         }
     }
+
+	
     // ========== MY QUESTIONS TAB ==========
     private Tab createMyQuestionsTab() {
+		// Create tab to view your user questions
         Tab tab = new Tab("My Questions");
         tab.setClosable(false);
-        
+        VBox questionsContainer = new VBox(10);
+		
         VBox content = new VBox(10);
         content.setPadding(new Insets(20));
         content.setStyle("-fx-background-color: white;");
         
         Label infoLabel = new Label("Your questions and their answers");
         infoLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #666;");
-        
-        VBox questionsContainer = new VBox(10);
-        
         try {
             List<Question> myQuestions = databaseHelper.getAllQuestions(currentUser.getUserName());
             displayMyQuestions(questionsContainer, myQuestions);
@@ -430,9 +445,9 @@ public class StudentQAPage {
             questionsContainer.getChildren().add(errorLabel);
             e.printStackTrace();
         }
-        
         content.getChildren().addAll(infoLabel, questionsContainer);
-        
+
+		// Make scrollable
         ScrollPane scrollPane = new ScrollPane(content);
         scrollPane.setFitToWidth(true);
         tab.setContent(scrollPane);
@@ -456,6 +471,7 @@ public class StudentQAPage {
         }
     }
 
+	
     private VBox createMyQuestionCard(Question question) {
         VBox card = new VBox(10);
         card.setPadding(new Insets(15));
@@ -1090,4 +1106,5 @@ public class StudentQAPage {
         alert.setContentText(content);
         alert.showAndWait();
     }
+
 }
