@@ -26,8 +26,8 @@ Tanner Urness
     0.KsuF0r
   ### [Stand Up Meeting 3](https://us06web.zoom.us/rec/share/lKTGt0rq2TDAIH-_MYjCObKLIPcCMGGSgG3BkHZOMUfRDHW_3pHzkJs4IvSJIa1i.upiUtisKfrAKxX9H?startTime=1760317355000)
     0.KsuF0r
-  ### [Stand Up Meeting 4]()
-  
+  ### [Stand Up Meeting 4](https://us06web.zoom.us/rec/share/eFjF3G2110ktnIgCEUw3NShvuhGFWdWp2S2SzcayhvQ25nGgEsUZ9-1qEGH4uc5X.jJmUadApARNsLwEz?startTime=1760405733000)
+    $B1.Jd!7
   ### [Stand Up Meeting 5]()
   
   ### [Stand Up Meeting 6]()
