@@ -29,6 +29,7 @@ public class StudentQAPage {
     private Stage primaryStage;
     private VBox mainLayout;
     private TabPane tabPane;
+	
     // Tabs
     private Tab myQuestionsTab;
     private Tab allQuestionsTab;
@@ -105,8 +106,7 @@ public class StudentQAPage {
         primaryStage.show();
     }
 
-    
-
+ 
     // ========== ASK QUESTION TAB ==========
     private Tab createAskQuestionTab() {
         Tab tab = new Tab("Ask Question");
@@ -336,20 +336,24 @@ public class StudentQAPage {
             try {
                 Question question = new Question(finalTitle, finalContent, currentUser.getUserName());
                 databaseHelper.createQuestion(question);
+				
                 // Show success message
                 Alert successAlert = new Alert(AlertType.INFORMATION);
                 successAlert.setTitle("Success");
                 successAlert.setHeaderText("Question Posted!");
                 successAlert.setContentText("Your question has been posted successfully.");
                 successAlert.showAndWait();
+				
                 // Clear fields
                 titleField.clear();
                 contentArea.clear();
                 errorLabel.setText("");
                 titleValidation.setText("");
                 contentValidation.setText("");
+				
                 // Refresh tabs to show the new question
                 refreshAllTabs();
+				
                 // Switch to "My Questions" tab to show the posted question
                 tabPane.getSelectionModel().select(1); // Index 1 is My Questions
                 
@@ -456,6 +460,7 @@ public class StudentQAPage {
     }
 
 
+	// Display only questions asked by current user
     private void displayMyQuestions(VBox container, List<Question> questions) {
         container.getChildren().clear();
         if (questions.isEmpty()) {
@@ -476,6 +481,7 @@ public class StudentQAPage {
         VBox card = new VBox(10);
         card.setPadding(new Insets(15));
         card.setStyle("-fx-border-color: #ddd; -fx-border-width: 1; -fx-background-color: #fafafa;");
+		
         // Title and status
         HBox headerBox = new HBox(10);
         headerBox.setAlignment(Pos.CENTER_LEFT);
@@ -486,6 +492,7 @@ public class StudentQAPage {
             "-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-padding: 3 8; -fx-font-size: 10px;" :
             "-fx-background-color: #ff9800; -fx-text-fill: white; -fx-padding: 3 8; -fx-font-size: 10px;");
         headerBox.getChildren().addAll(titleLabel, statusLabel);
+		
         // Content preview
         String contentPreview = question.getContent().length() > 150 ? 
             question.getContent().substring(0, 150) + "..." : 
@@ -493,6 +500,7 @@ public class StudentQAPage {
         Label contentLabel = new Label(contentPreview);
         contentLabel.setWrapText(true);
         contentLabel.setStyle("-fx-text-fill: #333;");
+		
         // Metadata
         int unreadCount = 0 ;
 		try {
@@ -507,28 +515,35 @@ public class StudentQAPage {
             " • Posted: " + question.getFormattedDate()
         );
         metaLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #666;");
+
+		
         // Buttons
         Button viewAnswersBtn = new Button("View Answers (" + question.getAnswers().size() + ")");
         viewAnswersBtn.setStyle("-fx-background-color: #0099ff; -fx-text-fill: white;");
         viewAnswersBtn.setOnAction(e -> showAnswersDialog(question));
+
         Button editBtn = new Button("Edit");
         editBtn.setStyle("-fx-background-color: #ff9800; -fx-text-fill: white;");
         editBtn.setOnAction(e -> editQuestion(question));
         editBtn.setDisable(question.isResolved()); // Can't edit resolved questions
+
         Button deleteBtn = new Button("Delete");
         deleteBtn.setStyle("-fx-background-color: #f44336; -fx-text-fill: white;");
         deleteBtn.setOnAction(e -> deleteQuestion(question));
+
         // ADD CLOSE QUESTION BUTTON
         Button closeBtn = new Button("Close Question");
         closeBtn.setStyle("-fx-background-color: #9C27B0; -fx-text-fill: white;");
         closeBtn.setOnAction(e -> closeQuestion(question));
         closeBtn.setVisible(!question.isResolved() && question.getAnswers().size() > 0); // Only show if unresolved and has answers
+
         HBox buttonBox = new HBox(10, viewAnswersBtn, editBtn, closeBtn, deleteBtn);
         card.getChildren().addAll(headerBox, contentLabel, metaLabel, buttonBox);
         return card;
     }
     
-    
+
+	// Mark question as resolved (close it)
     private void closeQuestion(Question question) {
         Alert confirm = new Alert(AlertType.CONFIRMATION);
         confirm.setTitle("Close Question");
@@ -551,6 +566,8 @@ public class StudentQAPage {
             }
         }
     }
+
+	
     // ========== ALL QUESTIONS TAB ==========
     private Tab createAllQuestionsTab() {
         Tab tab = new Tab("All Questions");
@@ -558,7 +575,8 @@ public class StudentQAPage {
         VBox content = new VBox(10);
         content.setPadding(new Insets(20));
         content.setStyle("-fx-background-color: white;");
-        
+
+		
         // Filter controls
         HBox filterBox = new HBox(10);
         filterBox.setAlignment(Pos.CENTER_LEFT);
@@ -571,7 +589,8 @@ public class StudentQAPage {
         filterBox.getChildren().addAll(filterLabel, filterCombo);
         
         VBox questionsContainer = new VBox(10);
-        
+
+		
         // Load questions based on filter
         filterCombo.setOnAction(e -> {
             try {
@@ -617,8 +636,7 @@ public class StudentQAPage {
         return tab;
     }
 
-    
-
+    // Display all questions
     private void displayAllQuestions(VBox container, List<Question> questions) {
         container.getChildren().clear();
         if (questions.isEmpty()) {
@@ -634,10 +652,13 @@ public class StudentQAPage {
         }
     }
 
+	
     private VBox createAllQuestionCard(Question question) {
         VBox card = new VBox(10);
         card.setPadding(new Insets(15));
         card.setStyle("-fx-border-color: #ddd; -fx-border-width: 1; -fx-background-color: white;");
+
+		
         // Header
         HBox headerBox = new HBox(10);
         headerBox.setAlignment(Pos.CENTER_LEFT);
@@ -647,10 +668,14 @@ public class StudentQAPage {
         statusLabel.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-padding: 3 8; -fx-font-size: 10px;");
         statusLabel.setVisible(question.isResolved());
         headerBox.getChildren().addAll(titleLabel, statusLabel);
+
+		
         // Content
         Label contentLabel = new Label(question.getContent());
         contentLabel.setWrapText(true);
         contentLabel.setStyle("-fx-text-fill: #333;");
+
+		
         // Metadata
         int unreadCount = 0 ;
 		try {
@@ -666,7 +691,8 @@ public class StudentQAPage {
             " • " + question.getFormattedDate()
         );
         metaLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #666;");
-        
+
+		
         // Show resolved answer if exists
         if (question.isResolved()) {
             Optional<Answer> resolvedAnswer = question.getAnswers().stream()
@@ -698,6 +724,8 @@ public class StudentQAPage {
         card.getChildren().addAll(headerBox, contentLabel, metaLabel, buttonBox);
         return card;
     }
+
+	
     // ========== DIALOG METHODS ==========
     private void showAnswersDialog(Question question) {
         Dialog<Void> dialog = new Dialog<>();
@@ -707,6 +735,7 @@ public class StudentQAPage {
         content.setPadding(new Insets(15));
         content.setMaxWidth(600);
 
+		
         if (question.getAnswers().isEmpty()) {
             Label noAnswers = new Label("No answers yet. Be the first to answer!");
             noAnswers.setStyle("-fx-text-fill: #999; -fx-font-style: italic;");
@@ -738,7 +767,6 @@ public class StudentQAPage {
                 HBox actionBox = new HBox(5);
 
                 
-
                 // Upvote button
                 Button upvoteBtn = new Button("👍 Upvote");
                 upvoteBtn.setStyle("-fx-font-size: 10px;");
@@ -754,6 +782,8 @@ public class StudentQAPage {
                 });
 
                 actionBox.getChildren().add(upvoteBtn);
+
+				
                 // If this is the question owner and question is not resolved
                 if (question.getAskedBy().equals(currentUser.getUserName()) && !question.isResolved()) {
                     Button markResolvedBtn = new Button("✓ Mark as Solution");
@@ -770,13 +800,16 @@ public class StudentQAPage {
                     });
                     actionBox.getChildren().add(markResolvedBtn);
                 }
+
+				
                 // If this is the answer owner
                 if (answer.getAnsweredBy().equals(currentUser.getUserName())) {
                     Button editBtn = new Button("Edit");
                     editBtn.setStyle("-fx-font-size: 10px;");
                     editBtn.setOnAction(e -> {
-                        dialog.close();
                         editAnswer(answer);
+						dialog.close();
+						refreshAllTabs();
                     });
                     Button deleteBtn = new Button("Delete");
                     deleteBtn.setStyle("-fx-background-color: #f44336; -fx-text-fill: white; -fx-font-size: 10px;");
@@ -797,7 +830,8 @@ public class StudentQAPage {
                 content.getChildren().add(answerBox);
             }
         }
-        
+
+		
         // Mark answers as read if this is the question owner
         if (question.getAskedBy().equals(currentUser.getUserName())) {
             for (Answer answer : question.getAnswers()) {
@@ -811,6 +845,7 @@ public class StudentQAPage {
             }
         }
 
+		
         ScrollPane scrollPane = new ScrollPane(content);
         scrollPane.setFitToWidth(true);
         scrollPane.setPrefHeight(400);
@@ -820,8 +855,8 @@ public class StudentQAPage {
         refreshAllTabs();
     }
 
-    
 
+	// Method to provide an answer to a question
     private void provideAnswer(Question question) {
         Dialog<String> dialog = new Dialog<>();
         dialog.setTitle("Provide Answer");
@@ -846,7 +881,8 @@ public class StudentQAPage {
         Label validation = new Label();
         validation.setWrapText(true);
         validation.setMaxWidth(500);
-        
+
+		// Listener to keep answer under max length and check input
         answerArea.textProperty().addListener((obs, old, newVal) -> {
             counter.setText(newVal.length() + "/" + Answer.CONTENT_MAX_LENGTH);
             counter.setStyle(newVal.length() > Answer.CONTENT_MAX_LENGTH ? 
@@ -877,21 +913,22 @@ public class StudentQAPage {
         
         dialog.getDialogPane().setContent(content);
         dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
-        
+
+		
         // Disable OK button when text is empty or too short
         Button okButton = (Button) dialog.getDialogPane().lookupButton(ButtonType.OK);
         okButton.setDisable(true);
         answerArea.textProperty().addListener((obs, old, newVal) -> {
             okButton.setDisable(newVal.trim().length() < Answer.CONTENT_MIN_LENGTH);
         });
-        
+
         dialog.setResultConverter(button -> {
             if (button == ButtonType.OK) {
                 return answerArea.getText().trim();
             }
             return null;
         });
-        
+
         Optional<String> result = dialog.showAndWait();
         result.ifPresent(answerText -> {
             if (!answerText.isEmpty()) {
@@ -909,7 +946,7 @@ public class StudentQAPage {
                 }
                 
                 String finalAnswer = answerText;
-                
+				
                 // Show warnings and offer corrections
                 if (report.hasIssues()) {
                     Alert warningAlert = new Alert(AlertType.CONFIRMATION);
@@ -967,17 +1004,22 @@ public class StudentQAPage {
     }
 
     
-
+	// Method to edit existing question
     private void editQuestion(Question question) {
         Dialog<Question> dialog = new Dialog<>();
         dialog.setTitle("Edit Question");
         dialog.setHeaderText("Update your question");
+		
         VBox content = new VBox(10);
         content.setPadding(new Insets(15));
+		
         Label titleLabel = new Label("Title:");
+		
         TextField titleField = new TextField(question.getTitle());
         titleField.setMaxWidth(500);
+		
         Label contentLabel = new Label("Content:");
+		
         TextArea contentArea = new TextArea(question.getContent());
         contentArea.setWrapText(true);
         contentArea.setPrefRowCount(8);
@@ -985,8 +1027,7 @@ public class StudentQAPage {
         content.getChildren().addAll(titleLabel, titleField, contentLabel, contentArea);
         dialog.getDialogPane().setContent(content);
         dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
-
-        
+  
 
         dialog.setResultConverter(button -> {
             if (button == ButtonType.OK) {
@@ -1002,9 +1043,7 @@ public class StudentQAPage {
         });
 
         
-
         Optional<Question> result = dialog.showAndWait();
-
         result.ifPresent(updatedQuestion -> {
             try {
                 databaseHelper.updateQuestion(updatedQuestion);
@@ -1017,12 +1056,13 @@ public class StudentQAPage {
     }
 
     
-
+	// Method to delete question
     private void deleteQuestion(Question question) {
         Alert confirm = new Alert(AlertType.CONFIRMATION);
         confirm.setTitle("Delete Question");
         confirm.setHeaderText("Are you sure?");
         confirm.setContentText("This will permanently delete your question and all its answers.");
+		
         Optional<ButtonType> result = confirm.showAndWait();
         if (result.isPresent() && result.get() == ButtonType.OK) {
             try {
@@ -1035,12 +1075,16 @@ public class StudentQAPage {
         }
     }
 
+
+	// Method to edit existing answer
     private void editAnswer(Answer answer) {
         Dialog<String> dialog = new Dialog<>();
         dialog.setTitle("Edit Answer");
         dialog.setHeaderText("Update your answer");
+		
         VBox content = new VBox(10);
         content.setPadding(new Insets(15));
+		
         TextArea answerArea = new TextArea(answer.getContent());
         answerArea.setWrapText(true);
         answerArea.setPrefRowCount(8);
@@ -1050,7 +1094,6 @@ public class StudentQAPage {
         dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
 
         
-
         dialog.setResultConverter(button -> {
 
             if (button == ButtonType.OK) {
@@ -1059,6 +1102,7 @@ public class StudentQAPage {
             return null;
         });
 
+		
         Optional<String> result = dialog.showAndWait();
         result.ifPresent(newContent -> {
             try {
@@ -1075,7 +1119,6 @@ public class StudentQAPage {
 
     }
 
-    
 
     // ========== UTILITY METHODS ==========
     private void refreshAllTabs() {
@@ -1099,12 +1142,11 @@ public class StudentQAPage {
     }
 
     
-
+	// Method to show alert
     private void showAlert(String title, String content, AlertType type) {
         Alert alert = new Alert(type);
         alert.setTitle(title);
         alert.setContentText(content);
         alert.showAndWait();
     }
-
 }
