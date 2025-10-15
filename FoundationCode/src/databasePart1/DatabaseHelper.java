@@ -6,6 +6,7 @@ import application.Answer;
 import application.User;
 import javafx.application.Platform;
 import javafx.scene.control.Alert;
+import java.time.LocalDateTime;
 
 /**
  * The DatabaseHelper class is responsible for managing the connection to the database,
@@ -25,21 +26,24 @@ public class DatabaseHelper {
         try {
             Class.forName(JDBC_DRIVER);
             System.out.println("Connecting to database...");
-            try {
-                connection = DriverManager.getConnection(DB_URL, USER, PASS);
-                statement = connection.createStatement(); 
-            } catch (SQLException e) {
-                Platform.runLater(() ->
-                    new Alert(Alert.AlertType.ERROR,
-                        "Couldn’t open the database.\nClose any other running copy and try again.\n\n" + e.getMessage()
-                    ).showAndWait()
-                );
-                return;
-            }
+            connection = DriverManager.getConnection(DB_URL, USER, PASS);
+            statement  = connection.createStatement(); // keep if legacy code needs it
             createTables();
             updateDatabaseSchema();
         } catch (ClassNotFoundException e) {
-            System.err.println("JDBC Driver not found: " + e.getMessage());
+            throw new SQLException("H2 JDBC Driver not found", e);
+        } catch (SQLException e) {
+            // surface the problem to StartCSE360 instead of continuing
+            throw e;
+        }
+    }
+    
+    private void ensureConnected() throws SQLException {
+        if (connection == null || connection.isClosed()) {
+            connectToDatabase();
+        }
+        if (connection == null || connection.isClosed()) {
+            throw new SQLException("Database connection could not be established.");
         }
     }
 
@@ -64,10 +68,11 @@ public class DatabaseHelper {
     }
 
     public boolean isDatabaseEmpty() throws SQLException {
-        String query = "SELECT COUNT(*) AS count FROM cse360users";
-        ResultSet resultSet = statement.executeQuery(query);
-        if (resultSet.next()) {
-            return resultSet.getInt("count") == 0;
+        ensureConnected();
+        final String sql = "SELECT COUNT(*) AS count FROM cse360users";
+        try (PreparedStatement ps = connection.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) return rs.getInt("count") == 0;
         }
         return true;
     }
@@ -464,6 +469,15 @@ public class DatabaseHelper {
                     System.out.println("Existing records updated with weight = 0.");
                 }
             }
+            try (ResultSet rs = meta.getColumns(null, null, "QUESTIONS", "PARENTQUESTIONID")) {
+                if (!rs.next()) {
+                    System.out.println("Adding parentQuestionId to questions…");
+                    statement.execute("ALTER TABLE questions ADD COLUMN parentQuestionId INT");
+                    // Optional: FK (H2 allows this)
+                    try { statement.execute("ALTER TABLE questions ADD CONSTRAINT fk_parent_q FOREIGN KEY (parentQuestionId) REFERENCES questions(id)"); }
+                    catch (SQLException ignored) {}
+                }
+            }
         } catch (SQLException e) {
             System.out.println("Note: Could not add columns — they may already exist: " + e.getMessage());
         }
@@ -491,6 +505,17 @@ public class DatabaseHelper {
                 + "FOREIGN KEY (questionId) REFERENCES questions(id) ON DELETE CASCADE, "
                 + "FOREIGN KEY (answeredBy) REFERENCES cse360users(userName))";
         statement.execute(answersTable);
+        String privateMessagesTable = "CREATE TABLE IF NOT EXISTS private_messages ("
+                + "id INT AUTO_INCREMENT PRIMARY KEY, "
+                + "questionId INT NOT NULL, "
+                + "sender VARCHAR(20) NOT NULL, "
+                + "messageType VARCHAR(10) NOT NULL, "   // 'QUESTION' or 'ANSWER'
+                + "content VARCHAR(500) NOT NULL, "
+                + "createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP, "
+                + "isRead BOOLEAN DEFAULT FALSE, "
+                + "FOREIGN KEY (questionId) REFERENCES questions(id) ON DELETE CASCADE, "
+                + "FOREIGN KEY (sender) REFERENCES cse360users(userName))";
+        statement.execute(privateMessagesTable);
     }
 
     public int createQuestion(Question question) throws SQLException {
@@ -539,6 +564,9 @@ public class DatabaseHelper {
         return null;
     }
 
+    
+    
+    // Get all questions restricted by user
     public List<Question> getAllQuestions(String username) throws SQLException {
         List<Question> questions = new ArrayList<>();
         String sql = username == null ? 
@@ -565,6 +593,26 @@ public class DatabaseHelper {
             }
         }
         return questions;
+    }
+    
+    // Filters for future implementation
+    public static class QuestionFilter {
+        private String askedBy;                 // optional
+        private Boolean isResolved;             // optional
+        private LocalDateTime createdAfter;     // optional
+        private LocalDateTime createdBefore;    // optional
+
+        // --- Getters ---
+        public String getAskedBy() { return askedBy; }
+        public Boolean getIsResolved() { return isResolved; }
+        public LocalDateTime getCreatedAfter() { return createdAfter; }
+        public LocalDateTime getCreatedBefore() { return createdBefore; }
+
+        // --- Setters ---
+        public void setAskedBy(String askedBy) { this.askedBy = askedBy; }
+        public void setIsResolved(Boolean isResolved) { this.isResolved = isResolved; }
+        public void setCreatedAfter(LocalDateTime createdAfter) { this.createdAfter = createdAfter; }
+        public void setCreatedBefore(LocalDateTime createdBefore) { this.createdBefore = createdBefore; }
     }
 
     public List<Question> getUnresolvedQuestions() throws SQLException {
@@ -760,7 +808,7 @@ public class DatabaseHelper {
             throw e;
         }
     }
-
+    
     public boolean closeQuestion(int questionId, String username) throws SQLException {
         String sql = "UPDATE questions SET isResolved = TRUE WHERE id = ? AND askedBy = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
@@ -768,6 +816,162 @@ public class DatabaseHelper {
             pstmt.setString(2, username);
             int rowsAffected = pstmt.executeUpdate();
             return rowsAffected > 0;
+        }
+    }
+    
+    public static class PrivateMessage {
+        private final int id;
+        private final int questionId;
+        private final String sender;
+        private final String messageType; // 'QUESTION' or 'ANSWER'
+        private final String content;
+        private final java.time.LocalDateTime createdAt;
+        private final boolean isRead;
+
+        public PrivateMessage(int id, int questionId, String sender, String messageType, String content,
+                              java.time.LocalDateTime createdAt, boolean isRead) {
+            this.id = id; this.questionId = questionId; this.sender = sender;
+            this.messageType = messageType; this.content = content;
+            this.createdAt = createdAt; this.isRead = isRead;
+        }
+        public int getId() { return id; }
+        public int getQuestionId() { return questionId; }
+        public String getSender() { return sender; }
+        public String getMessageType() { return messageType; }
+        public String getContent() { return content; }
+        public java.time.LocalDateTime getCreatedAt() { return createdAt; }
+        public boolean isRead() { return isRead; }
+    }
+    
+    /** Top‑level questions (parentQuestionId IS NULL), newest first. */
+    public List<Question> getQuestionsTopLevel() throws SQLException {
+        QuestionFilter f = new QuestionFilter();
+        List<Question> results = new ArrayList<>();
+        String sql = "SELECT id, title, content, askedBy, createdAt, isResolved, resolvedAnswerId "
+                   + "FROM questions WHERE parentQuestionId IS NULL ORDER BY createdAt DESC";
+        try (PreparedStatement ps = connection.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                Question q = new Question(
+                    rs.getInt("id"),
+                    rs.getString("title"),
+                    rs.getString("content"),
+                    rs.getString("askedBy"),
+                    rs.getTimestamp("createdAt").toLocalDateTime(),
+                    rs.getBoolean("isResolved"),
+                    rs.getInt("resolvedAnswerId")
+                );
+                q.setAnswers(getAnswersForQuestion(q.getId()));
+                results.add(q);
+            }
+        }
+        return results;
+    }
+
+    /** Follow‑up questions that reference a parent question. */
+    public List<Question> getFollowupQuestions(int parentQuestionId) throws SQLException {
+        List<Question> results = new ArrayList<>();
+        String sql = "SELECT id, title, content, askedBy, createdAt, isResolved, resolvedAnswerId "
+                   + "FROM questions WHERE parentQuestionId = ? ORDER BY createdAt ASC";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, parentQuestionId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Question q = new Question(
+                        rs.getInt("id"),
+                        rs.getString("title"),
+                        rs.getString("content"),
+                        rs.getString("askedBy"),
+                        rs.getTimestamp("createdAt").toLocalDateTime(),
+                        rs.getBoolean("isResolved"),
+                        rs.getInt("resolvedAnswerId")
+                    );
+                    q.setAnswers(getAnswersForQuestion(q.getId()));
+                    results.add(q);
+                }
+            }
+        }
+        return results;
+    }
+
+    /** Create a revised child question under a parent question. */
+    public int createFollowupQuestion(int parentQuestionId, String title, String content, String askedBy) throws SQLException {
+        String sql = "INSERT INTO questions (title, content, askedBy, createdAt, isResolved, resolvedAnswerId, parentQuestionId) "
+                   + "VALUES (?, ?, ?, CURRENT_TIMESTAMP, FALSE, NULL, ?)";
+        try (PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            ps.setString(1, title);
+            ps.setString(2, content);
+            ps.setString(3, askedBy);
+            ps.setInt(4, parentQuestionId);
+            ps.executeUpdate();
+            try (ResultSet keys = ps.getGeneratedKeys()) {
+                if (keys.next()) return keys.getInt(1);
+            }
+        }
+        throw new SQLException("Failed to insert follow‑up question");
+    }
+
+    /** Add a private feedback message. messageType ∈ {'QUESTION','ANSWER'} */
+    public int addPrivateMessage(int questionId, String sender, String messageType, String content) throws SQLException {
+        String sql = "INSERT INTO private_messages (questionId, sender, messageType, content, createdAt, isRead) "
+                   + "VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, FALSE)";
+        try (PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            ps.setInt(1, questionId);
+            ps.setString(2, sender);
+            ps.setString(3, messageType);
+            ps.setString(4, content);
+            ps.executeUpdate();
+            try (ResultSet keys = ps.getGeneratedKeys()) {
+                if (keys.next()) return keys.getInt(1);
+            }
+        }
+        throw new SQLException("Failed to insert private message");
+    }
+
+    /** All private messages for a question (visibility filtered in UI). */
+    public List<PrivateMessage> getPrivateMessagesForQuestion(int questionId) throws SQLException {
+        List<PrivateMessage> out = new ArrayList<>();
+        String sql = "SELECT id, questionId, sender, messageType, content, createdAt, isRead "
+                   + "FROM private_messages WHERE questionId = ? ORDER BY createdAt ASC";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, questionId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    out.add(new PrivateMessage(
+                        rs.getInt("id"),
+                        rs.getInt("questionId"),
+                        rs.getString("sender"),
+                        rs.getString("messageType"),
+                        rs.getString("content"),
+                        rs.getTimestamp("createdAt").toLocalDateTime(),
+                        rs.getBoolean("isRead")
+                    ));
+                }
+            }
+        }
+        return out;
+    }
+
+    /** Count unread private messages for the asker (messages not sent by the asker). */
+    public int getUnreadPrivateCountForAsker(int questionId, String askerUserName) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM private_messages WHERE questionId = ? AND isRead = FALSE AND sender <> ?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, questionId);
+            ps.setString(2, askerUserName);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getInt(1);
+            }
+        }
+        return 0;
+    }
+
+    /** Mark all unread private messages to the asker as read. */
+    public int markPrivateMessagesReadByAsker(int questionId, String askerUserName) throws SQLException {
+        String sql = "UPDATE private_messages SET isRead = TRUE WHERE questionId = ? AND isRead = FALSE AND sender <> ?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, questionId);
+            ps.setString(2, askerUserName);
+            return ps.executeUpdate();
         }
     }
 
