@@ -50,7 +50,7 @@ public class Question {
     }
     
     // Validation methods
-    private String validateTitle(String title) {
+    public static String validateTitle(String title) {
         if (title == null || title.trim().isEmpty()) {
             throw new IllegalArgumentException("Question title cannot be empty");
         }
@@ -63,7 +63,7 @@ public class Question {
         return title.trim();
     }
     
-    private String validateContent(String content) {
+    public static String validateContent(String content) {
         if (content == null || content.trim().isEmpty()) {
             throw new IllegalArgumentException("Question content cannot be empty");
         }

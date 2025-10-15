@@ -42,7 +42,7 @@ public class Answer {
     }
     
     // Validation
-    private String validateContent(String content) {
+    public static String validateContent(String content) {
         if (content == null || content.trim().isEmpty()) {
             throw new IllegalArgumentException("Answer content cannot be empty");
         }
