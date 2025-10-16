@@ -40,7 +40,7 @@ Tanner Urness
   ### [Requirements Code / Automated Testing](https://youtu.be/6XGHCSLfxy0)
     No Password
   
-  ### [Manual Testing / GUI Testing](https://us06web.zoom.us/rec/share/fXXTeJFAIkqV9r7_W9sHzUrFlXfgvxEn1lZpcA-qdUT8f-YnCjn-n3Nysb7l_fWG.YPBGxaEd4uHB-HgG?startTime=1760492978000)
+  ### [Manual Testing / GUI Showcase](https://us06web.zoom.us/rec/share/fXXTeJFAIkqV9r7_W9sHzUrFlXfgvxEn1lZpcA-qdUT8f-YnCjn-n3Nysb7l_fWG.YPBGxaEd4uHB-HgG?startTime=1760492978000)
     e2W+7zSA
  <br/>
  
