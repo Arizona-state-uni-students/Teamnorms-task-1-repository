@@ -35,11 +35,12 @@ Tanner Urness
     $B1.Jd!7
   ### [Stand Up Meeting 5](https://us06web.zoom.us/rec/share/fXXTeJFAIkqV9r7_W9sHzUrFlXfgvxEn1lZpcA-qdUT8f-YnCjn-n3Nysb7l_fWG.YPBGxaEd4uHB-HgG?startTime=1760491940000)
     e2W+7zSA
-  ### [Stand Up Meeting 6]()
+  ### [Stand Up Meeting 6](https://us06web.zoom.us/rec/share/1CE9sTYcQunJRWVypmgpvSNhQATGLhHgtzB5l-SuX-EM40IY528GaAojAGWIMk-K.tYDArZWrMMO6X5dJ?startTime=1760578017000)
+    i5k+AHx@
+  ### [Requirements Code / Automated Testing](https://youtu.be/6XGHCSLfxy0)
+    No Password
   
-  ### [Requirements Code / Automated Testing]()
-  
-  ### [Manual Testing / GUI Testing](https://us06web.zoom.us/rec/share/fXXTeJFAIkqV9r7_W9sHzUrFlXfgvxEn1lZpcA-qdUT8f-YnCjn-n3Nysb7l_fWG.YPBGxaEd4uHB-HgG?startTime=1760492978000)
+  ### [Manual Testing / GUI Showcase](https://us06web.zoom.us/rec/share/fXXTeJFAIkqV9r7_W9sHzUrFlXfgvxEn1lZpcA-qdUT8f-YnCjn-n3Nysb7l_fWG.YPBGxaEd4uHB-HgG?startTime=1760492978000)
     e2W+7zSA
  <br/>
  
@@ -52,8 +53,7 @@ Tanner Urness
 
   ### [Stand Up Meeting 1](https://us06web.zoom.us/rec/share/9paRBDqRTcmS_Y18YRjB7lLTcxad64GBaMrMfp-v0nPz8aTfT5JNaFA0Fl-1lv57.KLrEoU8yt6YoSQ78?startTime=1758237984000)
     6f%D3*T%
-
-
+    
   ### [Stand Up Meeting 2](https://us06web.zoom.us/rec/share/1i2Fm6NnizQ9u6FPwYjPilE9xjEMI2voNc_iaCgJC63TpEZaN7-P1eciRztEI7l_.qenE1IVuYYqBpy6f?startTime=1758417389000)
     22z4^&lC
 
@@ -64,9 +64,6 @@ Tanner Urness
     22z4^&lC
   <br/>
   
-
-
-
   
 ## Meeting Notes
   [09/16](https://docs.google.com/document/d/1vCtNPmaECGbodicpcUyhe3aNaatwFgugQZRCIvWDzg8/edit?usp=drive_link)  
