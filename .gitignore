@@ -12,6 +12,9 @@
  bin/
 
 
+# build file cleanup
+/bin/
+
 #Macintosh specific build files
 .DS_Store
 
