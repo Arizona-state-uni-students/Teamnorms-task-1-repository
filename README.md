@@ -11,6 +11,7 @@ Tanner Urness
 # Documents
 ### [Phase 1 Submission Document](https://docs.google.com/document/d/14wqnznDZ5PcifIVyaA14czP5GYDa2WvjKiTzikE76FY/edit?usp=sharing)
 ### [Phase 2 Submission Document](https://docs.google.com/document/d/1llOriFrgakeg_eskGuElmqV3B5nS_eDJ0IAuScePs9A/edit?usp=sharing)
+### [Phase 3 Submission Document](https://docs.google.com/document/d/1dM2R8Zpxl-NGnDiY7QbAFURE1YkJaYTFgAx1bi3a8Wo/edit?usp=sharing)
 
 # Code Files
   ### [Database](FoundationCode/src/databasePart1)
@@ -19,6 +20,17 @@ Tanner Urness
   ### [Thread QA Page](FoundationCode/src/application/Threads.java)
   ### [Automated Testing](FoundationCode/src/application/dataTest.java)
   <br/>
+
+
+# Phase 3
+## Stand Up Notes
+  ### [Meeting Notes](https://docs.google.com/document/d/1EFOjhE8FrSC1v7Hru8IB9p5n014Qgz6FcmqFbZbMYh8/edit?usp=sharing)
+## Screencasts
+  Required passcodes included below links
+  ### [Stand Up Meeting]()
+
+<br/>
+
 
 # Phase 2
 ## Stand Up Notes
