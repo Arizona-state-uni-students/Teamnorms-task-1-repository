@@ -18,7 +18,7 @@ Tanner Urness
   ### [Application](FoundationCode/src/application)
   ### [QA Page](FoundationCode/src/application/StudentQAPage.java)
   ### [Thread QA Page](FoundationCode/src/application/Threads.java)
-  ### [Automated Testing](FoundationCode/src/application/dataTest.java)
+  ### [Automated Testing](FoundationCode/src/application/QASystemTest.java)
   <br/>
 
 
@@ -27,8 +27,10 @@ Tanner Urness
   ### [Meeting Notes](https://docs.google.com/document/d/1EFOjhE8FrSC1v7Hru8IB9p5n014Qgz6FcmqFbZbMYh8/edit?usp=sharing)
 ## Screencasts
   Required passcodes included below links
-  ### [Stand Up Meeting]()
-
+  ### [Stand Up Meeting 1](https://us06web.zoom.us/rec/share/ddHsPj6hIZvky6pBxeBvcnH3Qvp9Yr8fl8LJ4GiDdpg8tGA9y7tdDa20HUM_8pzi.kuvSIxAOrz-BInY1?startTime=1762219056000)
+    uv^RXJ44
+  ### [Stand Up Meeting 2](https://us06web.zoom.us/rec/share/ddHsPj6hIZvky6pBxeBvcnH3Qvp9Yr8fl8LJ4GiDdpg8tGA9y7tdDa20HUM_8pzi.kuvSIxAOrz-BInY1?startTime=1762221519000)
+    uv^RXJ44
 <br/>
 
 
