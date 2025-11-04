@@ -188,6 +188,20 @@ public class QASystemTest {
     }
 
     // ========== Answer CRUD Tests ==========
+
+    /**
+     * <p> Test: Create valid answer </p>
+     * <p> 
+     * Tests for valid answer creation. A valid answer is one which is above the minimum character limit 
+     * and below the maximum, is assigned to the correct question, and is added to the database with its own ID. 
+     * Test verifies the answer by checking if the new answer has an ID and that the ID equals its expected value.
+     * </p>
+     *
+     * @throws SQLException If a database error occurs
+     * 
+     * @see QASystemTest#testCreateValidQuestion()
+     */
+
     @Test
     @DisplayName("Test 14: Create valid answer")
     void testCreateValidAnswer() throws SQLException {
@@ -203,6 +217,19 @@ public class QASystemTest {
         assertEquals(aId, a.getId(), "Answer should have correct ID");
     }
 
+    /**
+     * <p> Test: Create answer with too few characters (Invalid) </p>
+     * <p> 
+     * Tests an invalid answer. In this test an invalid answer is one which doesn't have enough characters
+     * (less than 5 characters). The test verifies that an IllegalArgumentException is thrown when attempting to 
+     * create such an answer for the question created in test 14.
+     * </p>
+     * 
+     * @throws IllegalArgumentException If createAnswer is passed an illegal argument
+     * 
+     * @see QASystemTest#testCreateValidAnswer()
+     */
+
     @Test
     @DisplayName("Test 15: Create answer with invalid content (too short)")
     void testCreateAnswerInvalidContentTooShort() {
@@ -210,6 +237,19 @@ public class QASystemTest {
             new Answer(1, "Hi", testUser1.getUserName());
         }, "Should throw exception for answer less than 5 characters");
     }
+
+    /**
+     * <p> Test: Create answer with too many characters (Invalid) </p>
+     * <p> 
+     * Tests an invalid answer. In this test an invalid answer is one which has too many characters
+     * (more than 2000 characters). The test verifies that an IllegalArgumentException is thrown when attempting to 
+     * create such an answer for the question created in test 14.
+     * </p>
+     * 
+     * @throws IllegalArgumentException If createAnswer is passed an illegal argument
+     * 
+     * @see QASystemTest#testCreateValidAnswer()
+     */
 
     @Test
     @DisplayName("Test 16: Create answer with invalid content (too long)")
@@ -220,6 +260,19 @@ public class QASystemTest {
         }, "Should throw exception for answer over 2000 characters");
     }
 
+    /**
+     * <p> Test: Create answer with no content (Invalid) </p>
+     * <p> 
+     * Tests an invalid answer. In this test an invalid answer is one which contains no characters
+     * (under minimum necessary characters). This test verifies that an IllegalArgumentException is thrown when attempting to 
+     * create such an answer for the question created in test 14.
+     * </p>
+     * 
+     * @throws IllegalArgumentException If createAnswer is passed an illegal argument
+     * 
+     * @see QASystemTest#testCreateValidAnswer()
+     */
+
     @Test
     @DisplayName("Test 17: Create answer with empty content")
     void testCreateAnswerEmptyContent() {
@@ -227,6 +280,19 @@ public class QASystemTest {
             new Answer(1, "", testUser1.getUserName());
         }, "Should throw exception for empty answer");
     }
+
+    /**
+     * <p> Test: Read answers for a question </p>
+     * <p> 
+     * This test verifies that the correct answers are returned when attempting to read the answers for
+     * a question. This is verified by checking that the actual size of an Answer list for a particular question 
+     * matches the expected size.
+     * </p>
+     * 
+     * @throws SQLException If a database error occurs
+     * 
+     * @see QASystemTest#testCreateValidQuestion(), QASystemTest#testCreateValidAnswer()
+     */
 
     @Test
     @DisplayName("Test 18: Read answers for a question")
