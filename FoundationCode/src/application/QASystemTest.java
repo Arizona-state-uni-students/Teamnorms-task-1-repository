@@ -40,29 +40,59 @@ public class QASystemTest {
     }
 
     // ========== Question CRUD Tests ==========
+
+    /**
+     * Tests successful creation of a question with valid title and content.
+     * <p>
+     * Verifies that:
+     * <ul>
+     * <li>A positive question ID is returned from the database</li>
+     * <li>The ID is correctly set on the {@link Question} object</li>
+     * </ul>
+     *
+     * @throws SQLException if insertion fails unexpectedly
+     * @see DatabaseHelper#createQuestion(Question)
+     * @since 1.0
+     */
     @Test
-    @DisplayName("Test 1: Create valid question")
+    @DisplayName("Test 1: Create a valid question")
     void testCreateValidQuestion() throws SQLException {
         Question q = new Question(
             "How do I implement a linked list?",
             "I'm trying to create a linked list in Java but getting confused about pointers.",
             testUser1.getUserName()
         );
+
         int id = db.createQuestion(q);
         assertTrue(id > 0, "Question ID should be positive");
         assertEquals(id, q.getId(), "Question object should have correct ID");
     }
 
+    /**
+     * Tests that a title shorter than 5 characters is rejected.
+     * <p>
+     * The {@link Question} constructor should throw Illegal Argument Exception
+     * when the title length is invalid.
+     *
+     * @since 1.0
+     */
     @Test
-    @DisplayName("Test 2: Create question with invalid title (too short)")
+    @DisplayName("Test 2: Create a question with invalid title (too short)")
     void testCreateQuestionInvalidTitleTooShort() {
         assertThrows(IllegalArgumentException.class, () -> {
             new Question("Help", "I need help with my code", testUser1.getUserName());
         }, "Should throw exception for title less than 5 characters");
     }
 
+    /**
+     * Tests that a title longer than 200 characters is rejected.
+     * <p>
+     * Constructs a 201-character title to trigger the length validation.
+     *
+     * @since 1.0
+     */
     @Test
-    @DisplayName("Test 3: Create question with invalid title (too long)")
+    @DisplayName("Test 3: Create a question with invalid title (too long)")
     void testCreateQuestionInvalidTitleTooLong() {
         String longTitle = "A".repeat(201);
         assertThrows(IllegalArgumentException.class, () -> {
@@ -70,21 +100,37 @@ public class QASystemTest {
         }, "Should throw exception for title over 200 characters");
     }
 
+    /**
+     * Tests that an empty title is not allowed.
+     * <p>
+     * An empty string should trigger an Illegal Argument Exception
+     * during question construction.
+     *
+     * @since 1.0
+     */
     @Test
-    @DisplayName("Test 4: Create question with empty title")
+    @DisplayName("Test 4: Create a question with empty title")
     void testCreateQuestionEmptyTitle() {
         assertThrows(IllegalArgumentException.class, () -> {
             new Question("", "Some content", testUser1.getUserName());
         }, "Should throw exception for empty title");
     }
 
+    /**
+     * Tests that content shorter than 10 characters is rejected.
+     * <p>
+     * Uses a 5-character content string to validate minimum length requirement.
+     *
+     * @since 1.0
+     */
     @Test
-    @DisplayName("Test 5: Create question with invalid content (too short)")
+    @DisplayName("Test 5: Create a question with invalid content (too short)")
     void testCreateQuestionInvalidContentTooShort() {
         assertThrows(IllegalArgumentException.class, () -> {
             new Question("Valid Title Here", "Short", testUser1.getUserName());
         }, "Should throw exception for content less than 10 characters");
     }
+}
 
     @Test
     @DisplayName("Test 6: Create question with invalid content (too long)")
