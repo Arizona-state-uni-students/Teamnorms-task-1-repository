@@ -130,16 +130,15 @@ public class QASystemTest {
             new Question("Valid Title Here", "Short", testUser1.getUserName());
         }, "Should throw exception for content less than 10 characters");
     }
-}
 
     @Test
-    @DisplayName("Test 6: Create question with invalid content (too long)")
-    void testCreateQuestionInvalidContentTooLong() {
-        String longContent = "A".repeat(2001);
-        assertThrows(IllegalArgumentException.class, () -> {
-            new Question("Valid Title", longContent, testUser1.getUserName());
-        }, "Should throw exception for content over 2000 characters");
-    }
+	@DisplayName("Test 6: Create question with invalid content (too long)")
+	void testCreateQuestionInvalidContentTooLong() {
+    String longContent = "A".repeat(2001);
+    	assertThrows(IllegalArgumentException.class, () -> {
+        	new Question("Valid Title", longContent, testUser1.getUserName());
+    }, 	"Should throw exception for content over 2000 characters");
+}
 
     @Test
     @DisplayName("Test 7: Create question with empty content")

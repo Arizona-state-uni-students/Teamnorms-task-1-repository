@@ -11,6 +11,10 @@
 # Ecplipse specific build files
  bin/
 
+# Module info files (cause issues with classpath compilation)
+**/module-info.java
+module-info.java
+
 
 # build file cleanup
 /bin/
