@@ -38,20 +38,18 @@ before_script:
   - mkdir -p build/classes build/test-classes build/lib build/test-results
   - find . -name "module-info.java" -type f -delete 2>/dev/null || true
   - |
-    # Setup H2 and classpaths - this runs for every job
     echo "=== Setting up H2 Database ==="
     H2_FOUND=$(find . -name "h2*.jar" -type f | head -1)
     if [ ! -z "$H2_FOUND" ]; then
       cp "$H2_FOUND" build/lib/
       export H2_JAR="build/lib/$(basename $H2_FOUND)"
-      echo "✓ H2 JAR found: $H2_JAR"
+      echo "H2 JAR found at $H2_JAR"
       ls -lh "$H2_JAR"
     else
-      echo "⚠ No H2 JAR found"
+      echo "No H2 JAR found"
       export H2_JAR=""
     fi
   - |
-    # Set classpaths
     if [ ! -z "$H2_JAR" ]; then
       export COMPILE_CLASSPATH="$H2_JAR:$JUNIT_JAR:$PATH_TO_FX/*:build/classes"
       export TEST_CLASSPATH="$H2_JAR:$JUNIT_JAR:$PATH_TO_FX/*:build/classes:build/test-classes"
@@ -59,24 +57,21 @@ before_script:
       export COMPILE_CLASSPATH="$JUNIT_JAR:$PATH_TO_FX/*:build/classes"
       export TEST_CLASSPATH="$JUNIT_JAR:$PATH_TO_FX/*:build/classes:build/test-classes"
     fi
-    echo "✓ Classpaths configured"
-    echo "COMPILE_CLASSPATH=$COMPILE_CLASSPATH"
-    echo "TEST_CLASSPATH=$TEST_CLASSPATH"
+    echo "Classpaths configured"
 
-# Define the three jobs
 jobs:
   include:
-    # Job 1: Branch - Compile only
     - name: "Branch Build"
       if: type = push AND branch != master
       script:
         - echo "=========================================="
-        - echo "Branch Build - $TRAVIS_BRANCH"
+        - echo "Branch Build"
+        - echo "Branch $TRAVIS_BRANCH"
         - echo "=========================================="
         - MAIN_FILES=$(find FoundationCode/src -name "*.java" -not -name "*Test.java" -type f)
         - |
           if [ -z "$MAIN_FILES" ]; then
-            echo "❌ No main source files found"
+            echo "No main source files found"
             exit 1
           fi
         - echo "$MAIN_FILES" | xargs javac -d build/classes -cp "$COMPILE_CLASSPATH" --module-path "$PATH_TO_FX" --add-modules javafx.controls,javafx.fxml
@@ -84,7 +79,7 @@ jobs:
           COMPILED=$(find build/classes -name "*.class" -type f | wc -l)
           echo "Compiled $COMPILED main classes"
           if [ $COMPILED -eq 0 ]; then
-            echo "❌ Compilation failed - no classes generated"
+            echo "Compilation failed"
             exit 1
           fi
         - TEST_FILES=$(find FoundationCode/src -name "*Test.java" -type f)
@@ -92,23 +87,21 @@ jobs:
         - |
           COMPILED_TESTS=$(find build/test-classes -name "*.class" -type f | wc -l)
           echo "Compiled $COMPILED_TESTS test classes"
-        - echo "✅ Build complete"
+        - echo "Build complete"
     
-    # Job 2: Pull Request - Compile and Test (strict)
     - name: "Pull Request Check"
       if: type = pull_request
       script:
         - echo "=========================================="
         - echo "Pull Request Check"
-        - echo "PR #$TRAVIS_PULL_REQUEST - $TRAVIS_PULL_REQUEST_BRANCH -> $TRAVIS_BRANCH"
+        - echo "PR number $TRAVIS_PULL_REQUEST"
+        - echo "From $TRAVIS_PULL_REQUEST_BRANCH to $TRAVIS_BRANCH"
         - echo "=========================================="
-        - echo "Verifying H2 JAR in classpath..."
-        - echo "H2_JAR=$H2_JAR"
-        - echo "TEST_CLASSPATH=$TEST_CLASSPATH"
+        - echo "H2 JAR location $H2_JAR"
         - MAIN_FILES=$(find FoundationCode/src -name "*.java" -not -name "*Test.java" -type f)
         - |
           if [ -z "$MAIN_FILES" ]; then
-            echo "❌ No main source files found"
+            echo "No main source files found"
             exit 1
           fi
         - echo "$MAIN_FILES" | xargs javac -d build/classes -cp "$COMPILE_CLASSPATH" --module-path "$PATH_TO_FX" --add-modules javafx.controls,javafx.fxml
@@ -116,7 +109,7 @@ jobs:
           COMPILED=$(find build/classes -name "*.class" -type f | wc -l)
           echo "Compiled $COMPILED main classes"
           if [ $COMPILED -eq 0 ]; then
-            echo "❌ Main compilation failed"
+            echo "Main compilation failed"
             exit 1
           fi
         - TEST_FILES=$(find FoundationCode/src -name "*Test.java" -type f)
@@ -125,58 +118,56 @@ jobs:
           COMPILED_TESTS=$(find build/test-classes -name "*.class" -type f | wc -l)
           echo "Compiled $COMPILED_TESTS test classes"
           if [ $COMPILED_TESTS -eq 0 ]; then
-            echo "❌ Test compilation failed"
+            echo "Test compilation failed"
             exit 1
           fi
-        - echo "Running tests with H2 in classpath..."
+        - echo "Running tests with H2 in classpath"
         - export JAVA_TOOL_OPTIONS="-Djava.awt.headless=true -Dtestfx.robot=glass -Dtestfx.headless=true"
         - java -jar $JUNIT_JAR --classpath "$TEST_CLASSPATH" --scan-classpath build/test-classes --reports-dir=build/test-results --disable-banner
-        - echo "✅ All PR checks passed - ready to merge!"
+        - echo "All PR checks passed - ready to merge"
     
-    # Job 3: Test - Run unit tests on branches
     - name: "Run Tests"
       if: type = push AND branch != master
       script:
         - echo "=========================================="
-        - echo "Running Tests - $TRAVIS_BRANCH"
+        - echo "Running Tests"
+        - echo "Branch $TRAVIS_BRANCH"
         - echo "=========================================="
-        - echo "Verifying H2 JAR in classpath..."
-        - echo "H2_JAR=$H2_JAR"
-        - echo "TEST_CLASSPATH=$TEST_CLASSPATH"
+        - echo "H2 JAR location $H2_JAR"
         - |
           if [ ! -f "$H2_JAR" ]; then
-            echo "❌ H2 JAR not found at $H2_JAR"
+            echo "H2 JAR not found"
             exit 1
           fi
         - MAIN_FILES=$(find FoundationCode/src -name "*.java" -not -name "*Test.java" -type f)
         - |
           if [ -z "$MAIN_FILES" ]; then
-            echo "❌ No main source files found"
+            echo "No main source files found"
             exit 1
           fi
-        - echo "Compiling main classes..."
+        - echo "Compiling main classes"
         - echo "$MAIN_FILES" | xargs javac -d build/classes -cp "$COMPILE_CLASSPATH" --module-path "$PATH_TO_FX" --add-modules javafx.controls,javafx.fxml
         - |
           COMPILED=$(find build/classes -name "*.class" -type f | wc -l)
           echo "Compiled $COMPILED main classes"
           if [ $COMPILED -eq 0 ]; then
-            echo "❌ Main compilation failed - cannot run tests"
+            echo "Main compilation failed"
             exit 1
           fi
-        - echo "Compiling test classes..."
+        - echo "Compiling test classes"
         - TEST_FILES=$(find FoundationCode/src -name "*Test.java" -type f)
         - echo "$TEST_FILES" | xargs javac -d build/test-classes -cp "$COMPILE_CLASSPATH" --module-path "$PATH_TO_FX" --add-modules javafx.controls,javafx.fxml
         - |
           COMPILED_TESTS=$(find build/test-classes -name "*.class" -type f | wc -l)
           echo "Compiled $COMPILED_TESTS test classes"
           if [ $COMPILED_TESTS -eq 0 ]; then
-            echo "❌ Test compilation failed - cannot run tests"
+            echo "Test compilation failed"
             exit 1
           fi
-        - echo "Running JUnit tests with H2 database..."
+        - echo "Running JUnit tests"
         - export JAVA_TOOL_OPTIONS="-Djava.awt.headless=true -Dtestfx.robot=glass -Dtestfx.headless=true"
         - java -jar $JUNIT_JAR --classpath "$TEST_CLASSPATH" --scan-classpath build/test-classes --reports-dir=build/test-results --disable-banner || true
-        - echo "✅ Test execution complete"
+        - echo "Test execution complete"
 
 notifications:
   email:
