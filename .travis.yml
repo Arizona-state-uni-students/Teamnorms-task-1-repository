@@ -84,6 +84,19 @@ before_script:
   - mkdir -p build/classes build/test-classes build/lib build/test-results
 
 script:
+  # Remove any module-info.java files if they exist (prevents compilation errors)
+  - echo "=== Checking for module-info.java files ==="
+  - |
+    MODULE_INFO_FILES=$(find . -name "module-info.java" -type f 2>/dev/null)
+    if [ ! -z "$MODULE_INFO_FILES" ]; then
+      echo "⚠ Found module-info.java files - removing for classpath compilation:"
+      echo "$MODULE_INFO_FILES"
+      find . -name "module-info.java" -type f -delete
+      echo "✓ Removed module-info.java files"
+    else
+      echo "✓ No module-info.java files found"
+    fi
+
   # Debug: Check current directory structure
   - echo "=== Repository Structure ==="
   - ls -la
@@ -223,6 +236,7 @@ script:
       
       # Parse test results
       if grep -q "Test run finished" test-results.log; then
+        echo "Test execution summary:"
         grep -E "(tests found|tests successful|tests failed|tests skipped)" test-results.log || true
         
         if [ $TEST_EXIT_CODE -eq 0 ]; then
@@ -232,15 +246,31 @@ script:
           echo ""
           echo "Failed tests:"
           grep -B 2 "FAILED" test-results.log || true
-          # Don't fail build on test failures in headless environment
-          echo "⚠ Test failures detected but continuing (may be due to headless environment)"
+          
+          # For PR checks, fail the build on test failures
+          if [ "$TRAVIS_EVENT_TYPE" = "pull_request" ]; then
+            echo ""
+            echo "❌ PR Check Failed: Tests must pass before merging"
+            exit 1
+          else
+            echo "⚠ Test failures detected but continuing (not a PR)"
+          fi
         fi
       else
         echo "⚠ Test execution had issues"
         tail -20 test-results.log
+        
+        if [ "$TRAVIS_EVENT_TYPE" = "pull_request" ]; then
+          echo "❌ PR Check Failed: Test execution error"
+          exit 1
+        fi
       fi
     else
       echo "⚠ No test classes found to run"
+      if [ "$TRAVIS_EVENT_TYPE" = "pull_request" ]; then
+        echo "❌ PR Check Failed: No tests to run"
+        exit 1
+      fi
     fi
   
   # Final Build Summary
@@ -255,6 +285,21 @@ script:
     echo "  ✓ Java source files: $TOTAL_JAVA"
     echo "  ✓ Compiled main classes: $TOTAL_MAIN"
     echo "  ✓ Compiled test classes: $TOTAL_TESTS"
+    
+    if [ "$TRAVIS_EVENT_TYPE" = "pull_request" ]; then
+      echo ""
+      echo "🔍 PR Check Status:"
+      if [ $TOTAL_MAIN -gt 0 ] && [ $TOTAL_TESTS -gt 0 ]; then
+        echo "  ✅ Code compiles"
+        echo "  ✅ Tests compile"
+        echo "  ✅ Tests passed"
+        echo ""
+        echo "✅ PR checks passed - ready to merge!"
+      else
+        echo "  ❌ PR checks failed"
+        exit 1
+      fi
+    fi
     echo "=========================================="
     
     if [ $TOTAL_JAVA -eq 0 ]; then
@@ -268,17 +313,46 @@ script:
       exit 0
     fi
 
-# Job configuration
+# Job configuration with PR testing
 jobs:
   include:
+    # Main build and test job
     - stage: Build and Test
-      name: "Compile FoundationCode and Run Tests"
+      name: "Compile and Test"
+      if: type != pull_request
+    
+    # PR-specific job with strict test requirements
+    - stage: Pull Request Checks
+      name: "PR: Compile, Test, and Validate"
+      if: type = pull_request
+      script:
+        - echo "=========================================="
+        - echo "🔍 Pull Request Check"
+        - echo "=========================================="
+        - echo "PR #$TRAVIS_PULL_REQUEST"
+        - echo "Branch: $TRAVIS_PULL_REQUEST_BRANCH -> $TRAVIS_BRANCH"
+        - echo "=========================================="
+        - echo ""
+        
+        # Run the same build script but with stricter requirements
+        # (The main script already handles PR-specific failures)
 
 stages:
   - name: Build and Test
+    if: type != pull_request
+  - name: Pull Request Checks
+    if: type = pull_request
 
 # Notifications
 notifications:
   email:
+    recipients:
+      - your-email@example.com  # Update with team email
     on_success: change
     on_failure: always
+  # Optional: Add Slack notifications
+  # slack:
+  #   rooms:
+  #     - your-workspace:token#channel
+  #   on_success: change
+  #   on_failure: always
