@@ -57,7 +57,8 @@ public class DatabaseHelper {
                 + "lastName VARCHAR(20), "
                 + "password VARCHAR(20), "
                 + "otp VARCHAR(16), "
-                + "role VARCHAR(20))";
+                + "role VARCHAR(20), "
+                + "hasRequest BOOLEAN DEFAULT FALSE)";
         statement.execute(userTable);
         createQATables();
         String invitationCodesTable = "CREATE TABLE IF NOT EXISTS InvitationCodes ("
@@ -414,6 +415,38 @@ public class DatabaseHelper {
         }
     }
 
+
+    // Update hasRequest
+    public boolean updateHasRequest(String username, Boolean tf) throws SQLException {
+        String sql = "UPDATE cse360users SET hasRequest = ? WHERE userName = ?";
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setBoolean(1, tf);
+            pstmt.setString(2, username);
+            int rowsAffected = pstmt.executeUpdate();
+            return rowsAffected > 0;
+        }
+    }
+    
+    // Get list of users who have a pending request
+    public List<User> getUsersWithRequest() throws SQLException {
+    	List<User> users = new ArrayList<>();
+        String sql = "SELECT * FROM cse360users WHERE hasRequest = ?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setBoolean(1, true);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    User user = new User(
+                    		rs.getString("username"),
+                    		rs.getString("password"),
+                    		rs.getString("role")
+                    );
+                    users.add(user);
+                }
+            }
+        }
+        return users;
+    }
+    
     public void updateDatabaseSchema() {
         try {
             DatabaseMetaData meta = connection.getMetaData();
@@ -1001,3 +1034,4 @@ public class DatabaseHelper {
         }
     }
 }
+
