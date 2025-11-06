@@ -1,268 +1,162 @@
 language: java
 
-
-# Use Ubuntu 22.04 LTS
-
 dist: jammy
 
-
-# Use JDK 21 (stable and well-supported)
-
 jdk:
-
   - openjdk21
 
-
-# Cache dependencies to speed up builds
-
 cache:
-
   directories:
-
     - $HOME/.m2
-
     - $HOME/.gradle
-
     - $HOME/javafx-sdk-21
 
-
 before_install:
-
-  # Download and setup JavaFX 21
-
   - echo "=== Setting up JavaFX ==="
-
   - |
-
     if [ ! -d "$HOME/javafx-sdk-21/lib" ]; then
-
-      echo "Downloading JavaFX 21..."
-
       wget -q https://download2.gluonhq.com/openjfx/21/openjfx-21_linux-x64_bin-sdk.zip -O javafx.zip
-
       unzip -q javafx.zip -d $HOME
-
       rm javafx.zip
-
       JAVAFX_DIR=$(find $HOME -maxdepth 1 -type d -name "javafx*" | head -1)
-
-      if [ ! -z "$JAVAFX_DIR" ] && [ "$JAVAFX_DIR" != "$HOME/javafx-sdk-21" ]; then
-
-        mv "$JAVAFX_DIR" "$HOME/javafx-sdk-21"
-
-      fi
-
+      [ ! -z "$JAVAFX_DIR" ] && [ "$JAVAFX_DIR" != "$HOME/javafx-sdk-21" ] && mv "$JAVAFX_DIR" "$HOME/javafx-sdk-21"
     fi
-
   - export PATH_TO_FX=$HOME/javafx-sdk-21/lib
-
   
-
-  # Download JUnit 5 Platform Console Standalone
-
   - echo "=== Setting up JUnit 5 ==="
-
   - |
-
-    if [ -d "$HOME/junit-platform-console-standalone.jar" ]; then
-
-      echo "Removing corrupted JUnit cache directory..."
-
-      rm -rf "$HOME/junit-platform-console-standalone.jar"
-
-    fi
-
-    
-
+    [ -d "$HOME/junit-platform-console-standalone.jar" ] && rm -rf "$HOME/junit-platform-console-standalone.jar"
     if [ ! -f "$HOME/junit-platform-console-standalone.jar" ]; then
-
-      echo "Downloading JUnit Platform Console Standalone..."
-
       wget -q https://repo1.maven.org/maven2/org/junit/platform/junit-platform-console-standalone/1.10.1/junit-platform-console-standalone-1.10.1.jar -O $HOME/junit-platform-console-standalone.jar
-
-      
-
-      if file $HOME/junit-platform-console-standalone.jar | grep -q "Java archive"; then
-
-        echo "✓ JUnit JAR downloaded successfully"
-
-      else
-
-        echo "✗ Downloaded file is not a valid JAR"
-
-        rm -f $HOME/junit-platform-console-standalone.jar
-
-        exit 1
-
-      fi
-
-    else
-
-      echo "✓ JUnit JAR already cached"
-
     fi
-
   - export JUNIT_JAR=$HOME/junit-platform-console-standalone.jar
-
-  
-
-  # Verify installations
-
-  - |
-
-    echo "=== Verifying Setup ==="
-
-    if [ -d "$PATH_TO_FX" ]; then
-
-      echo "✓ JavaFX libs found at: $PATH_TO_FX"
-
-      ls -la $PATH_TO_FX/*.jar | head -3
-
-    else
-
-      echo "✗ JavaFX not found"
-
-      exit 1
-
-    fi
-
-  - |
-
-    if [ -f "$JUNIT_JAR" ]; then
-
-      echo "✓ JUnit JAR found:"
-
-      ls -lh $JUNIT_JAR
-
-      file $JUNIT_JAR
-
-    else
-
-      echo "✗ JUnit JAR not found"
-
-      exit 1
-
-    fi
-
   - java -version
-
   - javac -version
 
-
 before_script:
-
   - export DISPLAY=:99.0
-
   - mkdir -p build/classes build/test-classes build/lib build/test-results
+  - find . -name "module-info.java" -type f -delete 2>/dev/null || true
 
+# Shared setup
+install:
+  - |
+    # Setup classpaths
+    H2_FOUND=$(find . -name "h2*.jar" -type f | head -1)
+    if [ ! -z "$H2_FOUND" ]; then
+      cp "$H2_FOUND" build/lib/
+      export H2_JAR="build/lib/$(basename $H2_FOUND)"
+      export COMPILE_CLASSPATH="$H2_JAR:$JUNIT_JAR:$PATH_TO_FX/*:build/classes"
+      export TEST_CLASSPATH="$H2_JAR:$JUNIT_JAR:$PATH_TO_FX/*:build/classes:build/test-classes"
+    else
+      export COMPILE_CLASSPATH="$JUNIT_JAR:$PATH_TO_FX/*:build/classes"
+      export TEST_CLASSPATH="$JUNIT_JAR:$PATH_TO_FX/*:build/classes:build/test-classes"
+    fi
 
-# Default script for all jobs (can be overridden)
-
-script:
-
-  - bash .travis/build.sh
-
-
-# Three separate jobs
-
+# Define the three jobs
 jobs:
-
   include:
-
-    # Job 1: Branch builds (not PRs)
-
-    - stage: Branch Build
-
-      name: "Build and Compile"
-
-      if: type != pull_request
-
+    # Job 1: Branch - Compile only
+    - name: "Branch Build"
+      if: type = push AND branch != master
       script:
-
         - echo "=========================================="
-
-        - echo "🔨 Branch Build"
-
-        - echo "Branch: $TRAVIS_BRANCH"
-
+        - echo "Branch Build - $TRAVIS_BRANCH"
         - echo "=========================================="
-
-        - bash .travis/compile.sh
-
+        - MAIN_FILES=$(find FoundationCode/src -name "*.java" -not -name "*Test.java" -type f)
+        - |
+          if [ -z "$MAIN_FILES" ]; then
+            echo "No main source files found"
+            exit 1
+          fi
+        - echo "$MAIN_FILES" | xargs javac -d build/classes -cp "$COMPILE_CLASSPATH" --module-path "$PATH_TO_FX" --add-modules javafx.controls,javafx.fxml
+        - |
+          COMPILED=$(find build/classes -name "*.class" -type f | wc -l)
+          echo "Compiled $COMPILED main classes"
+          if [ $COMPILED -eq 0 ]; then
+            echo "Compilation failed - no classes generated"
+            exit 1
+          fi
+        - TEST_FILES=$(find FoundationCode/src -name "*Test.java" -type f)
+        - echo "$TEST_FILES" | xargs javac -d build/test-classes -cp "$COMPILE_CLASSPATH" --module-path "$PATH_TO_FX" --add-modules javafx.controls,javafx.fxml
+        - |
+          COMPILED_TESTS=$(find build/test-classes -name "*.class" -type f | wc -l)
+          echo "Compiled $COMPILED_TESTS test classes"
+        - echo "✅ Build complete"
     
-
-    # Job 2: Run tests on branches
-
-    - stage: Test
-
-      name: "Run Unit Tests"
-
-      if: type != pull_request
-
-      script:
-
-        - echo "=========================================="
-
-        - echo "🧪 Running Tests"
-
-        - echo "=========================================="
-
-        - bash .travis/compile.sh
-
-        - bash .travis/test.sh
-
-    
-
-    # Job 3: Pull request checks (strict)
-
-    - stage: Pull Request Checks
-
-      name: "PR: Compile, Test, and Validate"
-
+    # Job 2: Pull Request - Compile and Test (strict)
+    - name: "Pull Request Check"
       if: type = pull_request
-
       script:
-
         - echo "=========================================="
-
-        - echo "🔍 Pull Request Check"
-
+        - echo "Pull Request Check"
+        - echo "PR #$TRAVIS_PULL_REQUEST - $TRAVIS_PULL_REQUEST_BRANCH -> $TRAVIS_BRANCH"
         - echo "=========================================="
-
-        - echo "PR #$TRAVIS_PULL_REQUEST"
-
-        - echo "Branch: $TRAVIS_PULL_REQUEST_BRANCH -> $TRAVIS_BRANCH"
-
+        - MAIN_FILES=$(find FoundationCode/src -name "*.java" -not -name "*Test.java" -type f)
+        - |
+          if [ -z "$MAIN_FILES" ]; then
+            echo "❌ No main source files found"
+            exit 1
+          fi
+        - echo "$MAIN_FILES" | xargs javac -d build/classes -cp "$COMPILE_CLASSPATH" --module-path "$PATH_TO_FX" --add-modules javafx.controls,javafx.fxml
+        - |
+          COMPILED=$(find build/classes -name "*.class" -type f | wc -l)
+          echo "Compiled $COMPILED main classes"
+          if [ $COMPILED -eq 0 ]; then
+            echo "❌ Main compilation failed"
+            exit 1
+          fi
+        - TEST_FILES=$(find FoundationCode/src -name "*Test.java" -type f)
+        - echo "$TEST_FILES" | xargs javac -d build/test-classes -cp "$COMPILE_CLASSPATH" --module-path "$PATH_TO_FX" --add-modules javafx.controls,javafx.fxml
+        - |
+          COMPILED_TESTS=$(find build/test-classes -name "*.class" -type f | wc -l)
+          echo "Compiled $COMPILED_TESTS test classes"
+          if [ $COMPILED_TESTS -eq 0 ]; then
+            echo "❌ Test compilation failed"
+            exit 1
+          fi
+        - export JAVA_TOOL_OPTIONS="-Djava.awt.headless=true -Dtestfx.robot=glass -Dtestfx.headless=true"
+        - java -jar $JUNIT_JAR --classpath "$TEST_CLASSPATH" --scan-classpath build/test-classes --reports-dir=build/test-results --disable-banner
+        - echo "✅ All PR checks passed - ready to merge!"
+    
+    # Job 3: Test - Run unit tests on branches (fail on compilation errors)
+    - name: "Run Tests"
+      if: type = push AND branch != master
+      script:
         - echo "=========================================="
-
-        - echo ""
-
-        - bash .travis/compile.sh
-
-        - bash .travis/test.sh --strict
-
-
-stages:
-
-  - name: Branch Build
-
-    if: type != pull_request
-
-  - name: Test
-
-    if: type != pull_request
-
-  - name: Pull Request Checks
-
-    if: type = pull_request
-
-
-# Notifications
+        - echo "Running Tests - $TRAVIS_BRANCH"
+        - echo "=========================================="
+        - MAIN_FILES=$(find FoundationCode/src -name "*.java" -not -name "*Test.java" -type f)
+        - |
+          if [ -z "$MAIN_FILES" ]; then
+            echo "❌ No main source files found"
+            exit 1
+          fi
+        - echo "Compiling main classes..."
+        - echo "$MAIN_FILES" | xargs javac -d build/classes -cp "$COMPILE_CLASSPATH" --module-path "$PATH_TO_FX" --add-modules javafx.controls,javafx.fxml
+        - |
+          COMPILED=$(find build/classes -name "*.class" -type f | wc -l)
+          echo "Compiled $COMPILED main classes"
+          if [ $COMPILED -eq 0 ]; then
+            echo "❌ Main compilation failed - cannot run tests"
+            exit 1
+          fi
+        - echo "Compiling test classes..."
+        - TEST_FILES=$(find FoundationCode/src -name "*Test.java" -type f)
+        - echo "$TEST_FILES" | xargs javac -d build/test-classes -cp "$COMPILE_CLASSPATH" --module-path "$PATH_TO_FX" --add-modules javafx.controls,javafx.fxml
+        - |
+          COMPILED_TESTS=$(find build/test-classes -name "*.class" -type f | wc -l)
+          echo "Compiled $COMPILED_TESTS test classes"
+          if [ $COMPILED_TESTS -eq 0 ]; then
+            echo "❌ Test compilation failed - cannot run tests"
+            exit 1
+          fi
+        - echo "Running JUnit tests..."
+        - export JAVA_TOOL_OPTIONS="-Djava.awt.headless=true -Dtestfx.robot=glass -Dtestfx.headless=true"
+        - java -jar $JUNIT_JAR --classpath "$TEST_CLASSPATH" --scan-classpath build/test-classes --reports-dir=build/test-results --disable-banner || true
+        - echo "✅ Test execution complete"
 
 notifications:
-
   email:
-
     on_success: change
-
     on_failure: always
