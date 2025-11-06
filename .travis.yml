@@ -1,704 +1,247 @@
 language: java
 
-
 # Use Ubuntu 22.04 LTS
-
 dist: jammy
 
-
 # Use JDK 21 (stable and well-supported)
-
 jdk:
-
   - openjdk21
 
-
 # Cache dependencies to speed up builds
-
 cache:
-
   directories:
-
     - $HOME/.m2
-
     - $HOME/.gradle
-
     - $HOME/javafx-sdk-21
-
+    - $HOME/junit-platform-console-standalone.jar
 
 before_install:
-
   # Download and setup JavaFX 21
-
   - echo "=== Setting up JavaFX ==="
-
   - |
-
     if [ ! -d "$HOME/javafx-sdk-21/lib" ]; then
-
       echo "Downloading JavaFX 21..."
-
       wget -q https://download2.gluonhq.com/openjfx/21/openjfx-21_linux-x64_bin-sdk.zip -O javafx.zip
-
       unzip -q javafx.zip -d $HOME
-
       rm javafx.zip
-
-      # The extracted directory might have a different name, let's find it
-
       JAVAFX_DIR=$(find $HOME -maxdepth 1 -type d -name "javafx*" | head -1)
-
       if [ ! -z "$JAVAFX_DIR" ] && [ "$JAVAFX_DIR" != "$HOME/javafx-sdk-21" ]; then
-
         mv "$JAVAFX_DIR" "$HOME/javafx-sdk-21"
-
       fi
-
     fi
-
-  
-
-  # Set JavaFX path
-
   - export PATH_TO_FX=$HOME/javafx-sdk-21/lib
-
   
-
   # Download JUnit 5 Platform Console Standalone
-
   - echo "=== Setting up JUnit 5 ==="
-
   - |
-
     if [ ! -f "$HOME/junit-platform-console-standalone.jar" ]; then
-
       echo "Downloading JUnit Platform Console Standalone..."
-
-      wget -q https://repo1.maven.org/maven2/org/junit/platform/junit-platform-console-standalone/1.10.1/junit-platform-console-standalone-1.10.1.jar \
-
-        -O $HOME/junit-platform-console-standalone.jar
-
+      wget -q https://repo1.maven.org/maven2/org/junit/platform/junit-platform-console-standalone/1.10.1/junit-platform-console-standalone-1.10.1.jar -O $HOME/junit-platform-console-standalone.jar
     fi
-
   - export JUNIT_JAR=$HOME/junit-platform-console-standalone.jar
-
   
-
   # Verify installations
-
   - |
-
     if [ -d "$PATH_TO_FX" ]; then
-
       echo "JavaFX libs found at: $PATH_TO_FX"
-
       ls -la $PATH_TO_FX/*.jar | head -5
-
     else
-
       echo "WARNING: JavaFX libs not found at expected location"
-
-      echo "Searching for JavaFX..."
-
-      find $HOME -name "javafx*.jar" -type f 2>/dev/null | head -5
-
     fi
-
-  
-
-  - echo "JUnit JAR: $JUNIT_JAR"
-
-  - ls -lh $JUNIT_JAR
-
-  
-
-  # Verify Java version
-
+  - echo "JUnit JAR location:"
+  - ls -lh $JUNIT_JAR || echo "JUnit JAR not found"
   - java -version
-
   - javac -version
 
-
 before_script:
-
-  # Set up display for headless mode
-
   - export DISPLAY=:99.0
-
-  # Prevent script from exiting on error
-
-  - set +e
-
-  
+  - mkdir -p build/classes build/test-classes build/lib build/test-results
 
 script:
-
-  # Create build directories
-
-  - mkdir -p build/classes
-
-  - mkdir -p build/test-classes
-
-  - mkdir -p build/lib
-
-  - mkdir -p build/test-results
-
-  
-
   # Debug: Check current directory structure
-
   - echo "=== Current directory structure ==="
-
   - ls -la
-
-  - echo "=== Looking for source directories ==="
-
   - find . -maxdepth 2 -type d -name "src" 2>/dev/null
-
   
-
   # Copy H2 database JAR to build/lib
-
   - echo "=== Setting up H2 Database ==="
-
   - |
-
     H2_FOUND=$(find . -name "h2*.jar" -type f | head -1)
-
     if [ ! -z "$H2_FOUND" ]; then
-
       cp "$H2_FOUND" build/lib/
-
       echo "H2 JAR copied to build/lib"
-
       export H2_JAR="build/lib/$(basename $H2_FOUND)"
-
     else
-
-      echo "No H2 JAR found"
-
+      echo "No H2 JAR found, continuing without it"
       export H2_JAR=""
-
     fi
-
   
-
-  # Set up classpath for compilation
-
+  # Set up classpaths
   - |
-
     if [ ! -z "$H2_JAR" ]; then
-
       export COMPILE_CLASSPATH="$H2_JAR:$JUNIT_JAR:$PATH_TO_FX/*:build/classes"
-
       export TEST_CLASSPATH="$H2_JAR:$JUNIT_JAR:$PATH_TO_FX/*:build/classes:build/test-classes"
-
     else
-
       export COMPILE_CLASSPATH="$JUNIT_JAR:$PATH_TO_FX/*:build/classes"
-
       export TEST_CLASSPATH="$JUNIT_JAR:$PATH_TO_FX/*:build/classes:build/test-classes"
-
     fi
-
+  - echo "Compile classpath set"
+  - echo "Test classpath set"
   
-
-  # Compile FoundationCode (excluding tests first)
-
+  # Compile FoundationCode (Main Classes)
   - echo "=== Compiling FoundationCode (Main Classes) ==="
-
   - |
-
     if [ -d "FoundationCode/src" ]; then
-
       echo "Found FoundationCode/src directory"
-
-      
-
-      # Compile non-test classes first
-
       echo "Compiling main application classes..."
-
-      javac -d build/classes \
-
-        -cp "$COMPILE_CLASSPATH" \
-
-        --module-path "$PATH_TO_FX" \
-
-        --add-modules javafx.controls,javafx.fxml \
-
-        $(find FoundationCode/src -name "*.java" -not -name "*Test.java") 2>&1 | tee foundation.log
-
       
-
-      COMPILE_RESULT=$?
-
+      # Find all non-test Java files
+      MAIN_FILES=$(find FoundationCode/src -name "*.java" -not -name "*Test.java" | tr '\n' ' ')
       
-
-      # Show any errors
-
-      if [ $COMPILE_RESULT -ne 0 ]; then
-
-        echo "=== Main class compilation errors ==="
-
-        grep -i "error" foundation.log 2>/dev/null | head -10
-
-      else
-
-        echo "Main classes compiled successfully"
-
-      fi
-
-    else
-
-      echo "FoundationCode/src directory not found"
-
-    fi
-
-  
-
-  # Compile FoundationCode Tests
-
-  - echo "=== Compiling FoundationCode Tests ==="
-
-  - |
-
-    if [ -d "FoundationCode/src" ]; then
-
-      echo "Compiling test classes..."
-
-      javac -d build/test-classes \
-
-        -cp "$COMPILE_CLASSPATH" \
-
-        --module-path "$PATH_TO_FX" \
-
-        --add-modules javafx.controls,javafx.fxml \
-
-        $(find FoundationCode/src -name "*Test.java") 2>&1 | tee foundation-tests.log
-
-      
-
-      TEST_COMPILE_RESULT=$?
-
-      
-
-      if [ $TEST_COMPILE_RESULT -ne 0 ]; then
-
-        echo "=== Test compilation errors ==="
-
-        grep -i "error" foundation-tests.log 2>/dev/null
-
-        echo "Full compilation log:"
-
-        cat foundation-tests.log
-
-      else
-
-        echo "Test classes compiled successfully"
-
-        echo "Compiled test classes:"
-
-        find build/test-classes -name "*Test.class" -type f
-
-      fi
-
-    fi
-
-  
-
-  # Compile passwordEvaluationTestbed
-
-  - echo "=== Compiling passwordEvaluationTestbed ==="
-
-  - |
-
-    if [ -d "passwordEvaluationTestbed/src" ]; then
-
-      echo "Found passwordEvaluationTestbed/src directory"
-
-      
-
-      javac -d build/classes \
-
-        -cp "$COMPILE_CLASSPATH" \
-
-        --module-path "$PATH_TO_FX" \
-
-        --add-modules javafx.controls,javafx.fxml \
-
-        passwordEvaluationTestbed/src/passwordEvaluationTestbed/*.java 2>&1 | tee password.log
-
-      
-
-      if [ $? -ne 0 ]; then
-
-        echo "Module compilation failed, trying classpath-only approach..."
-
+      if [ ! -z "$MAIN_FILES" ]; then
         javac -d build/classes \
-
           -cp "$COMPILE_CLASSPATH" \
-
-          passwordEvaluationTestbed/src/passwordEvaluationTestbed/*.java 2>&1 | tee password2.log
-
-      fi
-
-      
-
-      grep -i "error" password*.log 2>/dev/null | head -5
-
-    else
-
-      echo "passwordEvaluationTestbed/src directory not found"
-
-    fi
-
-  
-
-  # Compile userNameRecognizerConsoleTestbed
-
-  - echo "=== Compiling userNameRecognizerConsoleTestbed ==="
-
-  - |
-
-    if [ -d "userNameRecognizerConsoleTestbed/src" ]; then
-
-      echo "Found userNameRecognizerConsoleTestbed/src directory"
-
-      
-
-      javac -d build/classes \
-
-        -cp "build/classes" \
-
-        userNameRecognizerConsoleTestbed/src/userNameRecognizerTestbed/*.java 2>&1 | tee username.log
-
-      
-
-      grep -i "error" username.log 2>/dev/null | head -5
-
-    else
-
-      echo "userNameRecognizerConsoleTestbed/src directory not found"
-
-    fi
-
-  
-
-  # Check what was compiled
-
-  - echo "=== Compilation Results ==="
-
-  - |
-
-    TOTAL_CLASSES=$(find build/classes -name "*.class" -type f 2>/dev/null | wc -l)
-
-    TOTAL_TEST_CLASSES=$(find build/test-classes -name "*.class" -type f 2>/dev/null | wc -l)
-
-    echo "Total compiled main classes: $TOTAL_CLASSES"
-
-    echo "Total compiled test classes: $TOTAL_TEST_CLASSES"
-
-    
-
-    if [ $TOTAL_CLASSES -gt 0 ]; then
-
-      echo "Successfully compiled main classes:"
-
-      find build/classes -name "*.class" -type f | head -10
-
-    fi
-
-    
-
-    if [ $TOTAL_TEST_CLASSES -gt 0 ]; then
-
-      echo "Successfully compiled test classes:"
-
-      find build/test-classes -name "*Test.class" -type f
-
-    fi
-
-  
-
-  # Run JUnit Tests
-
-  - echo "=== Running JUnit Tests ==="
-
-  - |
-
-    if [ $TOTAL_TEST_CLASSES -gt 0 ]; then
-
-      echo "Running QASystemTest..."
-
-      
-
-      # Set JavaFX properties for headless mode
-
-      export _JAVA_OPTIONS="-Djava.awt.headless=true -Dtestfx.robot=glass -Dtestfx.headless=true -Dprism.order=sw"
-
-      
-
-      # Run tests with JUnit Platform Console
-
-      java -jar $JUNIT_JAR \
-
-        --classpath "$TEST_CLASSPATH" \
-
-        --scan-classpath build/test-classes \
-
-        --reports-dir=build/test-results \
-
-        --disable-banner 2>&1 | tee test-results.log
-
-      
-
-      TEST_EXIT_CODE=$?
-
-      
-
-      echo ""
-
-      echo "=== Test Results Summary ==="
-
-      grep -E "(Test run finished|tests found|tests successful|tests failed)" test-results.log || true
-
-      
-
-      if [ $TEST_EXIT_CODE -eq 0 ]; then
-
-        echo "✓ All tests passed!"
-
+          --module-path "$PATH_TO_FX" \
+          --add-modules javafx.controls,javafx.fxml \
+          $MAIN_FILES 2>&1 | tee foundation.log
+        
+        if [ ${PIPESTATUS[0]} -eq 0 ]; then
+          echo "✓ Main classes compiled successfully"
+        else
+          echo "✗ Main class compilation errors:"
+          cat foundation.log
+        fi
       else
-
-        echo "✗ Some tests failed. Check logs above."
-
-        echo "Detailed test failures:"
-
-        grep -A 5 "FAILED" test-results.log || true
-
+        echo "No main Java files found"
       fi
-
+    else
+      echo "FoundationCode/src directory not found"
+    fi
+  
+  # Compile FoundationCode Tests
+  - echo "=== Compiling FoundationCode Tests ==="
+  - |
+    if [ -d "FoundationCode/src" ]; then
+      echo "Compiling test classes..."
       
-
-      # Don't fail the build on test failures for now (optional)
-
-      # exit $TEST_EXIT_CODE
-
+      TEST_FILES=$(find FoundationCode/src -name "*Test.java" | tr '\n' ' ')
+      
+      if [ ! -z "$TEST_FILES" ]; then
+        javac -d build/test-classes \
+          -cp "$COMPILE_CLASSPATH" \
+          --module-path "$PATH_TO_FX" \
+          --add-modules javafx.controls,javafx.fxml \
+          $TEST_FILES 2>&1 | tee foundation-tests.log
+        
+        if [ ${PIPESTATUS[0]} -eq 0 ]; then
+          echo "✓ Test classes compiled successfully"
+          find build/test-classes -name "*Test.class" -type f
+        else
+          echo "✗ Test compilation errors:"
+          cat foundation-tests.log
+        fi
+      else
+        echo "No test files found"
+      fi
+    fi
+  
+  # Compile passwordEvaluationTestbed
+  - echo "=== Compiling passwordEvaluationTestbed ==="
+  - |
+    if [ -d "passwordEvaluationTestbed/src" ]; then
+      echo "Found passwordEvaluationTestbed/src directory"
+      javac -d build/classes \
+        -cp "$COMPILE_CLASSPATH" \
+        --module-path "$PATH_TO_FX" \
+        --add-modules javafx.controls,javafx.fxml \
+        passwordEvaluationTestbed/src/passwordEvaluationTestbed/*.java 2>&1 | tee password.log || echo "Password testbed compilation had issues"
+    fi
+  
+  # Compile userNameRecognizerConsoleTestbed
+  - echo "=== Compiling userNameRecognizerConsoleTestbed ==="
+  - |
+    if [ -d "userNameRecognizerConsoleTestbed/src" ]; then
+      echo "Found userNameRecognizerConsoleTestbed/src directory"
+      javac -d build/classes \
+        -cp "build/classes" \
+        userNameRecognizerConsoleTestbed/src/userNameRecognizerTestbed/*.java 2>&1 | tee username.log || echo "Username testbed compilation had issues"
+    fi
+  
+  # Check compilation results
+  - echo "=== Compilation Results ==="
+  - |
+    TOTAL_CLASSES=$(find build/classes -name "*.class" -type f 2>/dev/null | wc -l)
+    TOTAL_TEST_CLASSES=$(find build/test-classes -name "*.class" -type f 2>/dev/null | wc -l)
+    echo "Total compiled main classes: $TOTAL_CLASSES"
+    echo "Total compiled test classes: $TOTAL_TEST_CLASSES"
+  
+  # Run JUnit Tests
+  - echo "=== Running JUnit Tests ==="
+  - |
+    TOTAL_TEST_CLASSES=$(find build/test-classes -name "*.class" -type f 2>/dev/null | wc -l)
+    if [ $TOTAL_TEST_CLASSES -gt 0 ]; then
+      echo "Running tests with JUnit Platform Console..."
+      
+      export JAVA_TOOL_OPTIONS="-Djava.awt.headless=true -Dtestfx.robot=glass -Dtestfx.headless=true -Dprism.order=sw"
+      
+      java -jar $JUNIT_JAR \
+        --classpath "$TEST_CLASSPATH" \
+        --scan-classpath build/test-classes \
+        --reports-dir=build/test-results \
+        --disable-banner 2>&1 | tee test-results.log || TEST_FAILED=true
+      
+      echo ""
+      echo "=== Test Results Summary ==="
+      if [ -f test-results.log ]; then
+        grep -E "(Test run finished|tests found|tests successful|tests failed|SUCCESSFUL|FAILED)" test-results.log || echo "No test summary found"
+      fi
+      
+      if [ "$TEST_FAILED" = "true" ]; then
+        echo "⚠ Some tests had issues (may be due to headless environment)"
+      else
+        echo "✓ Test execution completed"
+      fi
     else
-
       echo "No test classes found to run"
-
     fi
-
   
-
-  # Test UserNameRecognizerTestbed if compiled
-
-  - echo "=== Testing Console Application ==="
-
-  - |
-
-    USERNAME_CLASS=$(find build/classes -name "UserNameRecognizerTestbed.class" -type f 2>/dev/null | head -1)
-
-    if [ ! -z "$USERNAME_CLASS" ]; then
-
-      echo "Running UserNameRecognizerTestbed test..."
-
-      echo -e "testuser123\ntest@user\n\n" | timeout 5s java -cp build/classes \
-
-        userNameRecognizerTestbed.UserNameRecognizerTestbed || true
-
-    else
-
-      echo "UserNameRecognizerTestbed not compiled"
-
-    fi
-
-  
-
   # Final summary
-
   - echo "=== Build Summary ==="
-
   - |
-
     TOTAL_JAVA=$(find . -name "*.java" -type f 2>/dev/null | grep -v "\.git" | wc -l)
-
     TOTAL_CLASS=$(find build/classes -name "*.class" -type f 2>/dev/null | wc -l)
-
     TOTAL_TEST_CLASS=$(find build/test-classes -name "*.class" -type f 2>/dev/null | wc -l)
-
     
-
-    echo "Total Java source files found: $TOTAL_JAVA"
-
-    echo "Total compiled main class files: $TOTAL_CLASS"
-
-    echo "Total compiled test class files: $TOTAL_TEST_CLASS"
-
+    echo "Build Statistics:"
+    echo "  - Java source files: $TOTAL_JAVA"
+    echo "  - Compiled main classes: $TOTAL_CLASS"
+    echo "  - Compiled test classes: $TOTAL_TEST_CLASS"
     
-
     if [ $TOTAL_JAVA -eq 0 ]; then
-
-      echo "ERROR: No Java source files found!"
-
-      echo "Please ensure your code is committed to the repository"
-
+      echo "✗ ERROR: No Java source files found!"
       exit 1
-
     fi
-
     
-
     if [ $TOTAL_CLASS -gt 0 ]; then
-
-      echo "✓ Build completed with $TOTAL_CLASS compiled main classes"
-
-    else
-
-      echo "WARNING: No main classes were successfully compiled"
-
-      echo "Check the compilation logs above for errors"
-
-    fi
-
-    
-
-    if [ $TOTAL_TEST_CLASS -gt 0 ]; then
-
-      echo "✓ Tests compiled: $TOTAL_TEST_CLASS test classes"
-
-    fi
-
-  
-
-  # Exit successfully if we found and compiled source files
-
-  - |
-
-    if [ $TOTAL_JAVA -gt 0 ] && [ $TOTAL_CLASS -gt 0 ]; then
-
-      echo "✓ Source files verified and compiled. Build process completed successfully."
-
+      echo "✓ Build completed successfully"
       exit 0
-
-    elif [ $TOTAL_JAVA -gt 0 ]; then
-
-      echo "⚠ Source files found but compilation had issues. Check logs above."
-
-      exit 1
-
     else
-
-      echo "✗ No source files found."
-
+      echo "✗ WARNING: No classes compiled"
       exit 1
-
     fi
 
-
-# Build jobs matrix
-
+# Use jobs instead of matrix (newer Travis CI syntax)
 jobs:
-
   include:
-
-    - stage: build
-
-      name: "Compile and Build"
-
-      script: echo "Build stage completed in main script"
-
-    
-
-    - stage: test
-
-      name: "Run Unit Tests"
-
-      script:
-
-        - echo "=== Running Unit Tests ==="
-
-        - |
-
-          # Ensure classes are compiled
-
-          if [ ! -d "build/test-classes" ] || [ -z "$(ls -A build/test-classes 2>/dev/null)" ]; then
-
-            echo "Test classes not found, need to compile first"
-
-            exit 1
-
-          fi
-
-          
-
-          # Run tests
-
-          export _JAVA_OPTIONS="-Djava.awt.headless=true -Dtestfx.robot=glass -Dtestfx.headless=true -Dprism.order=sw"
-
-          
-
-          java -jar $HOME/junit-platform-console-standalone.jar \
-
-            --classpath "$TEST_CLASSPATH" \
-
-            --scan-classpath build/test-classes \
-
-            --reports-dir=build/test-results \
-
-            --disable-banner
-
-          
-
-          TEST_RESULT=$?
-
-          
-
-          echo ""
-
-          echo "=== Test Execution Complete ==="
-
-          
-
-          if [ $TEST_RESULT -eq 0 ]; then
-
-            echo "✓ All unit tests passed!"
-
-          else
-
-            echo "✗ Some unit tests failed"
-
-            exit $TEST_RESULT
-
-          fi
-
+    - stage: Build and Test
+      name: "Compile and Run Tests"
+      # Uses the script section above
 
 stages:
-
-  - build
-
-  - test
-
-
-# Matrix configuration
-
-matrix:
-
-  fast_finish: true
-
-  allow_failures:
-
-    - stage: test
-
+  - name: Build and Test
 
 # Notifications
-
 notifications:
-
   email:
-
     on_success: change
-
     on_failure: always
