@@ -31,6 +31,10 @@ Tanner Urness
     uv^RXJ44
   ### [Stand Up Meeting 2](https://us06web.zoom.us/rec/share/ddHsPj6hIZvky6pBxeBvcnH3Qvp9Yr8fl8LJ4GiDdpg8tGA9y7tdDa20HUM_8pzi.kuvSIxAOrz-BInY1?startTime=1762221519000)
     uv^RXJ44
+  ### [Stand Up Meeting 3](https://us06web.zoom.us/rec/share/UamhUcdDrWE3JKqo6f7Ou2UVKAsZcyEFHR1Z24g7FMCBIACS10-fRc7zwUHSPz2b.BH2X1PBni-s0l9rp?startTime=1762305899000)
+    YSLG1DB&
+  ### [Stand Up Meeting 4](https://us06web.zoom.us/rec/share/tom1sLvw6vgNGnh1_dAdwnSOOAkNuwVqd2nhtTWru8Y1ZDtPigIRaAGv-l9uFciM.zfT12oLxh1tsiK5P?startTime=1762392451000)
+    c@dTs7TK
 <br/>
 
 
