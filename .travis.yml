@@ -61,12 +61,14 @@ before_script:
 
 jobs:
   include:
+    # Job 1: Build for all branch pushes (not PRs)
     - name: "Branch Build"
-      if: type = push AND branch != master
+      if: type = push
       script:
         - echo "=========================================="
         - echo "Branch Build"
         - echo "Branch $TRAVIS_BRANCH"
+        - echo "Commit $TRAVIS_COMMIT"
         - echo "=========================================="
         - MAIN_FILES=$(find FoundationCode/src -name "*.java" -not -name "*Test.java" -type f)
         - |
@@ -87,8 +89,9 @@ jobs:
         - |
           COMPILED_TESTS=$(find build/test-classes -name "*.class" -type f | wc -l)
           echo "Compiled $COMPILED_TESTS test classes"
-        - echo "Build complete"
+        - echo "Build complete for $TRAVIS_BRANCH"
     
+    # Job 2: Pull Request checks (strict)
     - name: "Pull Request Check"
       if: type = pull_request
       script:
@@ -126,8 +129,9 @@ jobs:
         - java -jar $JUNIT_JAR --classpath "$TEST_CLASSPATH" --scan-classpath build/test-classes --reports-dir=build/test-results --disable-banner
         - echo "All PR checks passed - ready to merge"
     
+    # Job 3: Run tests on all branch pushes (not PRs)
     - name: "Run Tests"
-      if: type = push AND branch != master
+      if: type = push
       script:
         - echo "=========================================="
         - echo "Running Tests"
@@ -167,7 +171,7 @@ jobs:
         - echo "Running JUnit tests"
         - export JAVA_TOOL_OPTIONS="-Djava.awt.headless=true -Dtestfx.robot=glass -Dtestfx.headless=true"
         - java -jar $JUNIT_JAR --classpath "$TEST_CLASSPATH" --scan-classpath build/test-classes --reports-dir=build/test-results --disable-banner || true
-        - echo "Test execution complete"
+        - echo "Test execution complete for $TRAVIS_BRANCH"
 
 notifications:
   email:
