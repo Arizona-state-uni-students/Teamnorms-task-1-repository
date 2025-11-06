@@ -130,7 +130,6 @@ public class QASystemTest {
             new Question("Valid Title Here", "Short", testUser1.getUserName());
         }, "Should throw exception for content less than 10 characters");
     }
-}
 
     @Test
 	@DisplayName("Test 6: Create question with invalid content (too long)")
