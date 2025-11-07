@@ -24,7 +24,7 @@ public class Answer {
      * 
      * @param questionId ID of the question the answer will be attached to.
      * @param content String containing the contents of the answer.
-     * @param answeredBy String containing the username of the person answering the question.
+     * @param answeredBy String containing the username of the person posting the answer.
      */
     public Answer(int questionId, String content, String answeredBy) {
         this.questionId = questionId;
@@ -41,7 +41,7 @@ public class Answer {
      * @param id ID of the answer.
      * @param questionId ID of the question the answer is attached to.
      * @param content String containing the contents of the answer.
-     * @param answeredBy String containing the username of the person answering the question.
+     * @param answeredBy String containing the username of the person posting the answer.
      * @param createdAt Time and date the answer was created.
      * @param isRead Boolean of whether the answer is read or not.
      * @param upvotes Number of upvotes the answer has received.
@@ -170,3 +170,4 @@ public class Answer {
     }
 
 }
+
