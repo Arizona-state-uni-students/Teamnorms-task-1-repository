@@ -1133,7 +1133,9 @@ public class StudentQAPage {
         } catch (SQLException ex) {
             showError("Answers load failed", ex.getMessage());
         }
+        if(!q.isResolved()) {
         displayQuestionThread.getChildren().add(answerComposer(q));
+        }
     }
     //add public review field
     private VBox answerComposer(Question q) {
@@ -1175,7 +1177,7 @@ public class StudentQAPage {
             }
             // Create the title with the count
             Label title = new Label("Private feedback (" + visibleCount + ")");
-            title.setStyle("-fx-font-weight:bold; -fx-text-fill: black;");
+            title.setStyle("-fx-font-weight:bold; -fx-text-fill: white;");
             box.getChildren().add(title);
             
             // Render the messages
@@ -1185,35 +1187,40 @@ public class StudentQAPage {
                 any = true;
                 VBox card = new VBox(3);
                 Label meta = new Label(pm.getSender() + " • " + pm.getCreatedAt().format(TS) + " • " + pm.getMessageType()+ " -->"+ pm.getTo());
-                meta.setStyle("-fx-text-fill: black; -fx-font-size:11px;");
+                meta.setStyle("-fx-text-fill: white; -fx-font-size:11px;");
                 Label text = new Label(pm.getContent());
                 text.setWrapText(true);
                 text.setStyle("-fx-text-fill: black;");
                 card.getChildren().addAll(meta, text);
-                card.setStyle("-fx-background-color:#fffbea; -fx-border-color:#ffe08a; -fx-padding:8;");
+                card.setStyle("-fx-background-color:#999; -fx-border-color:#ccc; -fx-padding:8;");
                 box.getChildren().add(card);
             }
             
             if (!any) {
                 Label none = new Label("No private feedback yet.");
-                none.setStyle("-fx-text-fill: black;");
+                none.setStyle("-fx-text-fill: white;");
                 box.getChildren().add(none);
             }
+            box.setStyle("-fx-background-color:#4c4c4c; -fx-padding:8px;");
         } catch (SQLException ex) {
             showError("Private messages load failed", ex.getMessage());
         }
-        displayQuestionThread.getChildren().add(box);
+        //displayQuestionThread.getChildren().add(box);
         //add private submission field
-        if(currentUser.getUserName().equals(q.getAskedBy())&&visibleCount>=1) {
-    		  if (!"Public".equals(viewFilter.getValue())) {
-    		      displayQuestionThread.getChildren().add(privateComposer(q));
-    		  }	
-        }else if(!currentUser.getUserName().equals(q.getAskedBy())){
-  		  if (!"Public".equals(viewFilter.getValue())) {
-		      displayQuestionThread.getChildren().add(privateComposer(q));
-		  }	
+        if(!q.isResolved()) {
+	        if(currentUser.getUserName().equals(q.getAskedBy())&&visibleCount>=1) {
+	    		  if (!"Public".equals(viewFilter.getValue())) {
+	    			  box.getChildren().add(privateComposer(q));
+	    		      //displayQuestionThread.getChildren().add(privateComposer(q));
+	    		  }	
+	        }else if(!currentUser.getUserName().equals(q.getAskedBy())){
+	  		  if (!"Public".equals(viewFilter.getValue())) {
+			      //displayQuestionThread.getChildren().add(privateComposer(q));
+				  box.getChildren().add(privateComposer(q));
+			  }	
+	        }
         }
-
+        displayQuestionThread.getChildren().add(box);
     }
 
     private void renderFollowups(Question q) {
@@ -1242,9 +1249,9 @@ public class StudentQAPage {
         ComboBox<String> privateUsers = new ComboBox<>();
         privateUsers.setVisible(true);
         Label lbl = new Label("Send private feedback");
-        lbl.setStyle("-fx-font-weight:bold; -fx-text-fill: black;");
+        lbl.setStyle("-fx-font-weight:bold; -fx-text-fill: white;");
         Label lbl2 = new Label("to User:");
-        lbl2.setStyle("-fx-text-fill: black;");
+        lbl2.setStyle("-fx-text-fill: white;");
         lbl2.setVisible(false);
         ComboBox<String> kind = new ComboBox<>();
         kind.getItems().addAll("Question", "Answer");
@@ -1286,7 +1293,7 @@ public class StudentQAPage {
 	        } catch (SQLException ex) {showError("load failed", ex.getMessage());}
         }else {privateUsers.setVisible(false);}
         //privateUsers.setValue();
-        VBox box = new VBox(6, lbl, new HBox(6, new Label("Type:") {{ setStyle("-fx-text-fill: black;"); }}, kind, lbl2, privateUsers), text, send);
+        VBox box = new VBox(6, lbl, new HBox(6, new Label("Type:") {{ setStyle("-fx-text-fill: white;"); }}, kind, lbl2, privateUsers), text, send);
         box.setPadding(new Insets(10,0,0,0));
         return box;
     }
