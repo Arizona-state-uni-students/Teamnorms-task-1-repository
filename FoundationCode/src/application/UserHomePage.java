@@ -20,6 +20,10 @@ public class UserHomePage {
         this.databaseHelper = databaseHelper;
     }
     
+    /**
+     * Displays the user home page in the primary stage. 
+     * @param primaryStage The primary stage where the scene will be displayed.
+     */
     public void show(Stage primaryStage, User currentUser) {
         GridPane grid = new GridPane();
         grid.setPadding(new Insets(20));
@@ -245,6 +249,13 @@ public class UserHomePage {
         primaryStage.show();
     }
     
+    /**
+     * Method to show an alert to the user.
+     * 
+     * @param title Title of the alert.
+     * @param content Content of the alert.
+     * @param type AlertType
+     */
     private void showAlert(String title, String content, AlertType type) {
         Alert alert = new Alert(type);
         alert.setTitle(title);

@@ -21,6 +21,10 @@ public class SetupLoginSelectionPage {
         this.databaseHelper = databaseHelper;
     }
 
+    /**
+     * Displays the setup login selection page in the primary stage. 
+     * @param primaryStage The primary stage where the scene will be displayed.
+     */
     public void show(Stage primaryStage) {
         
         // Buttons to select Login / Setup options that redirect to respective pages

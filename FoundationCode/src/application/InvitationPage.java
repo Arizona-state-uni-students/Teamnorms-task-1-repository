@@ -21,7 +21,6 @@ public class InvitationPage {
      * @param databaseHelper An instance of DatabaseHelper to handle database operations.
      * @param primaryStage   The primary stage where the scene will be displayed.
      */
-
     public void show(DatabaseHelper databaseHelper,Stage primaryStage, User user) {
     	VBox layout = new VBox();
 	    layout.setStyle("-fx-alignment: center; -fx-padding: 20;");

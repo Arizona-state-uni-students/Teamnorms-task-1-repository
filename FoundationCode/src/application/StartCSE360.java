@@ -16,6 +16,10 @@ public class StartCSE360 extends Application {
 		 launch(args);
 	}
 	
+	/**
+     * Displays the first page or the user login page in the primary stage depending on if the database is empty. 
+     * @param primaryStage The primary stage where the scene will be displayed.
+     */
 	@Override
     public void start(Stage primaryStage) {
         try {

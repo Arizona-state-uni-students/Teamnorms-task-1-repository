@@ -70,7 +70,7 @@ public class Question {
      * 
      * @param title String containing the title of the question.
      * @throws IllegalArgumentException If the title is invalid.
-     * @returns Question title if its valid.
+     * @return Question title if its valid.
      */
     public static String validateTitle(String title) {
         if (title == null || title.trim().isEmpty()) {
@@ -90,7 +90,7 @@ public class Question {
      * 
      * @param content String containing the contents of the question.
      * @throws IllegalArgumentException If the content is invalid.
-     * @returns Question contents if they are valid.
+     * @return Question contents if they are valid.
      */
     public static String validateContent(String content) {
         if (content == null || content.trim().isEmpty()) {
@@ -132,7 +132,7 @@ public class Question {
 
     /**
      * Gets the date and time the question was created at.
-     * @returns createdAt.
+     * @return createdAt.
      */
     public LocalDateTime getCreatedAt() { return createdAt; }
 
@@ -221,7 +221,7 @@ public class Question {
     // Utility methods
     /**
      * Gets the date and time the question was created at but formatted.
-     * @returns createdAt.
+     * @return createdAt.
      */
     public String getFormattedDate() {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM dd, yyyy HH:mm");
@@ -230,7 +230,7 @@ public class Question {
 
     /**
      * Gets question details in a formatted form.
-     * @returns String with id, title, askedBy, number of answers, and isResolved.
+     * @return String with id, title, askedBy, number of answers, and isResolved.
      */
     @Override
     public String toString() {

@@ -158,6 +158,13 @@ public class PasswordEvaluator {
 
 	}
 	
+	
+	/**
+	 * Method to evaluate a username.
+	 * 
+	 * @param input String to evaluate.
+	 * @return Message that's empty if the username is valid and an error message if it's invalid,
+	 */
 	public static String evaluateUsername(String input) {
 		// The following are the local variable used to perform the Directed Graph simulation
 		passwordErrorMessage = "";

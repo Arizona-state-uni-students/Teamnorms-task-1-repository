@@ -68,7 +68,10 @@ public class InputValidator {
     }
     
     /**
-     * Validates a question title
+     * Validates a question title.
+     * 
+     * @param title String to validate
+     * @return Validation report 
      */
     public static ValidationReport validateQuestionTitle(String title) {
         ValidationReport report = new ValidationReport();
@@ -108,7 +111,10 @@ public class InputValidator {
     }
     
     /**
-     * Validates question content
+     * Validates question content.
+     * 
+     * @param content String to validate
+     * @return Validation report 
      */
     public static ValidationReport validateQuestionContent(String content) {
         ValidationReport report = new ValidationReport();
@@ -148,7 +154,10 @@ public class InputValidator {
     }
     
     /**
-     * Validates answer content
+     * Validates answer content.
+     * 
+     * @param content String to validate
+     * @return Validation report 
      */
     public static ValidationReport validateAnswerContent(String content) {
         ValidationReport report = new ValidationReport();

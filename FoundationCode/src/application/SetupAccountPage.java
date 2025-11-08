@@ -34,6 +34,11 @@ public class SetupAccountPage {
     private boolean passwordSet = false;
     private boolean emailSet = false;
     private boolean nameSet = false;
+    
+    /**
+     * Displays the setup account page in the primary stage. 
+     * @param primaryStage The primary stage where the scene will be displayed.
+     */
     public void show(Stage primaryStage) {
     	// Establish GUI Grid
     	GridPane grid = new GridPane();
@@ -256,7 +261,13 @@ public class SetupAccountPage {
         primaryStage.setTitle("Administrator Setup");
         primaryStage.show();
     }
-    // FSM for username validation
+    
+    /**
+     * FSM for username validation
+     * 
+     * @param input String to validate.
+     * @param label Label to show message on.
+     */
 	private void validateUsername(String input, Label label) {
 		//TODO: 
 		//		GUI elements to let user know password requirements/restrictions
@@ -285,7 +296,13 @@ public class SetupAccountPage {
 			}
 		}
 	}
-    // FSM for password validation
+	
+	/**
+     * FSM for password validation
+     * 
+     * @param input String to validate.
+     * @param label Label to show message on.
+     */
 	private void validatePassword(String input, Label label) {
 		//TODO: 
 		//		GUI elements to let user know password requirements/restrictions
