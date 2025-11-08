@@ -41,7 +41,10 @@ public class UserDatabaseUI {
     }
 
     
-
+    /**
+     * Displays the user database UI in the primary stage.
+     * @param primaryStage The primary stage where the scene will be displayed.
+     */
     public void show(Stage primaryStage) throws SQLException {
 
         this.primaryStage = primaryStage;
@@ -91,6 +94,12 @@ public class UserDatabaseUI {
         primaryStage.setScene(userDBScene);
         primaryStage.setTitle("User Database Page");
     }
+    
+    /**
+     * Loads user data and displays it.
+     * 
+     * @throws SQLException
+     */
     private void loadUserData() throws SQLException {
         databaseTable.getChildren().clear();
         // Database table headers
@@ -236,6 +245,12 @@ public class UserDatabaseUI {
         }
     }
 
+    /**
+     * Method to edit middle initial.
+     * 
+     * @param username Username of the user to update middle initial for.
+     * @param currentMI String of the current middle initial
+     */
     private void editUserMiddleInitial(String username, String currentMI) {
         TextInputDialog dialog = new TextInputDialog(currentMI != null ? currentMI : "");
         dialog.setTitle("Edit Middle Initial");
@@ -264,7 +279,12 @@ public class UserDatabaseUI {
         });
     }
     
-    
+    /**
+     * Method to edit user email.
+     * 
+     * @param username Username of the user to update email for.
+     * @param currentEmail String of the current email
+     */
     private void editUserEmail(String username, String currentEmail) {
         TextInputDialog dialog = new TextInputDialog(currentEmail != null ? currentEmail : "");
         dialog.setTitle("Edit Email");
@@ -294,6 +314,12 @@ public class UserDatabaseUI {
     }
     
 
+    /**
+     * Method to change a user's role.
+     * 
+     * @param username Username of the user to update role for.
+     * @param currentRole String of the current role.
+     */
     private void changeUserRole(String username, String currentRole) {
         ChoiceDialog<String> dialog = new ChoiceDialog<>(currentRole, "User", "Student", "Reviewer", "Instructor", "Staff", "Admin");
         dialog.setTitle("Change User Role");
@@ -334,8 +360,12 @@ public class UserDatabaseUI {
         });
     }
 
-    
-
+    /**
+     * Method to delete user.
+     * 
+     * @param username Username of the user to update middle initial for.
+     * @param currentMI String of the current middle initial
+     */
     private void deleteUser(String username) {
         Alert confirmDialog = new Alert(AlertType.CONFIRMATION);
         confirmDialog.setTitle("Confirm Deletion");
@@ -369,6 +399,13 @@ public class UserDatabaseUI {
         
     }
 
+    /**
+     * Method to show an alert to the user.
+     * 
+     * @param title Title of the alert.
+     * @param content Content of the alert.
+     * @param type AlertType
+     */
     private void showAlert(String title, String content, AlertType type) {
         Alert alert = new Alert(type);
         alert.setTitle(title);
