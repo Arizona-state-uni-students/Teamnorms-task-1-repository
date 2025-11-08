@@ -14,6 +14,7 @@ public class User {
     private String firstName;
     private String lastName;
     private int weight;
+    private boolean isReviewerApplicant;
 
     /**
      * Constructor for minimal user creation
@@ -31,6 +32,27 @@ public class User {
         this.firstName = "";
         this.lastName = "";
         this.weight = 0;
+    }
+    
+    /**
+     * Constructor for user list creation.
+     * 
+     * @param userName String to set userName to.
+     * @param role String of the user role.
+     * @param email String to set email to.
+     * @param firstName String to set firstName to.
+     * @param lastName String to set lastName to.
+     * @param weight int representing user privilege weight.
+     * @param reviewerApplicant boolean representing if the user has a pending reviewer application.
+     */
+    public User(String userName, String role, String email, String firstname, String lastname, int weight, boolean reviewerApplicant) {
+        this.userName = userName;
+        this.role = role;
+        this.email = email;
+        this.firstName = firstname;
+        this.lastName = lastname;
+        this.weight = weight;
+        this.isReviewerApplicant = reviewerApplicant;
     }
 
     /**
@@ -233,6 +255,22 @@ public class User {
      */
     public void setWeight(int weight) {
         this.weight = weight;
+    }
+    /**
+     * Gets if the applicant has a pending reviewer application.
+     * 
+     * @return boolean
+     */
+    public boolean isReviewerApplicant() {
+    	return isReviewerApplicant;
+    }
+    /**
+     * Sets if the user has a reviewer application pending.
+     * 
+     * @param applicant boolean to determine if pending application.
+     */
+    public void setReviewerApplicant(boolean applicant) {
+    	this.isReviewerApplicant = applicant;
     }
 
 }
