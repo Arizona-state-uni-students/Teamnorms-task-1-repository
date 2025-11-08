@@ -83,7 +83,7 @@ public class DatabaseHelper {
     
     /**
      * Check if the database is empty.
-     * @returns True or False
+     * @return True or False
      * @throws SQLException If a database error occurs.
      */
     public boolean isDatabaseEmpty() throws SQLException {
@@ -127,7 +127,7 @@ public class DatabaseHelper {
      * 
      * @param username Username of the user to change the email for.
      * @param newEmail String to set the email to.
-     * @returns True or False based on function success.
+     * @return True or False based on function success.
      * @throws SQLException If a database error occurs.
      */
     public boolean updateUserEmail(String username, String newEmail) throws SQLException {
@@ -148,7 +148,7 @@ public class DatabaseHelper {
      * Log user into the system.
      * 
      * @param user User logging in.
-     * @returns True or False based on function success.
+     * @return True or False based on function success.
      * @throws SQLException If a database error occurs.
      */
     public boolean login(User user) throws SQLException {
@@ -175,7 +175,7 @@ public class DatabaseHelper {
     /**
      * Checks if an Admin exists in the database.
      * 
-     * @returns True or False based on function success.
+     * @return True or False based on function success.
      * @throws SQLException If a database error occurs.
      */
     public boolean doesAdminExist() throws SQLException {
@@ -191,7 +191,7 @@ public class DatabaseHelper {
      * Checks whether a certain user exists.
      * 
      * @param userName Username to check existence of.
-     * @returns True or False based on function success.
+     * @return True or False based on function success.
      */
     public boolean doesUserExist(String userName) {
         String query = "SELECT COUNT(*) FROM cse360users WHERE userName = ?";
@@ -210,7 +210,7 @@ public class DatabaseHelper {
     /**
      * Gets a list of all users in the database.
      * 
-     * @returns List of Users
+     * @return List of Users
      * @throws SQLException If a database error occurs.
      */
     public List<User> getAllUsers() throws SQLException {
@@ -241,7 +241,7 @@ public class DatabaseHelper {
      * 
      * @param username Username to set middleInitial for.
      * @param newMiddleInitial String to set middleInitial to.
-     * @returns True or False based on function success.
+     * @return True or False based on function success.
      * @throws SQLException If a database error occurs.
      */
     public boolean updateUserMiddleInitial(String username, String newMiddleInitial) throws SQLException {
@@ -265,7 +265,7 @@ public class DatabaseHelper {
     /**
      * Gets the role of a user in the database.
      * 
-     * @returns Role value
+     * @return Role value
      * @param userName Username to get the role of.
      */
     public String getUserRole(String userName) {
@@ -285,7 +285,7 @@ public class DatabaseHelper {
     /**
      * Gets the weight of a user in the database.
      * 
-     * @returns Weight value (int)
+     * @return Weight value (int)
      * @param userName Username to get the role of.
      */
     public int getUserWeight(String userName) {
@@ -306,7 +306,7 @@ public class DatabaseHelper {
      * Deletes a user from the database.
      * 
      * @param username Username of the user to delete.
-     * @returns True or False based on function success.
+     * @return True or False based on function success.
      * @throws SQLException If a database error occurs.
      */
     public boolean deleteUser(String username) throws SQLException {
@@ -326,7 +326,7 @@ public class DatabaseHelper {
      * Checks whether a user is the last admin in the database.
      * 
      * @param username Username to check.
-     * @returns True or False based on function success.
+     * @return True or False based on function success.
      * @throws SQLException If a database error occurs.
      */
     private boolean isLastAdmin(String username) throws SQLException {
@@ -351,7 +351,7 @@ public class DatabaseHelper {
     /**
      * Gets the number of users currently in the database.
      * 
-     * @returns Number of users in database.
+     * @return Number of users in database.
      * @throws SQLException If a database error occurs.
      */
     public int getUserCount() throws SQLException {
@@ -369,7 +369,7 @@ public class DatabaseHelper {
      * Gets user information by username.
      * 
      * @param username Username to retrieve info for.
-     * @returns User information.
+     * @return User information.
      * @throws SQLException If a database error occurs.
      */
     public Optional<User> getUserByUsername(String username) throws SQLException {
@@ -398,7 +398,7 @@ public class DatabaseHelper {
      * Gets a list of users by their role
      * 
      * @param role The role to search for
-     * @returns a list of users and their information
+     * @return a list of users and their information
      * @throws SQLException If a database error occurs.
      */
     public List<User> getUsers_Role(String role) throws SQLException {
@@ -433,7 +433,7 @@ public class DatabaseHelper {
      * 
      * @param username Username of the user to update information for.
      * @param newPassword String to update the password to.
-     * @returns True or False based on function success.
+     * @return True or False based on function success.
      * @throws SQLException If a database error occurs.
      */
     public boolean updateUserPassword(String username, String newPassword) throws SQLException {
@@ -451,7 +451,7 @@ public class DatabaseHelper {
      * 
      * @param username Username of the user to set the one time password for.
      * @param otp String of the one time password.
-     * @returns True or False based on function success.
+     * @return True or False based on function success.
      * @throws SQLException If a database error occurs.
      */
     public boolean setOtp(String username, String otp) throws SQLException {
@@ -469,7 +469,7 @@ public class DatabaseHelper {
      * @param username Username of the user to set the one time password for.
      * @param otp String of the one time password.
      * @param ttlMinutes Time in minutes until the otp expires.
-     * @returns True or False based on function success.
+     * @return True or False based on function success.
      * @throws SQLException If a database error occurs.
      */
     public boolean setOtp(String username, String otp, int ttlMinutes) throws SQLException {
@@ -488,7 +488,7 @@ public class DatabaseHelper {
      * 
      * @param username Username of the user with an otp to check.
      * @param otp String of the one time password.
-     * @returns True or False based on function success.
+     * @return True or False based on function success.
      * @throws SQLException If a database error occurs.
      */
     public boolean isOtpValid(String username, String otp) throws SQLException {
@@ -509,7 +509,7 @@ public class DatabaseHelper {
      * Marks the one time password as used.
      * 
      * @param username Username of the user with an otp to use.
-     * @returns True or False based on function success.
+     * @return True or False based on function success.
      * @throws SQLException If a database error occurs.
      */
     public boolean consumeOtp(String username) throws SQLException {
@@ -523,7 +523,7 @@ public class DatabaseHelper {
     /**
      * Removes expired one time passwords from the database.
      * 
-     * @returns The row count
+     * @return The row count
      * @throws SQLException If a database error occurs.
      */
     public int purgeExpiredOtps() throws SQLException {
@@ -538,7 +538,7 @@ public class DatabaseHelper {
      * 
      * @param username Username of the user to reset the password for.
      * @param newPassword String to update the password to.
-     * @returns True or False based on function success.
+     * @return True or False based on function success.
      * @throws SQLException If a database error occurs.
      */
     public boolean resetUserPassword(String username, String newPassword) throws SQLException {
@@ -556,7 +556,7 @@ public class DatabaseHelper {
      * 
      * @param username Username of the user to update role for.
      * @param newRole String of role to update to.
-     * @returns True or False based on function success.
+     * @return True or False based on function success.
      * @throws SQLException If a database error occurs.
      */
     public boolean updateUserRole(String username, String newRole) throws SQLException {
@@ -576,7 +576,7 @@ public class DatabaseHelper {
     /**
      * Generates an invitation code
      * 
-     * @returns Invitation code.
+     * @return Invitation code.
      */
     public String generateInvitationCode() {
         return generateInvitationCode(0);
@@ -586,7 +586,7 @@ public class DatabaseHelper {
      * Generates an invitation code.
      * 
      * @param ttlMinutes Time in minutes until invitation code expires.
-     * @returns Invitation code.
+     * @return Invitation code.
      */
     public String generateInvitationCode(int ttlMinutes) {
         String code = java.util.UUID.randomUUID().toString().substring(0, 4);
@@ -609,7 +609,7 @@ public class DatabaseHelper {
      * Validates an invitation code.
      * 
      * @param code String of the invitation code.
-     * @returns True or False
+     * @return True or False
      */
     public boolean validateInvitationCode(String code) {
         String q = "SELECT 1 FROM InvitationCodes " +
@@ -632,7 +632,7 @@ public class DatabaseHelper {
     /**
      * Removes expired invitation code from the database.
      * 
-     * @returns The row count
+     * @return The row count
      * @throws SQLException If a database error occurs.
      */
     public int purgeExpiredInvitationCodes() throws SQLException {
@@ -663,7 +663,7 @@ public class DatabaseHelper {
      * 
      * @param username Username of the user.
      * @param tf Boolean value to update to.
-     * @returns True or False based on function success.
+     * @return True or False based on function success.
      * @throws SQLException If a database error occurs.
      */
     public boolean updateHasRequest(String username, Boolean tf) throws SQLException {
@@ -679,7 +679,7 @@ public class DatabaseHelper {
     /**
      * Gets a list of users who have a pending request.
      * 
-     * @returns List of users where hasRequest is true.
+     * @return List of users where hasRequest is true.
      * @throws SQLException If a database error occurs.
      */
     public List<User> getUsersWithRequest() throws SQLException {
@@ -827,7 +827,7 @@ public class DatabaseHelper {
      * Creates a new question in the database.
      * 
      * @param question Question to add into database.
-     * @returns Question Id
+     * @return Question Id
      * @throws SQLException If a database error occurs.
      */
     public int createQuestion(Question question) throws SQLException {
@@ -856,7 +856,7 @@ public class DatabaseHelper {
      * Gets a question by its ID.
      * 
      * @param id Question id of question to retrieve.
-     * @returns Question
+     * @return Question
      * @throws SQLException If a database error occurs.
      */
     public Question getQuestionById(int id) throws SQLException {
@@ -888,7 +888,7 @@ public class DatabaseHelper {
      * Gets all questions by a specific user.
      * 
      * @param username String of username of user to retrieve questions from.
-     * @returns List of questions
+     * @return List of questions
      * @throws SQLException If a database error occurs.
      */
     public List<Question> getAllQuestions(String username) throws SQLException {
@@ -929,22 +929,22 @@ public class DatabaseHelper {
         // --- Getters ---
         /**
          * Gets askedBy
-         * @returns askedBy
+         * @return askedBy
          */
         public String getAskedBy() { return askedBy; }
         /**
          * Gets isResolved
-         * @returns isResolved
+         * @return isResolved
          */
         public Boolean getIsResolved() { return isResolved; }
         /**
          * Gets createdAfter
-         * @returns createdAfter
+         * @return createdAfter
          */
         public LocalDateTime getCreatedAfter() { return createdAfter; }
         /**
          * Gets createdBefore
-         * @returns createdBefore
+         * @return createdBefore
          */
         public LocalDateTime getCreatedBefore() { return createdBefore; }
 
@@ -974,7 +974,7 @@ public class DatabaseHelper {
     /**
      * Gets a list of all unresolved questions in the database.
      * 
-     * @returns List of questions.
+     * @return List of questions.
      * @throws SQLException If a database error occurs.
      */
     public List<Question> getUnresolvedQuestions() throws SQLException {
@@ -1004,7 +1004,7 @@ public class DatabaseHelper {
      * Gets a list of questions based on a keyword.
      * 
      * @param keyword String to search for.
-     * @returns List of questions
+     * @return List of questions
      * @throws SQLException If a database error occurs.
      */
     public List<Question> searchQuestions(String keyword) throws SQLException {
@@ -1037,7 +1037,7 @@ public class DatabaseHelper {
      * Updates a questions information (Title, content, id, and askedBy).
      * 
      * @param question Question to update information for.
-     * @returns True or False based on function success.
+     * @return True or False based on function success.
      * @throws SQLException If a database error occurs.
      */
     public boolean updateQuestion(Question question) throws SQLException {
@@ -1057,7 +1057,7 @@ public class DatabaseHelper {
      * 
      * @param questionId ID of the question to delete.
      * @param username Username of the user who asked the question.
-     * @returns True or False based on function success.
+     * @return True or False based on function success.
      * @throws SQLException If a database error occurs.
      */
     public boolean deleteQuestion(int questionId, String username) throws SQLException {
@@ -1076,7 +1076,7 @@ public class DatabaseHelper {
      * @param questionId ID of the question to mark as resolved.
      * @param answerId ID of the answer responsible for resolving the question.
      * @param username Username of the user who asked the question.
-     * @returns True or False based on function success.
+     * @return True or False based on function success.
      * @throws SQLException If a database error occurs.
      */
     public boolean markQuestionResolved(int questionId, int answerId, String username) throws SQLException {
@@ -1094,7 +1094,7 @@ public class DatabaseHelper {
      * Creates a new answer in the database.
      * 
      * @param answer Answer to add into database.
-     * @returns Answer ID
+     * @return Answer ID
      * @throws SQLException If a database error occurs.
      */
     public int createAnswer(Answer answer) throws SQLException {
@@ -1124,7 +1124,7 @@ public class DatabaseHelper {
      * Gets the number of unread answers for a particular question.
      * 
      * @param questionId ID of question to check the number of unread answers for.
-     * @returns Number of unread answers.
+     * @return Number of unread answers.
      * @throws SQLException If a database error occurs.
      */
     public int getUnreadAnswersCount(int questionId) throws SQLException {
@@ -1144,7 +1144,7 @@ public class DatabaseHelper {
      * Gets the list of answers for a particular question.
      * 
      * @param questionId ID of the question to retrieve the answers for.
-     * @returns List of answers
+     * @return List of answers
      * @throws SQLException If a database error occurs.
      */
     public List<Answer> getAnswersForQuestion(int questionId) throws SQLException {
@@ -1174,7 +1174,7 @@ public class DatabaseHelper {
      * Updates an answers information (Content, id, answeredBy).
      * 
      * @param answer Answer to update information for.
-     * @returns True or False based on function success.
+     * @return True or False based on function success.
      * @throws SQLException If a database error occurs.
      */
     public boolean updateAnswer(Answer answer) throws SQLException {
@@ -1193,7 +1193,7 @@ public class DatabaseHelper {
      * 
      * @param answerId ID of the answer to delete from the database.
      * @param username Username of the user who posted the answer.
-     * @returns True or False based on function success.
+     * @return True or False based on function success.
      * @throws SQLException If a database error occurs.
      */
     public boolean deleteAnswer(int answerId, String username) throws SQLException {
@@ -1210,7 +1210,7 @@ public class DatabaseHelper {
      * Marks an answer as read.
      * 
      * @param answerId Id of the answer to mark as read.
-     * @returns True or False based on function success.
+     * @return True or False based on function success.
      * @throws SQLException If a database error occurs.
      */
     public boolean markAnswerAsRead(int answerId) throws SQLException {
@@ -1227,7 +1227,7 @@ public class DatabaseHelper {
      * 
      * @param answerId ID of the answer to update.
      * @param username Username of the user who posted the answer.
-     * @returns True or False based on function success.
+     * @return True or False based on function success.
      * @throws SQLException If a database error occurs.
      */
     public boolean upvoteAnswer(int answerId, String username) throws SQLException {
@@ -1258,7 +1258,7 @@ public class DatabaseHelper {
      * 
      * @param questionId ID of the question to close.
      * @param username Username of the user who asked the question.
-     * @returns True or False based on function success.
+     * @return True or False based on function success.
      * @throws SQLException If a database error occurs.
      */
     public boolean closeQuestion(int questionId, String username) throws SQLException {
@@ -1350,7 +1350,7 @@ public class DatabaseHelper {
     /**
      * Gets a list of questions where parentQuestionId is NULL (Top Level).
      * 
-     * @returns List of questions
+     * @return List of questions
      * @throws SQLException If a database error occurs.
      */
     public List<Question> getQuestionsTopLevel() throws SQLException {
@@ -1381,7 +1381,7 @@ public class DatabaseHelper {
      * Gets a list of questions that have a parent question (follow up questions).
      * 
      * @param parentQuestionId ID of the parent question.
-     * @returns List of questions
+     * @return List of questions
      * @throws SQLException If a database error occurs.
      */
     public List<Question> getFollowupQuestions(int parentQuestionId) throws SQLException {
@@ -1416,7 +1416,7 @@ public class DatabaseHelper {
      * @param title Title for the follow up question.
      * @param content Content of the follow up question.
      * @param askedBy Username of the user asking the question.
-     * @returns Generated keys
+     * @return Generated keys
      * @throws SQLException If a database error occurs.
      */
     public int createFollowupQuestion(int parentQuestionId, String title, String content, String askedBy) throws SQLException {
@@ -1442,7 +1442,7 @@ public class DatabaseHelper {
      * @param sender Username of the user sending the message.
      * @param messageType Type of private message (Question or Answer).
      * @param content Content of the private message.
-     * @returns Generated keys
+     * @return Generated keys
      * @throws SQLException If a database error occurs.
      */
     public int addPrivateMessage(int questionId, String to, String from, String messageType, String content) throws SQLException {
@@ -1466,7 +1466,7 @@ public class DatabaseHelper {
      * Gets a list of all private messages for a question.
      * 
      * @param questionID ID of the question to get private messages for.
-     * @returns List of private messages
+     * @return List of private messages
      * @throws SQLException If a database error occurs.
      */
     public List<PrivateMessage> getPrivateMessagesForQuestion(int questionId) throws SQLException {
@@ -1498,7 +1498,7 @@ public class DatabaseHelper {
      * 
      * @param questionId ID of the question to get unread count for.
      * @param askerUserName Username of the asker.
-     * @returns Number of unread private messages.
+     * @return Number of unread private messages.
      * @throws SQLException If a database error occurs.
      */
     public int getUnreadPrivateCountForAsker(int questionId, String askerUserName) throws SQLException {
@@ -1518,7 +1518,7 @@ public class DatabaseHelper {
      * 
      * @param questionId ID of the question to mark unread messages as read.
      * @param askerUserName Username of the asker.
-     * @returns Row count
+     * @return Row count
      * @throws SQLException If a database error occurs.
      */
     public int markPrivateMessagesReadByAsker(int questionId, String askerUserName) throws SQLException {
