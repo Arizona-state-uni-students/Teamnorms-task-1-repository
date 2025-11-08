@@ -66,12 +66,6 @@ public class WelcomeLoginPage {
             new StudentQAPage(databaseHelper, user).show(primaryStage);
         });
         
-        Button threadsButton = new Button("Student Threads");
-        threadsButton.setStyle("-fx-font-size: 14px; -fx-padding: 5 20; -fx-background-color: #4CAF50; -fx-text-fill: white;");
-        threadsButton.setOnAction(a -> {
-            new Threads(databaseHelper, user).show(primaryStage);
-        });
-        
         if (("user".equals(user.getRole().toLowerCase()))||"student".equals(user.getRole().toLowerCase())) {
             Button reviewerButton = new Button("You are not a star reviewer... Yet!");
             reviewerButton.setStyle("-fx-font-size: 14px; -fx-padding: 5 20; -fx-background-color: #ffdd00; -fx-text-fill: black;");
@@ -106,7 +100,6 @@ public class WelcomeLoginPage {
         grid.add(welcomeLabel, 0, 0);
         grid.add(userButton, 0, 2);
         grid.add(qaButton, 0, 3);     // ADD THIS LINE - Q&A button
-        grid.add(threadsButton, 0, 4);
         grid.add(logout, 0, 5);        // CHANGE from row 3 to row 4
         
         Scene welcomeScene = new Scene(grid, 800, 400);
