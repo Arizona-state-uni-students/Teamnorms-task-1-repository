@@ -17,6 +17,9 @@ public class QASystemTest {
     private static User testUser1;
     private static User testUser2;
 
+	/**
+     * This method sets up the database for use in testing.
+     */
     @BeforeAll
     static void setupDatabase() throws SQLException {
         db = new DatabaseHelper();
@@ -34,6 +37,9 @@ public class QASystemTest {
         }
     }
 
+	/**
+     * Closes the connection to the database.
+     */
     @AfterAll
     static void cleanup() {
         db.closeConnection();
@@ -515,6 +521,17 @@ public class QASystemTest {
     }
 
     // ========== Question List Tests ==========
+
+	/**
+     * <p>Test: Get all questions for user</p>
+     * <p>
+     * This test verifies that the correct questions are returned when getting a list 
+     * of question belonging to a user. This is verified checking that the list of questions 
+     * returned is at least 2 and that the askedBy value equals the user is should.
+     * </p>
+     * 
+     * @throws SQLException If a database error occurs.
+     */
     @Test
     @DisplayName("Test 22: Get all questions for user")
     void testGetAllQuestionsForUser() throws SQLException {
@@ -529,6 +546,16 @@ public class QASystemTest {
         assertTrue(allMatchUser, "All questions should belong to user1");
     }
 
+	/**
+     * <p>Test: Get unresolved questions only</p>
+     * <p>
+     * This test verifies that only unresolved questions are returned when searching for unresolved 
+     * questions. This is verified by checking the list that's returned for any questions where 
+     * isResolved is true, if there are none the test passes.
+     * </p>
+     * 
+     * @throws SQLException If a database error occurs.
+     */
     @Test
     @DisplayName("Test 23: Get unresolved questions only")
     void testGetUnresolvedQuestions() throws SQLException {
@@ -543,6 +570,17 @@ public class QASystemTest {
                    "All questions should be unresolved");
     }
 
+	/**
+     * <p>Test: Search questions by keyword</p>
+     * <p>
+     * This test verifies that when searching by keyword only results containing the keyword are shown.
+     * This is verified by checking the list that's returned for the desired keyword both in the 
+     * title and in the content. If there is any question returned that doesn't contain the keyword 
+     * the test fails, otherwise it succeeds.
+     * </p>
+     * 
+     * @throws SQLException If a database error occurs.
+     */
     @Test
     @DisplayName("Test 24: Search questions by keyword")
     void testSearchQuestions() throws SQLException {
@@ -560,6 +598,18 @@ public class QASystemTest {
             "Results should contain keyword");
     }
 
+	/**
+     * <p>Test: Mark question as resolved with specific answer</p>
+     * <p>
+     * This test verifies that a question can be marked as resolved and that a specific answer 
+     * can be marked as the answer that resolved the question. This is verified by checking that the 
+     * return value is true when marking a question as resolved and when reading the isResolved value.
+     * The test also checks that the correct answer id is retrieved from the question when reading the 
+     * questions resolvedAnswerId value.
+     * </p>
+     * 
+     * @throws SQLException If a database error occurs.
+     */
     @Test
     @DisplayName("Test 25: Mark question as resolved with specific answer")
     void testMarkQuestionResolved() throws SQLException {
