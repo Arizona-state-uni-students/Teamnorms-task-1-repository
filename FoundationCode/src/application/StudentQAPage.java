@@ -150,6 +150,12 @@ public class StudentQAPage {
     		//requirements: certain weights? total contributions? nice application? 
     		infoLabel.setText("you are not a reviewer. Would you like to be one? your current weight is: "+weight);
     	}
+    	//standard page
+    	loadReviewers();
+    	
+    	
+    	
+    	//add a list of reviewers and link to their questions
         VBox content = new VBox(5);
         content.setPadding(new Insets(8));
         content.setStyle("-fx-background-color: white;");
@@ -181,6 +187,17 @@ public class StudentQAPage {
         scrollPane.setFitToWidth(true);
         tab.setContent(scrollPane);
         return tab;
+    }
+    private void loadReviewers() {
+    	try {
+			List<User> reviewers = databaseHelper.getUsers_Role("Reviewer");
+			for(User r : reviewers) {
+				System.out.println(r.getUserName());
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
     }
     // ========== END REVIEWER REQUEST TAB =-=====
     // ========== CREATE QUESTION TAB ============
