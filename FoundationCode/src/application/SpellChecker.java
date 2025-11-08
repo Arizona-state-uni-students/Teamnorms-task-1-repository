@@ -8,7 +8,10 @@ import java.util.*;
  */
 public class SpellChecker {
     
-    // Common dictionary words (expand as needed)
+	/**
+	 * Common dictionary words
+	 * @return Set
+	 */
     private static final Set<String> DICTIONARY = new HashSet<>(Arrays.asList(
         // Common words
         "the", "be", "to", "of", "and", "a", "in", "that", "have", "i", "it", "for", "not", "on", "with",
@@ -32,7 +35,10 @@ public class SpellChecker {
         "getter", "setter", "override", "overload", "parameter", "argument", "scope", "access", "modifier"
     ));
     
-    // Common misspellings map
+    /**
+     * Common misspellings map
+     * @return Map
+     */
     private static final Map<String, String> COMMON_MISSPELLINGS = new HashMap<>();
     static {
         COMMON_MISSPELLINGS.put("recieve", "receive");

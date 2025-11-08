@@ -32,6 +32,10 @@ public class UserLoginPage {
         this.databaseHelper = databaseHelper;
     }
 
+    /**
+     * Displays the user login page in the primary stage. 
+     * @param primaryStage The primary stage where the scene will be displayed.
+     */
     public void show(Stage primaryStage) {
     	// Establish GUI Grid
     	GridPane grid = new GridPane();
@@ -180,7 +184,12 @@ public class UserLoginPage {
         primaryStage.show();                        // GUI Container
     }
     
-    // Forces the user to set a new permanent password, then returns them to Login.
+    /**
+     * Forces the user to set a new permanent password, then returns them to Login.
+     * 
+     * @param owner Stage to show user
+     * @param username Username of the user to reset password for.
+     */
     private void showForceResetDialog(Stage owner, String username) {
         Dialog<Void> dlg = new Dialog<>();
         dlg.setTitle("Change Password");

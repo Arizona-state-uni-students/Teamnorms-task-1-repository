@@ -62,7 +62,7 @@ public class Answer {
      * 
      * @param content String containing the contents of the answer.
      * @throws IllegalArgumentException If the content is invalid.
-     * @returns Answer contents if they are valid.
+     * @return Answer contents if they are valid.
      */
     public static String validateContent(String content) {
         if (content == null || content.trim().isEmpty()) {
@@ -104,7 +104,7 @@ public class Answer {
 
     /**
      * Gets the date and time the answer was created at.
-     * @returns createdAt.
+     * @return createdAt.
      */
     public LocalDateTime getCreatedAt() { return createdAt; }
 
@@ -152,7 +152,7 @@ public class Answer {
     // Utility methods
     /**
      * Gets the date and time the answer was created at but formatted.
-     * @returns createdAt.
+     * @return createdAt.
      */
     public String getFormattedDate() {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM dd, yyyy HH:mm");
@@ -161,7 +161,7 @@ public class Answer {
 
     /**
      * Gets answer details in a formatted form with id, answeredBy, and upvotes.
-     * @returns String with id, answeredBy, and upvotes.
+     * @return String with id, answeredBy, and upvotes.
      */
     @Override
     public String toString() {

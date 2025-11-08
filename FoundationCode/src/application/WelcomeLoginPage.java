@@ -29,6 +29,12 @@ public class WelcomeLoginPage {
     public WelcomeLoginPage(DatabaseHelper databaseHelper) {
         this.databaseHelper = databaseHelper;
     }
+    
+    /**
+     * Displays the welcome login page in the primary stage. 
+     * @param primaryStage The primary stage where the scene will be displayed.
+     * @param user User currently using the system.
+     */
     public void show(Stage primaryStage, User user) {
     	   
         // Establish GUI Grid
