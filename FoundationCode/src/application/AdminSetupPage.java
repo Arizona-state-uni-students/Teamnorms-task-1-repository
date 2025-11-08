@@ -28,6 +28,11 @@ public class AdminSetupPage {
     
     private final DatabaseHelper databaseHelper;
 
+	/**
+     * Method to display the Admin setup page.
+     * 
+     * @param databaseHelper Database Helper.
+     */
     public AdminSetupPage(DatabaseHelper databaseHelper) {
         this.databaseHelper = databaseHelper;
     }
@@ -221,7 +226,12 @@ public class AdminSetupPage {
         primaryStage.setTitle("Administrator Setup");
         primaryStage.show();
     }
-    // FSM for username validation
+    /**
+     * <p>Method that handles username validation</p>
+     * 
+     * @param input String to be validated.
+     * @param label Label to inform users whether the username is valid or not.
+     */
 	private void validateUsername(String input, Label label) {
 		//TODO: 
 		//		GUI elements to let user know password requirements/restrictions
@@ -250,7 +260,12 @@ public class AdminSetupPage {
 			}
 		}
 	}
-    // FSM for password validation
+    /**
+     * <p>Method that handles password validation</p>
+     * 
+     * @param input String to be validated.
+     * @param label Label to inform users whether the username is valid or not.
+     */
 	private void validatePassword(String input, Label label) {
 		//TODO: 
 		//		GUI elements to let user know password requirements/restrictions
@@ -282,4 +297,5 @@ public class AdminSetupPage {
 		}
 	}
 }
+
 

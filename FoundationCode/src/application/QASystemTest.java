@@ -17,6 +17,9 @@ public class QASystemTest {
     private static User testUser1;
     private static User testUser2;
 
+	/**
+     * This method sets up the database for use in testing.
+     */
     @BeforeAll
     static void setupDatabase() throws SQLException {
         db = new DatabaseHelper();
@@ -34,6 +37,9 @@ public class QASystemTest {
         }
     }
 
+	/**
+     * Closes the connection to the database.
+     */
     @AfterAll
     static void cleanup() {
         db.closeConnection();
@@ -69,12 +75,12 @@ public class QASystemTest {
     }
 
     /**
-     * Tests that a title shorter than 5 characters is rejected.
+     * <p>Tests that a title shorter than 5 characters is rejected.</p>
      * <p>
      * The {@link Question} constructor should throw Illegal Argument Exception
      * when the title length is invalid.
-     *
-     * @since 1.0
+     * </p>
+     * @throws IllegalArgumentException If the question constructor is passed an illegal argument.
      */
     @Test
     @DisplayName("Test 2: Create a question with invalid title (too short)")
@@ -85,11 +91,11 @@ public class QASystemTest {
     }
 
     /**
-     * Tests that a title longer than 200 characters is rejected.
+     * <p>Tests that a title longer than 200 characters is rejected.</p>
      * <p>
      * Constructs a 201-character title to trigger the length validation.
-     *
-     * @since 1.0
+     * </p>
+     * @throws IllegalArgumentException If the question constructor is passed an illegal argument.
      */
     @Test
     @DisplayName("Test 3: Create a question with invalid title (too long)")
@@ -101,12 +107,12 @@ public class QASystemTest {
     }
 
     /**
-     * Tests that an empty title is not allowed.
+     * <p>Tests that an empty title is not allowed.</p>
      * <p>
      * An empty string should trigger an Illegal Argument Exception
      * during question construction.
-     *
-     * @since 1.0
+     * </p>
+     * @throws IllegalArgumentException If the question constructor is passed an illegal argument.
      */
     @Test
     @DisplayName("Test 4: Create a question with empty title")
@@ -117,11 +123,11 @@ public class QASystemTest {
     }
 
     /**
-     * Tests that content shorter than 10 characters is rejected.
+     * <p>Tests that content shorter than 10 characters is rejected.</p>
      * <p>
      * Uses a 5-character content string to validate minimum length requirement.
-     *
-     * @since 1.0
+     * </p>
+     * @throws IllegalArgumentException If the question constructor is passed an illegal argument.
      */
     @Test
     @DisplayName("Test 5: Create a question with invalid content (too short)")
@@ -131,15 +137,31 @@ public class QASystemTest {
         }, "Should throw exception for content less than 10 characters");
     }
 
+	/**
+     * <p>Tests that content longer than 2000 characters is rejected.</p>
+     * <p>
+     * Generates a 2001 character long string and attempts to create a new Question, 
+     * should trigger an exception.
+     * </p>
+     * @throws IllegalArgumentException If the question constructor is passed an illegal argument.
+     */
     @Test
 	@DisplayName("Test 6: Create question with invalid content (too long)")
 	void testCreateQuestionInvalidContentTooLong() {
     String longContent = "A".repeat(2001);
     	assertThrows(IllegalArgumentException.class, () -> {
         	new Question("Valid Title", longContent, testUser1.getUserName());
-    }, 	"Should throw exception for content over 2000 characters");
-}
+    	}, 	"Should throw exception for content over 2000 characters");
+	}
 
+	/**
+     * <p>Tests that empty content is not allowed.</p>
+     * <p>
+     * An empty string should trigger an Illegal Argument Exception
+     * during question construction.
+     * </p>
+     * @throws IllegalArgumentException If the question constructor is passed an illegal argument.
+     */
     @Test
     @DisplayName("Test 7: Create question with empty content")
     void testCreateQuestionEmptyContent() {
@@ -148,6 +170,14 @@ public class QASystemTest {
         }, "Should throw exception for empty content");
     }
 
+	/**
+     * <p>Tests that a question can be read by its id.</p>
+     * <p>
+     * Creates a question then retrieves it by its id. Verifies that the question was successfully read by 
+     * comparing actual and expected values.
+     * </p>
+     * @throws SQLException If database error occurs.
+     */
     @Test
     @DisplayName("Test 8: Read question by ID")
     void testReadQuestionById() throws SQLException {
@@ -163,6 +193,13 @@ public class QASystemTest {
         assertEquals(q.getContent(), retrieved.getContent(), "Content should match");
     }
 
+	/**
+     * <p>Tests that attempting to read a question that doesn't exist returns null.</p>
+     * <p>
+     * Verifies that the return value is null when reading a question that doesn't exist.
+     * </p>
+     * @throws SQLException If database error occurs.
+     */
     @Test
     @DisplayName("Test 9: Read non-existent question")
     void testReadNonExistentQuestion() throws SQLException {
@@ -170,6 +207,14 @@ public class QASystemTest {
         assertNull(retrieved, "Should return null for non-existent question");
     }
 
+	/**
+     * <p>Tests that a question title and content can be updated.</p>
+     * <p>
+     * This test creates a question then attempts to update its title and its content. The updates 
+     * are verified by checking that the actual values match their expected values.
+     * </p>
+     * @throws SQLException If database error occurs.
+     */
     @Test
     @DisplayName("Test 10: Update question title and content")
     void testUpdateQuestion() throws SQLException {
@@ -188,6 +233,14 @@ public class QASystemTest {
         assertEquals("Updated content with more details", retrieved.getContent(), "Content should be updated");
     }
 
+	/**
+     * <p>Test: Update question with invalid title.</p>
+     * <p>
+     * Verifies that an IllegalArgumentException is thrown when attempting to update a question with an invalid title.
+     * </p>
+     * @throws SQLException If database error occurs.
+     * @throws IllegalArgumentException If the question constructor is passed an illegal argument.
+     */
     @Test
     @DisplayName("Test 11: Update question with invalid title")
     void testUpdateQuestionInvalidTitle() throws SQLException {
@@ -202,6 +255,15 @@ public class QASystemTest {
         }, "Should throw exception when updating to invalid title");
     }
 
+	/**
+     * <p> Test: Delete question </p>
+     * <p> 
+     * This test verifies that a question can be deleted. This is verified by checking that the database method returns true 
+     * and that the question id no longer exists after deletion.
+     * </p>
+     * 
+     * @throws SQLException If a database error occurs
+     */
     @Test
     @DisplayName("Test 12: Delete question")
     void testDeleteQuestion() throws SQLException {
@@ -217,6 +279,16 @@ public class QASystemTest {
         assertNull(retrieved, "Deleted question should not exist");
     }
 
+	/**
+     * <p> Test: Delete question by wrong user </p>
+     * <p> 
+     * This test verifies that a question can only be deleted by the user who posted it. This is verified by checking that the 
+     * database method returns false when another user attempts to delete the question. The question id is also checked to make 
+     * sure it still exists.
+     * </p>
+     * 
+     * @throws SQLException If a database error occurs
+     */
     @Test
     @DisplayName("Test 13: Delete question by wrong user")
     void testDeleteQuestionByWrongUser() throws SQLException {
@@ -356,6 +428,16 @@ public class QASystemTest {
         assertEquals(2, answers.size(), "Should have 2 answers");
     }
 
+	/**
+     * <p> Test: Update answer content </p>
+     * <p> 
+     * This test verifies that the content of an answer can be changed after the creation of the answer. 
+     * This is verified by checking that the database method returns true, and checking that the actual content 
+     * of the answer after updating it matches the expected.
+     * </p>
+     * 
+     * @throws SQLException If a database error occurs
+     */
     @Test
     @DisplayName("Test 19: Update answer content")
     void testUpdateAnswer() throws SQLException {
@@ -379,6 +461,15 @@ public class QASystemTest {
         assertEquals("Updated answer content with more details", retrieved.getContent(), "Content should be updated");
     }
 
+	/**
+     * <p> Test: Delete answer </p>
+     * <p> 
+     * This test verifies that an answer can be deleted. This is verified by checking that the database method returns true 
+     * and that the answer id no longer exists after deletion.
+     * </p>
+     * 
+     * @throws SQLException If a database error occurs
+     */
     @Test
     @DisplayName("Test 20: Delete answer")
     void testDeleteAnswer() throws SQLException {
@@ -397,6 +488,15 @@ public class QASystemTest {
         assertFalse(exists, "Deleted answer should not exist");
     }
 
+	/**
+     * <p> Test: Mark answer as read </p>
+     * <p> 
+     * This test verifies that an answer can be marked as read. This is verified by checking that the database method 
+     * returns true and that after updating isRead its value equals true.
+     * </p>
+     * 
+     * @throws SQLException If a database error occurs
+     */
     @Test
     @DisplayName("Test 21: Mark answer as read")
     void testMarkAnswerAsRead() throws SQLException {
@@ -421,8 +521,19 @@ public class QASystemTest {
     }
 
     // ========== Question List Tests ==========
+
+	/**
+     * <p>Test: Get all questions for user</p>
+     * <p>
+     * This test verifies that the correct questions are returned when getting a list 
+     * of question belonging to a user. This is verified checking that the list of questions 
+     * returned is at least 2 and that the askedBy value equals the user is should.
+     * </p>
+     * 
+     * @throws SQLException If a database error occurs.
+     */
     @Test
-    @DisplayName("Test 23: Get all questions for user")
+    @DisplayName("Test 22: Get all questions for user")
     void testGetAllQuestionsForUser() throws SQLException {
         Question q1 = new Question("User1 Q1", "Content 1 here", testUser1.getUserName());
         Question q2 = new Question("User1 Q2", "Content 2 here", testUser1.getUserName());
@@ -435,8 +546,18 @@ public class QASystemTest {
         assertTrue(allMatchUser, "All questions should belong to user1");
     }
 
+	/**
+     * <p>Test: Get unresolved questions only</p>
+     * <p>
+     * This test verifies that only unresolved questions are returned when searching for unresolved 
+     * questions. This is verified by checking the list that's returned for any questions where 
+     * isResolved is true, if there are none the test passes.
+     * </p>
+     * 
+     * @throws SQLException If a database error occurs.
+     */
     @Test
-    @DisplayName("Test 24: Get unresolved questions only")
+    @DisplayName("Test 23: Get unresolved questions only")
     void testGetUnresolvedQuestions() throws SQLException {
         Question q = new Question(
             "Unresolved Question",
@@ -449,8 +570,19 @@ public class QASystemTest {
                    "All questions should be unresolved");
     }
 
+	/**
+     * <p>Test: Search questions by keyword</p>
+     * <p>
+     * This test verifies that when searching by keyword only results containing the keyword are shown.
+     * This is verified by checking the list that's returned for the desired keyword both in the 
+     * title and in the content. If there is any question returned that doesn't contain the keyword 
+     * the test fails, otherwise it succeeds.
+     * </p>
+     * 
+     * @throws SQLException If a database error occurs.
+     */
     @Test
-    @DisplayName("Test 25: Search questions by keyword")
+    @DisplayName("Test 24: Search questions by keyword")
     void testSearchQuestions() throws SQLException {
         Question q = new Question(
             "How to use recursion in Java?",
@@ -466,8 +598,20 @@ public class QASystemTest {
             "Results should contain keyword");
     }
 
+	/**
+     * <p>Test: Mark question as resolved with specific answer</p>
+     * <p>
+     * This test verifies that a question can be marked as resolved and that a specific answer 
+     * can be marked as the answer that resolved the question. This is verified by checking that the 
+     * return value is true when marking a question as resolved and when reading the isResolved value.
+     * The test also checks that the correct answer id is retrieved from the question when reading the 
+     * questions resolvedAnswerId value.
+     * </p>
+     * 
+     * @throws SQLException If a database error occurs.
+     */
     @Test
-    @DisplayName("Test 26: Mark question as resolved with specific answer")
+    @DisplayName("Test 25: Mark question as resolved with specific answer")
     void testMarkQuestionResolved() throws SQLException {
         Question q = new Question(
             "Question to Resolve",
@@ -495,7 +639,7 @@ public class QASystemTest {
          * @throws SQLException if a database access error occurs.
          */
         @Test
-        @DisplayName("Test 27: Count unread answers for question owner")
+        @DisplayName("Test 26: Count unread answers for question owner")
         void testUnreadAnswerCount() throws SQLException {
             Question q = new Question(
                 "Question with Unread Answers",
@@ -527,7 +671,7 @@ public class QASystemTest {
          * @throws SQLException if a database access error occurs.
          */
         @Test
-        @DisplayName("Test 28: Question deletion cascades to answers")
+        @DisplayName("Test 27: Question deletion cascades to answers")
         void testQuestionDeletionCascade() throws SQLException {
             Question q = new Question(
                 "Question to Delete with Answers",
@@ -549,7 +693,7 @@ public class QASystemTest {
          * This tests the question's input validation, for null title.
          */
         @Test
-        @DisplayName("Test 29: Question validation - null title")
+        @DisplayName("Test 28: Question validation - null title")
         void testQuestionValidationNullTitle() {
             assertThrows(IllegalArgumentException.class, () -> {
                 new Question(null, "Valid content here", testUser1.getUserName());
@@ -563,7 +707,7 @@ public class QASystemTest {
          * This tests the answer's input validation, for null content.
          */
         @Test
-        @DisplayName("Test 30: Answer validation - null content")
+        @DisplayName("Test 29: Answer validation - null content")
         void testAnswerValidationNullContent() {
             assertThrows(IllegalArgumentException.class, () -> {
                 new Answer(1, null, testUser1.getUserName());
@@ -584,7 +728,7 @@ public class QASystemTest {
          * @throws SQLException if a database access error occurs.
          */
         @Test
-        @DisplayName("Test 31: Close question without specifying answer")
+        @DisplayName("Test 30: Close question without specifying answer")
         void testCloseQuestion() throws SQLException {
             Question q = new Question(
                 "Question to Close",

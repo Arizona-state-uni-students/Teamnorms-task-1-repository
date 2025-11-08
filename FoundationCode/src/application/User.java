@@ -15,7 +15,13 @@ public class User {
     private String lastName;
     private int weight;
 
-    // Constructor for minimal user creation
+    /**
+     * Constructor for minimal user creation
+     * 
+     * @param userName String to set userName to.
+     * @param password String to set password to.
+     * @param role String of the user role.
+     */
     public User(String userName, String password, String role) {
         this.userName = userName;
         this.password = password;
@@ -27,7 +33,18 @@ public class User {
         this.weight = 0;
     }
 
-    // Constructor for full user creation
+    /**
+     * Constructor for full user creation.
+     * 
+     * @param userName String to set userName to.
+     * @param email String to set email to.
+     * @param password String to set password to.
+     * @param role String of the user role.
+     * @param firstName String to set firstName to.
+     * @param lastName String to set lastName to.
+     * @param middleInitial String to set middleInitial to.
+     * @param weight int representing user privilege weight.
+     */
     public User(String userName, String email, String password, String role, 
                 String firstName, String lastName, String middleInitial, int weight) {
         this.userName = userName;
@@ -41,50 +58,110 @@ public class User {
     }
 
     // Getters and setters
+    /**
+     * Gets the user's userName.
+     * 
+     * @return userName
+     */
     public String getUserName() {
         return userName;
     }
-
+    
+    /**
+     * Sets the user's userName.
+     * 
+     * @param userName String of what to set userName to.
+     */
     public void setUserName(String userName) {
         this.userName = userName;
     }
 
+    /**
+     * Gets the user's email.
+     * 
+     * @return email
+     */
     public String getEmail() {
         return email;
     }
 
+    /**
+     * Sets the user's email.
+     * 
+     * @param email String of what to set email to.
+     */
     public void setEmail(String email) {
         this.email = email != null ? email : "";
     }
 
+    /**
+     * Gets the user's middle initial.
+     * 
+     * @return middleInitial
+     */
     public String getMiddleInitial() {
         return middleInitial;
     }
 
+    /**
+     * Sets the user's middle initial.
+     * 
+     * @param middleInitial String of what to set middleInitial to.
+     */
     public void setMiddleInitial(String middleInitial) {
         this.middleInitial = middleInitial != null ? middleInitial : "";
     }
 
+    /**
+     * Gets the user's password.
+     * 
+     * @return password
+     */
     public String getPassword() {
         return password;
     }
 
+    /**
+     * Sets the user's password.
+     * 
+     * @param password String of what to set password to.
+     */
     public void setPassword(String password) {
         this.password = password;
     }
 
+    /**
+     * Gets the user's role.
+     * 
+     * @return role
+     */
     public String getRole() {
         return role;
     }
 
+    /**
+     * Sets the user's role.
+     * 
+     * @param role String of what to set role to.
+     */
     public void setRole(String role) {
         this.role = role;
     }
 
+    /**
+     * Sets the user's privileges.
+     * 
+     * @param privileges int representing user privilege weight.
+     */
     public void setPrivileges(int privileges) {
         this.privileges = privileges;
     }
-
+    
+    /**
+     * Get the weight of the users permissions from the 'role' description.
+     * 
+     * @return int representing user privilege weight.
+     */
     public int getPrivileges() {
         switch (role) {
             case "user":
@@ -104,27 +181,58 @@ public class User {
         }
     }
 
+    /**
+     * Gets the user's first name.
+     * 
+     * @return firstName
+     */
     public String getFirstName() {
         return firstName;
     }
 
+    /**
+     * Sets the user's first name.
+     * 
+     * @param firstName String of what to set firstName to.
+     */
     public void setFirstName(String firstName) {
         this.firstName = firstName != null ? firstName : "";
     }
 
+    /**
+     * Gets the user's last name.
+     * 
+     * @return lastName
+     */
     public String getLastName() {
         return lastName;
     }
 
+    /**
+     * Sets the user's last name.
+     * 
+     * @param lastName String of what to set lastName to.
+     */
     public void setLastName(String lastName) {
         this.lastName = lastName != null ? lastName : "";
     }
 
+    /**
+     * Gets the user's privilege weight.
+     * 
+     * @return weight
+     */
     public int getWeight() {
         return weight;
     }
 
+    /**
+     * Sets the user's privilege weight.
+     * 
+     * @param weight int to set weight to.
+     */
     public void setWeight(int weight) {
         this.weight = weight;
     }
+
 }

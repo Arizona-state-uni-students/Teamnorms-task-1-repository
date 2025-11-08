@@ -18,8 +18,14 @@ public class Answer {
     // Constants for validation
     public static final int CONTENT_MIN_LENGTH = 5;
     public static final int CONTENT_MAX_LENGTH = 500;  // CHANGED FROM 2000
-    
-    // Constructor for new answers
+
+    /**
+     * Constructor to create a new Answer for a question.
+     * 
+     * @param questionId ID of the question the answer will be attached to.
+     * @param content String containing the contents of the answer.
+     * @param answeredBy String containing the username of the person posting the answer.
+     */
     public Answer(int questionId, String content, String answeredBy) {
         this.questionId = questionId;
         this.content = validateContent(content);
@@ -29,7 +35,17 @@ public class Answer {
         this.upvotes = 0;
     }
     
-    // Constructor for loading from database
+    /**
+     * Constructor for loading an Answer from the database.
+     * 
+     * @param id ID of the answer.
+     * @param questionId ID of the question the answer is attached to.
+     * @param content String containing the contents of the answer.
+     * @param answeredBy String containing the username of the person posting the answer.
+     * @param createdAt Time and date the answer was created.
+     * @param isRead Boolean of whether the answer is read or not.
+     * @param upvotes Number of upvotes the answer has received.
+     */
     public Answer(int id, int questionId, String content, String answeredBy, 
                   LocalDateTime createdAt, boolean isRead, int upvotes) {
         this.id = id;
@@ -41,7 +57,13 @@ public class Answer {
         this.upvotes = upvotes;
     }
     
-    // Validation
+    /**
+     * Method to validate the contents of an answer.
+     * 
+     * @param content String containing the contents of the answer.
+     * @throws IllegalArgumentException If the content is invalid.
+     * @returns Answer contents if they are valid.
+     */
     public static String validateContent(String content) {
         if (content == null || content.trim().isEmpty()) {
             throw new IllegalArgumentException("Answer content cannot be empty");
@@ -56,38 +78,96 @@ public class Answer {
     }
     
     // Getters
+    /**
+     * Gets the answers ID.
+     * @return id.
+     */
     public int getId() { return id; }
+
+     /**
+     * Gets the question ID.
+     * @return questionId.
+     */
     public int getQuestionId() { return questionId; }
+
+    /**
+     * Gets the answers content.
+     * @return content.
+     */
     public String getContent() { return content; }
+
+    /**
+     * Gets answeredBy.
+     * @return answeredBy.
+     */
     public String getAnsweredBy() { return answeredBy; }
+
+    /**
+     * Gets the date and time the answer was created at.
+     * @returns createdAt.
+     */
     public LocalDateTime getCreatedAt() { return createdAt; }
+
+    /**
+     * Gets the value of isRead.
+     * @return isRead.
+     */
     public boolean isRead() { return isRead; }
+
+    /**
+     * Gets the number of upvotes.
+     * @return upvotes.
+     */
     public int getUpvotes() { return upvotes; }
     
     // Setters
+    /**
+     * Sets the answer ID.
+     * @param id Int to set ID to.
+     */
     public void setId(int id) { this.id = id; }
-    
+
+    /**
+     * Sets the answers content.
+     * @param content String of what to set the content to.
+     */
     public void setContent(String content) {
         this.content = validateContent(content);
     }
-    
+
+    /**
+     * Sets the value of isRead to true.
+     */
     public void markAsRead() {
         this.isRead = true;
     }
-    
+
+    /**
+     * Increments the value of upvotes.
+     */
     public void incrementUpvotes() {
         this.upvotes++;
     }
     
     // Utility methods
+    /**
+     * Gets the date and time the answer was created at but formatted.
+     * @returns createdAt.
+     */
     public String getFormattedDate() {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM dd, yyyy HH:mm");
         return createdAt.format(formatter);
     }
-    
+
+    /**
+     * Gets answer details in a formatted form with id, answeredBy, and upvotes.
+     * @returns String with id, answeredBy, and upvotes.
+     */
     @Override
     public String toString() {
         return String.format("Answer #%d by %s (%d upvotes)", 
             id, answeredBy, upvotes);
     }
+
 }
+
