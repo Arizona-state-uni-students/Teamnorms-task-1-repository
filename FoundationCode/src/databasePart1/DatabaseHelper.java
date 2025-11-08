@@ -21,7 +21,11 @@ public class DatabaseHelper {
     static final String PASS = ""; 
     private Connection connection = null;
     private Statement statement = null; 
-
+    
+    /**
+     * Method to connect to database
+     * @throws SQLException If a database error occurs.
+     */
     public void connectToDatabase() throws SQLException {
         try {
             Class.forName(JDBC_DRIVER);
@@ -38,6 +42,10 @@ public class DatabaseHelper {
         }
     }
     
+    /**
+     * Method to ensure connection to database.
+     * @throws SQLException If a database error occurs.
+     */
     private void ensureConnected() throws SQLException {
         if (connection == null || connection.isClosed()) {
             connectToDatabase();
@@ -47,6 +55,10 @@ public class DatabaseHelper {
         }
     }
 
+    /**
+     * Create user table and invitation code table.
+     * @throws SQLException If a database error occurs.
+     */
     private void createTables() throws SQLException {
         String userTable = "CREATE TABLE IF NOT EXISTS cse360users ("
                 + "id INT AUTO_INCREMENT PRIMARY KEY, "
@@ -67,7 +79,12 @@ public class DatabaseHelper {
                 + "expiresAt TIMESTAMP)";
         statement.execute(invitationCodesTable);
     }
-
+    
+    /**
+     * Check if the database is empty.
+     * @returns True or False
+     * @throws SQLException If a database error occurs.
+     */
     public boolean isDatabaseEmpty() throws SQLException {
         ensureConnected();
         final String sql = "SELECT COUNT(*) AS count FROM cse360users";
@@ -78,6 +95,12 @@ public class DatabaseHelper {
         return true;
     }
 
+    /**
+     * Register new user into database user table.
+     * 
+     * @param user User to add into database.
+     * @throws SQLException If a database error occurs.
+     */
     public void register(User user) throws SQLException {
         String insertUser = "INSERT INTO cse360users (userName, email, middleInitial, password, role) VALUES (?, ?, ?, ?, ?)";
         try (PreparedStatement pstmt = connection.prepareStatement(insertUser)) {
@@ -98,6 +121,14 @@ public class DatabaseHelper {
         }
     }
 
+    /**
+     * Updates a user's email in the database.
+     * 
+     * @param username Username of the user to change the email for.
+     * @param newEmail String to set the email to.
+     * @returns True or False based on function success.
+     * @throws SQLException If a database error occurs.
+     */
     public boolean updateUserEmail(String username, String newEmail) throws SQLException {
         String sql = "UPDATE cse360users SET email = ? WHERE userName = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
@@ -112,6 +143,13 @@ public class DatabaseHelper {
         }
     }
 
+    /**
+     * Log user into the system.
+     * 
+     * @param user User logging in.
+     * @returns True or False based on function success.
+     * @throws SQLException If a database error occurs.
+     */
     public boolean login(User user) throws SQLException {
         String query = "SELECT * FROM cse360users WHERE userName = ? AND password = ? AND role = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(query)) {
@@ -133,6 +171,12 @@ public class DatabaseHelper {
         }
     }
 
+    /**
+     * Checks if an Admin exists in the database.
+     * 
+     * @returns True or False based on function success.
+     * @throws SQLException If a database error occurs.
+     */
     public boolean doesAdminExist() throws SQLException {
         String query = "SELECT COUNT(*) AS count FROM cse360users WHERE role = 'admin'";
         ResultSet resultSet = statement.executeQuery(query);
@@ -141,7 +185,13 @@ public class DatabaseHelper {
         }
         return false;
     }
-
+    
+    /**
+     * Checks whether a certain user exists.
+     * 
+     * @param userName Username to check existence of.
+     * @returns True or False based on function success.
+     */
     public boolean doesUserExist(String userName) {
         String query = "SELECT COUNT(*) FROM cse360users WHERE userName = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(query)) {
@@ -155,7 +205,13 @@ public class DatabaseHelper {
         }
         return false;
     }
-
+    
+    /**
+     * Gets a list of all users in the database.
+     * 
+     * @returns List of Users
+     * @throws SQLException If a database error occurs.
+     */
     public List<User> getAllUsers() throws SQLException {
         List<User> users = new ArrayList<>();
         String sql = "SELECT username, email, middleInitial, role, password, weight FROM cse360users ORDER BY role";
@@ -179,6 +235,14 @@ public class DatabaseHelper {
         return users;
     }
 
+    /**
+     * Updates the middle initial of a user in the database.
+     * 
+     * @param username Username to set middleInitial for.
+     * @param newMiddleInitial String to set middleInitial to.
+     * @returns True or False based on function success.
+     * @throws SQLException If a database error occurs.
+     */
     public boolean updateUserMiddleInitial(String username, String newMiddleInitial) throws SQLException {
         String sql = "UPDATE cse360users SET middleInitial = ? WHERE userName = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
@@ -197,6 +261,12 @@ public class DatabaseHelper {
         }
     }
 
+    /**
+     * Gets the role of a user in the database.
+     * 
+     * @returns Role value
+     * @param userName Username to get the role of.
+     */
     public String getUserRole(String userName) {
         String query = "SELECT role FROM cse360users WHERE userName = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(query)) {
@@ -210,7 +280,14 @@ public class DatabaseHelper {
         }
         return null;
     }
-
+    
+    /**
+     * Deletes a user from the database.
+     * 
+     * @param username Username of the user to delete.
+     * @returns True or False based on function success.
+     * @throws SQLException If a database error occurs.
+     */
     public boolean deleteUser(String username) throws SQLException {
         if (isLastAdmin(username)) {
             System.err.println("Cannot delete the last admin user!");
@@ -223,7 +300,14 @@ public class DatabaseHelper {
             return rowsAffected > 0;
         }
     }
-
+    
+    /**
+     * Checks whether a user is the last admin in the database.
+     * 
+     * @param username Username to check.
+     * @returns True or False based on function success.
+     * @throws SQLException If a database error occurs.
+     */
     private boolean isLastAdmin(String username) throws SQLException {
         String roleQuery = "SELECT role FROM cse360users WHERE userName = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(roleQuery)) {
@@ -243,6 +327,12 @@ public class DatabaseHelper {
         return false;
     }
 
+    /**
+     * Gets the number of users currently in the database.
+     * 
+     * @returns Number of users in database.
+     * @throws SQLException If a database error occurs.
+     */
     public int getUserCount() throws SQLException {
         String sql = "SELECT COUNT(*) AS count FROM cse360users";
         try (PreparedStatement ps = connection.prepareStatement(sql);
@@ -253,7 +343,14 @@ public class DatabaseHelper {
         }
         return 0;
     }
-
+    
+    /**
+     * Gets user information by username.
+     * 
+     * @param username Username to retrieve info for.
+     * @returns User information.
+     * @throws SQLException If a database error occurs.
+     */
     public Optional<User> getUserByUsername(String username) throws SQLException {
         String sql = "SELECT username, role, password FROM cse360users WHERE username = ?";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
@@ -275,7 +372,15 @@ public class DatabaseHelper {
         }
         return Optional.empty();
     }
-
+    
+    /**
+     * Updates the password of a user in the database.
+     * 
+     * @param username Username of the user to update information for.
+     * @param newPassword String to update the password to.
+     * @returns True or False based on function success.
+     * @throws SQLException If a database error occurs.
+     */
     public boolean updateUserPassword(String username, String newPassword) throws SQLException {
         String sql = "UPDATE cse360users SET password = ? WHERE userName = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
@@ -286,6 +391,14 @@ public class DatabaseHelper {
         }
     }
 
+    /**
+     * Sets a one time password for a user without an expiration time.
+     * 
+     * @param username Username of the user to set the one time password for.
+     * @param otp String of the one time password.
+     * @returns True or False based on function success.
+     * @throws SQLException If a database error occurs.
+     */
     public boolean setOtp(String username, String otp) throws SQLException {
         String sql = "UPDATE cse360users SET otp = ?, otpIsUsed = FALSE, otpExpiresAt = NULL WHERE userName = ?";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
@@ -294,7 +407,16 @@ public class DatabaseHelper {
             return ps.executeUpdate() > 0;
         }
     }
-
+    
+    /**
+     * Sets a one time password for a user with an expiration time.
+     * 
+     * @param username Username of the user to set the one time password for.
+     * @param otp String of the one time password.
+     * @param ttlMinutes Time in minutes until the otp expires.
+     * @returns True or False based on function success.
+     * @throws SQLException If a database error occurs.
+     */
     public boolean setOtp(String username, String otp, int ttlMinutes) throws SQLException {
         String sql = "UPDATE cse360users SET otp = ?, otpIsUsed = FALSE, otpExpiresAt = ? WHERE userName = ?";
         java.sql.Timestamp expiresAt = new java.sql.Timestamp(System.currentTimeMillis() + ttlMinutes * 60L * 1000L);
@@ -306,6 +428,14 @@ public class DatabaseHelper {
         }
     }
 
+    /**
+     * Checks whether the one time password is valid.
+     * 
+     * @param username Username of the user with an otp to check.
+     * @param otp String of the one time password.
+     * @returns True or False based on function success.
+     * @throws SQLException If a database error occurs.
+     */
     public boolean isOtpValid(String username, String otp) throws SQLException {
         String q = "SELECT 1 FROM cse360users " +
                    "WHERE userName = ? AND otp = ? " +
@@ -320,6 +450,13 @@ public class DatabaseHelper {
         }
     }
 
+    /**
+     * Marks the one time password as used.
+     * 
+     * @param username Username of the user with an otp to use.
+     * @returns True or False based on function success.
+     * @throws SQLException If a database error occurs.
+     */
     public boolean consumeOtp(String username) throws SQLException {
         String q = "UPDATE cse360users SET otp = NULL, otpIsUsed = TRUE, otpExpiresAt = NULL WHERE userName = ?";
         try (PreparedStatement ps = connection.prepareStatement(q)) {
@@ -328,6 +465,12 @@ public class DatabaseHelper {
         }
     }
 
+    /**
+     * Removes expired one time passwords from the database.
+     * 
+     * @returns The row count
+     * @throws SQLException If a database error occurs.
+     */
     public int purgeExpiredOtps() throws SQLException {
         String q = "UPDATE cse360users SET otp = NULL, otpIsUsed = TRUE WHERE otpExpiresAt IS NOT NULL AND otpExpiresAt <= CURRENT_TIMESTAMP";
         try (PreparedStatement ps = connection.prepareStatement(q)) {
@@ -335,6 +478,14 @@ public class DatabaseHelper {
         }
     }
 
+    /**
+     * Resets a user's password in the database.
+     * 
+     * @param username Username of the user to reset the password for.
+     * @param newPassword String to update the password to.
+     * @returns True or False based on function success.
+     * @throws SQLException If a database error occurs.
+     */
     public boolean resetUserPassword(String username, String newPassword) throws SQLException {
         String sql = "UPDATE cse360users SET password = ? WHERE userName = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
@@ -345,6 +496,14 @@ public class DatabaseHelper {
         }
     }
 
+    /**
+     * Updates the role of a user in the database.
+     * 
+     * @param username Username of the user to update role for.
+     * @param newRole String of role to update to.
+     * @returns True or False based on function success.
+     * @throws SQLException If a database error occurs.
+     */
     public boolean updateUserRole(String username, String newRole) throws SQLException {
         if (isLastAdmin(username) && !"admin".equals(newRole)) {
             System.err.println("Cannot remove admin role from the last admin!");
@@ -359,10 +518,21 @@ public class DatabaseHelper {
         }
     }
 
+    /**
+     * Generates an invitation code
+     * 
+     * @returns Invitation code.
+     */
     public String generateInvitationCode() {
         return generateInvitationCode(0);
     }
-
+    
+    /**
+     * Generates an invitation code.
+     * 
+     * @param ttlMinutes Time in minutes until invitation code expires.
+     * @returns Invitation code.
+     */
     public String generateInvitationCode(int ttlMinutes) {
         String code = java.util.UUID.randomUUID().toString().substring(0, 4);
         String sql = "INSERT INTO InvitationCodes (code, isUsed, expiresAt) VALUES (?, FALSE, ?)";
@@ -380,6 +550,12 @@ public class DatabaseHelper {
         return code;
     }
 
+    /**
+     * Validates an invitation code.
+     * 
+     * @param code String of the invitation code.
+     * @returns True or False
+     */
     public boolean validateInvitationCode(String code) {
         String q = "SELECT 1 FROM InvitationCodes " +
                    "WHERE code = ? AND isUsed = FALSE " +
@@ -398,13 +574,24 @@ public class DatabaseHelper {
         return false;
     }
 
+    /**
+     * Removes expired invitation code from the database.
+     * 
+     * @returns The row count
+     * @throws SQLException If a database error occurs.
+     */
     public int purgeExpiredInvitationCodes() throws SQLException {
         String q = "UPDATE InvitationCodes SET isUsed = TRUE WHERE expiresAt IS NOT NULL AND expiresAt <= CURRENT_TIMESTAMP AND isUsed = FALSE";
         try (PreparedStatement ps = connection.prepareStatement(q)) {
             return ps.executeUpdate();
         }
     }
-
+    
+    /**
+     * Marks an invitation code as used.
+     * 
+     * @param code String of the invitation code.
+     */
     private void markInvitationCodeAsUsed(String code) {
         String query = "UPDATE InvitationCodes SET isUsed = TRUE WHERE code = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(query)) {
@@ -416,7 +603,14 @@ public class DatabaseHelper {
     }
 
 
-    // Update hasRequest
+    /**
+     * Updates the value of hasRequest.
+     * 
+     * @param username Username of the user.
+     * @param tf Boolean value to update to.
+     * @returns True or False based on function success.
+     * @throws SQLException If a database error occurs.
+     */
     public boolean updateHasRequest(String username, Boolean tf) throws SQLException {
         String sql = "UPDATE cse360users SET hasRequest = ? WHERE userName = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
@@ -427,7 +621,12 @@ public class DatabaseHelper {
         }
     }
     
-    // Get list of users who have a pending request
+    /**
+     * Gets a list of users who have a pending request.
+     * 
+     * @returns List of users where hasRequest is true.
+     * @throws SQLException If a database error occurs.
+     */
     public List<User> getUsersWithRequest() throws SQLException {
     	List<User> users = new ArrayList<>();
         String sql = "SELECT * FROM cse360users WHERE hasRequest = ?";
@@ -447,6 +646,9 @@ public class DatabaseHelper {
         return users;
     }
     
+    /**
+     * Updates the database schema.
+     */
     public void updateDatabaseSchema() {
         try {
             DatabaseMetaData meta = connection.getMetaData();
@@ -516,6 +718,11 @@ public class DatabaseHelper {
         }
     }
 
+    /**
+     * Creates tables in database for questions, answers, and private messages.
+     * 
+     * @throws SQLException If a database error occurs.
+     */
     private void createQATables() throws SQLException {
         String questionsTable = "CREATE TABLE IF NOT EXISTS questions ("
                 + "id INT AUTO_INCREMENT PRIMARY KEY, "
@@ -551,6 +758,13 @@ public class DatabaseHelper {
         statement.execute(privateMessagesTable);
     }
 
+    /**
+     * Creates a new question in the database.
+     * 
+     * @param question Question to add into database.
+     * @returns Question Id
+     * @throws SQLException If a database error occurs.
+     */
     public int createQuestion(Question question) throws SQLException {
         String sql = "INSERT INTO questions (title, content, askedBy, createdAt) VALUES (?, ?, ?, ?)";
         try (PreparedStatement pstmt = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -574,6 +788,13 @@ public class DatabaseHelper {
         }
     }
 
+    /**
+     * Gets a question by its ID.
+     * 
+     * @param id Question id of question to retrieve.
+     * @returns Question
+     * @throws SQLException If a database error occurs.
+     */
     public Question getQuestionById(int id) throws SQLException {
         String sql = "SELECT * FROM questions WHERE id = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
@@ -599,7 +820,13 @@ public class DatabaseHelper {
 
     
     
-    // Get all questions restricted by user
+    /**
+     * Gets all questions by a specific user.
+     * 
+     * @param username String of username of user to retrieve questions from.
+     * @returns List of questions
+     * @throws SQLException If a database error occurs.
+     */
     public List<Question> getAllQuestions(String username) throws SQLException {
         List<Question> questions = new ArrayList<>();
         String sql = username == null ? 
@@ -628,7 +855,7 @@ public class DatabaseHelper {
         return questions;
     }
     
-    // Filters for future implementation
+    /** Filters for future implementation */
     public static class QuestionFilter {
         private String askedBy;                 // optional
         private Boolean isResolved;             // optional
@@ -636,18 +863,56 @@ public class DatabaseHelper {
         private LocalDateTime createdBefore;    // optional
 
         // --- Getters ---
+        /**
+         * Gets askedBy
+         * @returns askedBy
+         */
         public String getAskedBy() { return askedBy; }
+        /**
+         * Gets isResolved
+         * @returns isResolved
+         */
         public Boolean getIsResolved() { return isResolved; }
+        /**
+         * Gets createdAfter
+         * @returns createdAfter
+         */
         public LocalDateTime getCreatedAfter() { return createdAfter; }
+        /**
+         * Gets createdBefore
+         * @returns createdBefore
+         */
         public LocalDateTime getCreatedBefore() { return createdBefore; }
 
         // --- Setters ---
+        /**
+         * Sets askedBy
+         * @param askedBy
+         */
         public void setAskedBy(String askedBy) { this.askedBy = askedBy; }
+        /**
+         * Sets isResolved
+         * @param isResolved
+         */
         public void setIsResolved(Boolean isResolved) { this.isResolved = isResolved; }
+        /**
+         * Sets createdAfter
+         * @param createdAfter
+         */
         public void setCreatedAfter(LocalDateTime createdAfter) { this.createdAfter = createdAfter; }
+        /**
+         * Sets createdBefore
+         * @param createdBefore
+         */
         public void setCreatedBefore(LocalDateTime createdBefore) { this.createdBefore = createdBefore; }
     }
 
+    /**
+     * Gets a list of all unresolved questions in the database.
+     * 
+     * @returns List of questions.
+     * @throws SQLException If a database error occurs.
+     */
     public List<Question> getUnresolvedQuestions() throws SQLException {
         List<Question> questions = new ArrayList<>();
         String sql = "SELECT * FROM questions WHERE isResolved = FALSE ORDER BY createdAt DESC";
@@ -671,6 +936,13 @@ public class DatabaseHelper {
         return questions;
     }
 
+    /**
+     * Gets a list of questions based on a keyword.
+     * 
+     * @param keyword String to search for.
+     * @returns List of questions
+     * @throws SQLException If a database error occurs.
+     */
     public List<Question> searchQuestions(String keyword) throws SQLException {
         List<Question> questions = new ArrayList<>();
         String sql = "SELECT * FROM questions WHERE LOWER(title) LIKE ? OR LOWER(content) LIKE ? ORDER BY createdAt DESC";
@@ -697,6 +969,13 @@ public class DatabaseHelper {
         return questions;
     }
 
+    /**
+     * Updates a questions information (Title, content, id, and askedBy).
+     * 
+     * @param question Question to update information for.
+     * @returns True or False based on function success.
+     * @throws SQLException If a database error occurs.
+     */
     public boolean updateQuestion(Question question) throws SQLException {
         String sql = "UPDATE questions SET title = ?, content = ? WHERE id = ? AND askedBy = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
@@ -709,6 +988,14 @@ public class DatabaseHelper {
         }
     }
 
+    /**
+     * Deletes a question from the database.
+     * 
+     * @param questionId ID of the question to delete.
+     * @param username Username of the user who asked the question.
+     * @returns True or False based on function success.
+     * @throws SQLException If a database error occurs.
+     */
     public boolean deleteQuestion(int questionId, String username) throws SQLException {
         String sql = "DELETE FROM questions WHERE id = ? AND askedBy = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
@@ -719,6 +1006,15 @@ public class DatabaseHelper {
         }
     }
 
+    /**
+     * Marks a question as resolved.
+     * 
+     * @param questionId ID of the question to mark as resolved.
+     * @param answerId ID of the answer responsible for resolving the question.
+     * @param username Username of the user who asked the question.
+     * @returns True or False based on function success.
+     * @throws SQLException If a database error occurs.
+     */
     public boolean markQuestionResolved(int questionId, int answerId, String username) throws SQLException {
         String sql = "UPDATE questions SET isResolved = TRUE, resolvedAnswerId = ? WHERE id = ? AND askedBy = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
@@ -730,6 +1026,13 @@ public class DatabaseHelper {
         }
     }
 
+    /**
+     * Creates a new answer in the database.
+     * 
+     * @param answer Answer to add into database.
+     * @returns Answer ID
+     * @throws SQLException If a database error occurs.
+     */
     public int createAnswer(Answer answer) throws SQLException {
         String sql = "INSERT INTO answers (questionId, content, answeredBy, createdAt) VALUES (?, ?, ?, ?)";
         try (PreparedStatement pstmt = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -752,6 +1055,14 @@ public class DatabaseHelper {
             }
         }
     }
+    
+    /**
+     * Gets the number of unread answers for a particular question.
+     * 
+     * @param questionId ID of question to check the number of unread answers for.
+     * @returns Number of unread answers.
+     * @throws SQLException If a database error occurs.
+     */
     public int getUnreadAnswersCount(int questionId) throws SQLException {
         String sql = "SELECT COUNT(*) FROM answers WHERE questionId = ? AND isRead = false";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
@@ -765,6 +1076,13 @@ public class DatabaseHelper {
         return 0; 
     }
     
+    /**
+     * Gets the list of answers for a particular question.
+     * 
+     * @param questionId ID of the question to retrieve the answers for.
+     * @returns List of answers
+     * @throws SQLException If a database error occurs.
+     */
     public List<Answer> getAnswersForQuestion(int questionId) throws SQLException {
         List<Answer> answers = new ArrayList<>();
         String sql = "SELECT * FROM answers WHERE questionId = ? ORDER BY upvotes DESC, createdAt ASC";
@@ -788,6 +1106,13 @@ public class DatabaseHelper {
         return answers;
     }
 
+    /**
+     * Updates an answers information (Content, id, answeredBy).
+     * 
+     * @param answer Answer to update information for.
+     * @returns True or False based on function success.
+     * @throws SQLException If a database error occurs.
+     */
     public boolean updateAnswer(Answer answer) throws SQLException {
         String sql = "UPDATE answers SET content = ? WHERE id = ? AND answeredBy = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
@@ -799,6 +1124,14 @@ public class DatabaseHelper {
         }
     }
 
+    /**
+     * Deletes an answer from the database.
+     * 
+     * @param answerId ID of the answer to delete from the database.
+     * @param username Username of the user who posted the answer.
+     * @returns True or False based on function success.
+     * @throws SQLException If a database error occurs.
+     */
     public boolean deleteAnswer(int answerId, String username) throws SQLException {
         String sql = "DELETE FROM answers WHERE id = ? AND answeredBy = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
@@ -809,6 +1142,13 @@ public class DatabaseHelper {
         }
     }
 
+    /**
+     * Marks an answer as read.
+     * 
+     * @param answerId Id of the answer to mark as read.
+     * @returns True or False based on function success.
+     * @throws SQLException If a database error occurs.
+     */
     public boolean markAnswerAsRead(int answerId) throws SQLException {
         String sql = "UPDATE answers SET isRead = TRUE WHERE id = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
@@ -818,7 +1158,14 @@ public class DatabaseHelper {
         }
     }
 
-
+    /**
+     * Updates the upvotes for an answer.
+     * 
+     * @param answerId ID of the answer to update.
+     * @param username Username of the user who posted the answer.
+     * @returns True or False based on function success.
+     * @throws SQLException If a database error occurs.
+     */
     public boolean upvoteAnswer(int answerId, String username) throws SQLException {
         try {
 
@@ -842,6 +1189,14 @@ public class DatabaseHelper {
         }
     }
     
+    /**
+     * Closes a question (marks as resolved).
+     * 
+     * @param questionId ID of the question to close.
+     * @param username Username of the user who asked the question.
+     * @returns True or False based on function success.
+     * @throws SQLException If a database error occurs.
+     */
     public boolean closeQuestion(int questionId, String username) throws SQLException {
         String sql = "UPDATE questions SET isResolved = TRUE WHERE id = ? AND askedBy = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
@@ -852,6 +1207,9 @@ public class DatabaseHelper {
         }
     }
     
+    /**
+     * Represents a private message
+     */
     public static class PrivateMessage {
         private final int id;
         private final int questionId;
@@ -860,23 +1218,74 @@ public class DatabaseHelper {
         private final String content;
         private final java.time.LocalDateTime createdAt;
         private final boolean isRead;
-
+        
+        /**
+         * Constructor to create a new PrivateMessage
+         * 
+         * @param id ID of the private message.
+         * @param questionId ID of the question the message is meant for.
+         * @param sender Username of the user sending the message.
+         * @param messageType Type of message (Question or Answer).
+         * @param content Content of the message.
+         * @param createdAt Time the message was created.
+         * @param isRead If the message is read or not.
+         */
         public PrivateMessage(int id, int questionId, String sender, String messageType, String content,
                               java.time.LocalDateTime createdAt, boolean isRead) {
             this.id = id; this.questionId = questionId; this.sender = sender;
             this.messageType = messageType; this.content = content;
             this.createdAt = createdAt; this.isRead = isRead;
         }
+        
+        /**
+         * Gets the message id
+         * @return id
+         */
         public int getId() { return id; }
+        
+        /**
+         * Gets the questionId
+         * @return questionId
+         */
         public int getQuestionId() { return questionId; }
+        
+        /**
+         * Gets the sender
+         * @return sender
+         */
         public String getSender() { return sender; }
+        
+        /**
+         * Gets the message type
+         * @return messageType
+         */
         public String getMessageType() { return messageType; }
+        
+        /**
+         * Gets the content
+         * @return content
+         */
         public String getContent() { return content; }
+        
+        /**
+         * Gets createdAt
+         * @return createdAt
+         */
         public java.time.LocalDateTime getCreatedAt() { return createdAt; }
+        
+        /**
+         * Gets the value of isRead
+         * @return isRead
+         */
         public boolean isRead() { return isRead; }
     }
     
-    /** Top‑level questions (parentQuestionId IS NULL), newest first. */
+    /**
+     * Gets a list of questions where parentQuestionId is NULL (Top Level).
+     * 
+     * @returns List of questions
+     * @throws SQLException If a database error occurs.
+     */
     public List<Question> getQuestionsTopLevel() throws SQLException {
         QuestionFilter f = new QuestionFilter();
         List<Question> results = new ArrayList<>();
@@ -900,8 +1309,14 @@ public class DatabaseHelper {
         }
         return results;
     }
-
-    /** Follow‑up questions that reference a parent question. */
+    
+    /**
+     * Gets a list of questions that have a parent question (follow up questions).
+     * 
+     * @param parentQuestionId ID of the parent question.
+     * @returns List of questions
+     * @throws SQLException If a database error occurs.
+     */
     public List<Question> getFollowupQuestions(int parentQuestionId) throws SQLException {
         List<Question> results = new ArrayList<>();
         String sql = "SELECT id, title, content, askedBy, createdAt, isResolved, resolvedAnswerId "
@@ -927,7 +1342,16 @@ public class DatabaseHelper {
         return results;
     }
 
-    /** Create a revised child question under a parent question. */
+    /**
+     * Creates a follow up question to another question (Child question to a parent question).
+     * 
+     * @param parentQuestionId ID of the parent question.
+     * @param title Title for the follow up question.
+     * @param content Content of the follow up question.
+     * @param askedBy Username of the user asking the question.
+     * @returns Generated keys
+     * @throws SQLException If a database error occurs.
+     */
     public int createFollowupQuestion(int parentQuestionId, String title, String content, String askedBy) throws SQLException {
         String sql = "INSERT INTO questions (title, content, askedBy, createdAt, isResolved, resolvedAnswerId, parentQuestionId) "
                    + "VALUES (?, ?, ?, CURRENT_TIMESTAMP, FALSE, NULL, ?)";
@@ -943,8 +1367,17 @@ public class DatabaseHelper {
         }
         throw new SQLException("Failed to insert follow‑up question");
     }
-
-    /** Add a private feedback message. messageType ∈ {'QUESTION','ANSWER'} */
+    
+    /**
+     * Creates a private feedback message.
+     * 
+     * @param questionId ID of the question the message is in reference to.
+     * @param sender Username of the user sending the message.
+     * @param messageType Type of private message (Question or Answer).
+     * @param content Content of the private message.
+     * @returns Generated keys
+     * @throws SQLException If a database error occurs.
+     */
     public int addPrivateMessage(int questionId, String sender, String messageType, String content) throws SQLException {
         String sql = "INSERT INTO private_messages (questionId, sender, messageType, content, createdAt, isRead) "
                    + "VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, FALSE)";
@@ -961,7 +1394,13 @@ public class DatabaseHelper {
         throw new SQLException("Failed to insert private message");
     }
 
-    /** All private messages for a question (visibility filtered in UI). */
+    /**
+     * Gets a list of all private messages for a question.
+     * 
+     * @param questionID ID of the question to get private messages for.
+     * @returns List of private messages
+     * @throws SQLException If a database error occurs.
+     */
     public List<PrivateMessage> getPrivateMessagesForQuestion(int questionId) throws SQLException {
         List<PrivateMessage> out = new ArrayList<>();
         String sql = "SELECT id, questionId, sender, messageType, content, createdAt, isRead "
@@ -985,7 +1424,14 @@ public class DatabaseHelper {
         return out;
     }
 
-    /** Count unread private messages for the asker (messages not sent by the asker). */
+    /**
+     * Gets the number of unread private messages for the asker.
+     * 
+     * @param questionId ID of the question to get unread count for.
+     * @param askerUserName Username of the asker.
+     * @returns Number of unread private messages.
+     * @throws SQLException If a database error occurs.
+     */
     public int getUnreadPrivateCountForAsker(int questionId, String askerUserName) throws SQLException {
         String sql = "SELECT COUNT(*) FROM private_messages WHERE questionId = ? AND isRead = FALSE AND sender <> ?";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
@@ -998,7 +1444,14 @@ public class DatabaseHelper {
         return 0;
     }
 
-    /** Mark all unread private messages to the asker as read. */
+    /**
+     * Marks all unread private messages to the asker as read.
+     * 
+     * @param questionId ID of the question to mark unread messages as read.
+     * @param askerUserName Username of the asker.
+     * @returns Row count
+     * @throws SQLException If a database error occurs.
+     */
     public int markPrivateMessagesReadByAsker(int questionId, String askerUserName) throws SQLException {
         String sql = "UPDATE private_messages SET isRead = TRUE WHERE questionId = ? AND isRead = FALSE AND sender <> ?";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
@@ -1008,6 +1461,9 @@ public class DatabaseHelper {
         }
     }
 
+    /**
+     * Closes database connection
+     */
     public void closeConnection() {
         try { 
             if (statement != null) statement.close(); 
@@ -1021,6 +1477,9 @@ public class DatabaseHelper {
         } 
     }
 
+    /**
+     * Truncates the database
+     */
     public void truncate() {
         try {
             Class.forName(JDBC_DRIVER);
