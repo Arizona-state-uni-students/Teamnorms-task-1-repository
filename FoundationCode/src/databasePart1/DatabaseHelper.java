@@ -127,7 +127,7 @@ public class DatabaseHelper {
      * 
      * @param username Username of the user to change the email for.
      * @param newEmail String to set the email to.
-     * @returns True or False based on function success.
+     * @return true
      * @throws SQLException If a database error occurs.
      */
     public boolean updateUserEmail(String username, String newEmail) throws SQLException {
@@ -306,14 +306,10 @@ public class DatabaseHelper {
      * Deletes a user from the database.
      * 
      * @param username Username of the user to delete.
-     * @returns True or False based on function success.
      * @throws SQLException If a database error occurs.
+     * @return true
      */
     public boolean deleteUser(String username) throws SQLException {
-        if (isLastAdmin(username)) {
-            System.err.println("Cannot delete the last admin user!");
-            return false;
-        }
         String sql = "DELETE FROM cse360users WHERE userName = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setString(1, username);
@@ -329,7 +325,7 @@ public class DatabaseHelper {
      * @returns True or False based on function success.
      * @throws SQLException If a database error occurs.
      */
-    private boolean isLastAdmin(String username) throws SQLException {
+    public boolean isLastAdmin(String username) throws SQLException {
         String roleQuery = "SELECT role FROM cse360users WHERE userName = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(roleQuery)) {
             pstmt.setString(1, username);
@@ -560,10 +556,6 @@ public class DatabaseHelper {
      * @throws SQLException If a database error occurs.
      */
     public boolean updateUserRole(String username, String newRole) throws SQLException {
-        if (isLastAdmin(username) && !"admin".equals(newRole)) {
-            System.err.println("Cannot remove admin role from the last admin!");
-            return false;
-        }
         String sql = "UPDATE cse360users SET role = ? WHERE userName = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setString(1, newRole);

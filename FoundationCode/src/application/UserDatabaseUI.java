@@ -56,7 +56,6 @@ public class UserDatabaseUI {
         databaseTable.setHgap(10);
         databaseTable.setVgap(10);
 
-        
 
         Label Header = new Label("Welcome to the User Database.");
         Header.setStyle("-fx-font-size: 22px; -fx-font-weight: bold;");
@@ -77,6 +76,7 @@ public class UserDatabaseUI {
         refreshButton.setOnAction(a -> {
             try {
                 loadUserData();
+
             } catch (SQLException e) {
                 showAlert("Error", "Failed to refresh data: " + e.getMessage(), AlertType.ERROR);
             }
@@ -295,92 +295,85 @@ public class UserDatabaseUI {
     
 
     private void changeUserRole(String username, String currentRole) {
-
         ChoiceDialog<String> dialog = new ChoiceDialog<>(currentRole, "User", "Student", "Reviewer", "Instructor", "Staff", "Admin");
-
         dialog.setTitle("Change User Role");
         dialog.setHeaderText("Change role for: " + username);
         dialog.setContentText("Select new role:");
-
+        Optional<String> result = dialog.showAndWait();
         
 
-        Optional<String> result = dialog.showAndWait();
-
+        
         result.ifPresent(newRole -> {
-
             if (!newRole.equals(currentRole)) {
-
-                try {
-
-                    if (databaseHelper.updateUserRole(username, newRole)) {
-
-                        showAlert("Success", "Role updated for " + username, AlertType.INFORMATION);
-
-                        loadUserData();
-
-                    } else {
-
-                        showAlert("Error", "Cannot change role. This might be the last admin.", AlertType.ERROR);
-
-                    }
-
-                } catch (SQLException e) {
-
-                    showAlert("Error", "Database error: " + e.getMessage(), AlertType.ERROR);
-
-                }
-
+            	try {
+        			List<User> reviewers = databaseHelper.getUsers_Role("Admin");
+        			for(User r : reviewers) {
+        				System.out.println(r.getUserName());
+        			}
+        			// Check if the current user is an Admin
+        			if ("Admin".equals(user.getRole())) {
+        			    if (user.getUserName().equals(username)) {
+        			        if (reviewers.size() > 1) {
+        			            databaseHelper.updateUserRole(username, newRole);
+        			            loadUserData();
+        			        } else {
+        			        showAlert("Error", "Cannot change role: You are the last remaining Admin.", AlertType.ERROR);
+        			        }
+        			    } else {
+        			        databaseHelper.updateUserRole(username, newRole);
+        			        showAlert("Success", "Role Updated for:  " + username, AlertType.INFORMATION);
+        			        loadUserData();
+        			    }
+        			}
+                    System.out.println(reviewers.size());
+        		} catch (SQLException e) {
+        			// TODO Auto-generated catch block
+        			e.printStackTrace();
+        		}
             }
-
         });
-
     }
 
     
 
     private void deleteUser(String username) {
-
         Alert confirmDialog = new Alert(AlertType.CONFIRMATION);
-
         confirmDialog.setTitle("Confirm Deletion");
         confirmDialog.setHeaderText("Delete User");
         confirmDialog.setContentText("Are you sure you want to delete user: " + username + "?");
-
         
+    	try {
+			List<User> reviewers = databaseHelper.getUsers_Role("Admin");
+			for(User r : reviewers) {
+				System.out.println(r.getUserName());
+			}
 
-        Optional<ButtonType> result = confirmDialog.showAndWait();
-
-        if (result.isPresent() && result.get() == ButtonType.OK) {
-
-            try {
-
-                if (databaseHelper.deleteUser(username)) {
-
-                    showAlert("Success", "User deleted: " + username, AlertType.INFORMATION);
-
-                    loadUserData();
-                } else {
-
-                    showAlert("Error", "Cannot delete user. This might be the last admin.", AlertType.ERROR);
-                }
-
-            } catch (SQLException e) {
-            	
-                showAlert("Error", "Database error: " + e.getMessage(), AlertType.ERROR);
-
-            }
-
-        }
-
+			if ("Admin".equals(user.getRole())) {
+			    if (user.getUserName().equals(username)) {
+			        if (reviewers.size() > 1) {
+			            databaseHelper.deleteUser(username);
+			        } else {
+			        showAlert("Error", "Cannot delete user: You are the last remaining Admin.", AlertType.ERROR);
+			        }
+			    } else {
+			        databaseHelper.deleteUser(username);
+			        loadUserData();
+			    }
+			}
+            System.out.println(reviewers.size());
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+        
+        
     }
 
     private void showAlert(String title, String content, AlertType type) {
-
         Alert alert = new Alert(type);
         alert.setTitle(title);
         alert.setContentText(content);
         alert.showAndWait();
-
     }
 
 }
