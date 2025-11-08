@@ -79,6 +79,7 @@ public class DatabaseHelper {
                 + "expiresAt TIMESTAMP)";
         statement.execute(invitationCodesTable);
     }
+
     
     /**
      * Check if the database is empty.
@@ -279,6 +280,26 @@ public class DatabaseHelper {
             e.printStackTrace();
         }
         return null;
+    }
+    
+    /**
+     * Gets the weight of a user in the database.
+     * 
+     * @returns Weight value (int)
+     * @param userName Username to get the role of.
+     */
+    public int getUserWeight(String userName) {
+        String query = "SELECT weight FROM cse360users WHERE userName = ?";
+        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+            pstmt.setString(1, userName);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                return rs.getInt("weight");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
     }
     
     /**
@@ -734,6 +755,7 @@ public class DatabaseHelper {
                 + "resolvedAnswerId INT DEFAULT -1, "
                 + "FOREIGN KEY (askedBy) REFERENCES cse360users(userName))";
         statement.execute(questionsTable);
+
         String answersTable = "CREATE TABLE IF NOT EXISTS answers ("
                 + "id INT AUTO_INCREMENT PRIMARY KEY, "
                 + "questionId INT NOT NULL, "
@@ -745,19 +767,21 @@ public class DatabaseHelper {
                 + "FOREIGN KEY (questionId) REFERENCES questions(id) ON DELETE CASCADE, "
                 + "FOREIGN KEY (answeredBy) REFERENCES cse360users(userName))";
         statement.execute(answersTable);
+
+        // FIXED: Use from_user instead of sender
         String privateMessagesTable = "CREATE TABLE IF NOT EXISTS private_messages ("
                 + "id INT AUTO_INCREMENT PRIMARY KEY, "
                 + "questionId INT NOT NULL, "
-                + "sender VARCHAR(20) NOT NULL, "
-                + "messageType VARCHAR(10) NOT NULL, "   // 'QUESTION' or 'ANSWER'
+                + "to_user VARCHAR(20) NOT NULL, "
+                + "from_user VARCHAR(20) NOT NULL, "
+                + "messageType VARCHAR(10) NOT NULL, "
                 + "content VARCHAR(500) NOT NULL, "
                 + "createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP, "
                 + "isRead BOOLEAN DEFAULT FALSE, "
                 + "FOREIGN KEY (questionId) REFERENCES questions(id) ON DELETE CASCADE, "
-                + "FOREIGN KEY (sender) REFERENCES cse360users(userName))";
+                + "FOREIGN KEY (from_user) REFERENCES cse360users(userName))";
         statement.execute(privateMessagesTable);
     }
-
     /**
      * Creates a new question in the database.
      * 
@@ -787,7 +811,6 @@ public class DatabaseHelper {
             }
         }
     }
-
     /**
      * Gets a question by its ID.
      * 
@@ -1213,12 +1236,12 @@ public class DatabaseHelper {
     public static class PrivateMessage {
         private final int id;
         private final int questionId;
+        private final String to_user;
         private final String sender;
         private final String messageType; // 'QUESTION' or 'ANSWER'
         private final String content;
         private final java.time.LocalDateTime createdAt;
         private final boolean isRead;
-        
         /**
          * Constructor to create a new PrivateMessage
          * 
@@ -1230,13 +1253,12 @@ public class DatabaseHelper {
          * @param createdAt Time the message was created.
          * @param isRead If the message is read or not.
          */
-        public PrivateMessage(int id, int questionId, String sender, String messageType, String content,
+        public PrivateMessage(int id, int questionId, String to_user, String sender, String messageType, String content,
                               java.time.LocalDateTime createdAt, boolean isRead) {
-            this.id = id; this.questionId = questionId; this.sender = sender;
+            this.id = id; this.questionId = questionId; this.to_user = to_user; this.sender = sender;
             this.messageType = messageType; this.content = content;
             this.createdAt = createdAt; this.isRead = isRead;
         }
-        
         /**
          * Gets the message id
          * @return id
@@ -1248,7 +1270,11 @@ public class DatabaseHelper {
          * @return questionId
          */
         public int getQuestionId() { return questionId; }
-        
+        /**
+         * Gets the recipient
+         * @return to_user
+         */
+        public String getTo() {return to_user;}
         /**
          * Gets the sender
          * @return sender
@@ -1309,7 +1335,7 @@ public class DatabaseHelper {
         }
         return results;
     }
-    
+
     /**
      * Gets a list of questions that have a parent question (follow up questions).
      * 
@@ -1367,7 +1393,7 @@ public class DatabaseHelper {
         }
         throw new SQLException("Failed to insert follow‑up question");
     }
-    
+
     /**
      * Creates a private feedback message.
      * 
@@ -1378,14 +1404,15 @@ public class DatabaseHelper {
      * @returns Generated keys
      * @throws SQLException If a database error occurs.
      */
-    public int addPrivateMessage(int questionId, String sender, String messageType, String content) throws SQLException {
-        String sql = "INSERT INTO private_messages (questionId, sender, messageType, content, createdAt, isRead) "
-                   + "VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, FALSE)";
+    public int addPrivateMessage(int questionId, String to, String from, String messageType, String content) throws SQLException {
+        String sql = "INSERT INTO private_messages (questionId, to_user, from_user, messageType, content, createdAt, isRead) "
+                   + "VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, FALSE)";
         try (PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setInt(1, questionId);
-            ps.setString(2, sender);
-            ps.setString(3, messageType);
-            ps.setString(4, content);
+            ps.setString(2, to);
+            ps.setString(3, from);
+            ps.setString(4, messageType);
+            ps.setString(5, content);
             ps.executeUpdate();
             try (ResultSet keys = ps.getGeneratedKeys()) {
                 if (keys.next()) return keys.getInt(1);
@@ -1403,8 +1430,8 @@ public class DatabaseHelper {
      */
     public List<PrivateMessage> getPrivateMessagesForQuestion(int questionId) throws SQLException {
         List<PrivateMessage> out = new ArrayList<>();
-        String sql = "SELECT id, questionId, sender, messageType, content, createdAt, isRead "
-                   + "FROM private_messages WHERE questionId = ? ORDER BY createdAt ASC";
+        String sql = "SELECT id, questionId, to_user, from_user, messageType, content, createdAt, isRead "
+                + "FROM private_messages WHERE questionId = ? ORDER BY createdAt ASC";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setInt(1, questionId);
             try (ResultSet rs = ps.executeQuery()) {
@@ -1412,7 +1439,8 @@ public class DatabaseHelper {
                     out.add(new PrivateMessage(
                         rs.getInt("id"),
                         rs.getInt("questionId"),
-                        rs.getString("sender"),
+                        rs.getString("to_user"),
+                        rs.getString("from_user"),
                         rs.getString("messageType"),
                         rs.getString("content"),
                         rs.getTimestamp("createdAt").toLocalDateTime(),
@@ -1433,7 +1461,7 @@ public class DatabaseHelper {
      * @throws SQLException If a database error occurs.
      */
     public int getUnreadPrivateCountForAsker(int questionId, String askerUserName) throws SQLException {
-        String sql = "SELECT COUNT(*) FROM private_messages WHERE questionId = ? AND isRead = FALSE AND sender <> ?";
+    	String sql = "SELECT COUNT(*) FROM private_messages WHERE questionId = ? AND isRead = FALSE AND from_user <> ?";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setInt(1, questionId);
             ps.setString(2, askerUserName);
@@ -1453,7 +1481,7 @@ public class DatabaseHelper {
      * @throws SQLException If a database error occurs.
      */
     public int markPrivateMessagesReadByAsker(int questionId, String askerUserName) throws SQLException {
-        String sql = "UPDATE private_messages SET isRead = TRUE WHERE questionId = ? AND isRead = FALSE AND sender <> ?";
+    	String sql = "UPDATE private_messages SET isRead = TRUE WHERE questionId = ? AND isRead = FALSE AND from_user <> ?";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setInt(1, questionId);
             ps.setString(2, askerUserName);
@@ -1493,4 +1521,3 @@ public class DatabaseHelper {
         }
     }
 }
-

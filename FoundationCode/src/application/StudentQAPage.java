@@ -45,6 +45,7 @@ public class StudentQAPage {
     private Tab myQuestionsTab;
     private Tab allQuestionsTab;
     private Tab askQuestionTab;
+    private Tab reviewerRequestTab;
     
     public StudentQAPage(DatabaseHelper databaseHelper, User currentUser) {
         this.databaseHelper = databaseHelper;
@@ -55,7 +56,7 @@ public class StudentQAPage {
         this.primaryStage = primaryStage;
         mainLayout = new VBox(-2);
         mainLayout.setPadding(new Insets(21));
-        mainLayout.setPrefSize(900, 600);
+        mainLayout.setPrefSize(1100, 600);
 
 		// Page background image
        Image backgroundImage = new Image(getClass().getResource("/QAbg.png").toExternalForm());
@@ -82,7 +83,8 @@ public class StudentQAPage {
         askQuestionTab = createAskQuestionTab();
         myQuestionsTab = createMyQuestionsTab();
         allQuestionsTab = createAllQuestionsTab();
-        tabPane.getTabs().addAll(askQuestionTab, myQuestionsTab, allQuestionsTab);
+        reviewerRequestTab = createReviewerRequestTab();
+        tabPane.getTabs().addAll(askQuestionTab, myQuestionsTab, allQuestionsTab, reviewerRequestTab);
         tabPane.setStyle("-fx-background-color: transparent; -fx-background: transparent; -fx-tab-header-background-color: transparent;");
 
         // ======= Bottom Buttons =======
@@ -118,7 +120,70 @@ public class StudentQAPage {
     }
 
  
-    // ========== ASK QUESTION TAB ==========
+    // ========== REVIEWER REQUEST TAB ==========
+    private Tab createReviewerRequestTab() {
+        Tab tab = new Tab("Reviewer Requests");
+        tab.setStyle("-fx-background-color: transparent; -fx-background: transparent;");
+        tab.setClosable(false);
+        
+        Label infoLabel = new Label("Ask a new question to get help from other students");
+        infoLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #666;");
+        
+    	String thisrole = currentUser.getRole();
+    	int weight = databaseHelper.getUserWeight(currentUser.getUserName());
+    	//if is reviewer
+    	//if is not reviewer
+    	//if is instructor (confirm or deny reviewer)
+    	if("Reviewer".equals(thisrole)) {
+    		//currently a reviewer
+    		//drop role? congratulations?
+    		infoLabel.setText("you are already a reviewer. your current weight is:"+weight);
+    	}
+    	else if("Instructor".equals(thisrole)) {
+    		//check requests to be a reviewer
+    		//approve or deny
+    		infoLabel.setText("you are an instructor");
+    	}
+    	else{
+    		//not a reviewer, not an instructor
+    		//create application
+    		//requirements: certain weights? total contributions? nice application? 
+    		infoLabel.setText("you are not a reviewer. Would you like to be one? your current weight is: "+weight);
+    	}
+        VBox content = new VBox(5);
+        content.setPadding(new Insets(8));
+        content.setStyle("-fx-background-color: white;");
+
+        Separator sep1 = new Separator();
+        Label contentLabel = new Label("Question Details:*");
+        contentLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 14px; -fx-text-fill: #2c2c2c;");
+        TextArea contentArea = new TextArea();
+        contentArea.setPromptText("Describe your question in detail (10-500 characters)");
+        contentArea.setWrapText(true);
+        contentArea.setPrefRowCount(8);
+        contentArea.setMaxWidth(600);
+        Button submitButton = new Button("Submit Question");
+        submitButton.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10 20;");
+        Button clearButton = new Button("Clear");
+        clearButton.setStyle("-fx-background-color: #999; -fx-text-fill: white;");
+        clearButton.setOnAction(e -> {
+
+        });
+        HBox buttonBox = new HBox(10, clearButton, submitButton);
+        buttonBox.setAlignment(Pos.CENTER_LEFT);
+        content.getChildren().addAll(
+            infoLabel,submitButton,clearButton,
+            contentArea, contentLabel, sep1
+        );
+
+		// Make scrollable
+        ScrollPane scrollPane = new ScrollPane(content);
+        scrollPane.setFitToWidth(true);
+        tab.setContent(scrollPane);
+        return tab;
+    }
+    // ========== END REVIEWER REQUEST TAB =-=====
+    // ========== CREATE QUESTION TAB ============
     private Tab createAskQuestionTab() {
         Tab tab = new Tab("Ask Question");
         tab.setStyle("-fx-background-color: transparent; -fx-background: transparent;");
@@ -436,8 +501,8 @@ public class StudentQAPage {
             }
         }
     }
-
-	
+    // ==========END CREATE QUESTION TAB ============
+    
     // ========== MY QUESTIONS TAB ==========
     private Tab createMyQuestionsTab() {
 		// Create tab to view your user questions
@@ -577,7 +642,7 @@ public class StudentQAPage {
             }
         }
     }
-
+    //========== END MY QUESTIONS TAB ==========
 	
     // ========== ALL QUESTIONS TAB ==========
     private Tab createAllQuestionsTab() {
@@ -603,21 +668,21 @@ public class StudentQAPage {
 
         // --- Left panel (questions list + New button) ---
         displayQuestions = new VBox(8);
-        displayQuestions.setPadding(new Insets(10));
+        //displayQuestions.setPadding(new Insets(6));
 
         Button newQuestionBtn = new Button("New Question");
         newQuestionBtn.setOnAction(e -> openCreateQuestionDialog());
 
         // Resolution filter (matches Threads-style simple controls)
         resolutionFilter = new ComboBox<>();
-        resolutionFilter.getItems().addAll("All Questions", "Unresolved Only", "Resolved Only");
+        resolutionFilter.getItems().addAll("All Questions", "Unresolved Only", "Resolved Only", "Answers with Reviewer", "Answers without Reviewer");
         resolutionFilter.setValue("All Questions"); // default
         resolutionFilter.setTooltip(new Tooltip("Filter by resolution status"));
 
-        Label resolutionLbl = new Label("Resolution:");
+        Label resolutionLbl = new Label("Filter:");
         resolutionLbl.setStyle("-fx-text-fill: black; -fx-font-size:12px;");
 
-        HBox filterBox = new HBox(8, resolutionLbl, resolutionFilter);
+        HBox filterBox = new HBox(4, resolutionLbl, resolutionFilter);
         filterBox.setAlignment(Pos.CENTER_LEFT);
 
         // Inline error banner (kept subtle; only shown on failures)
@@ -626,7 +691,7 @@ public class StudentQAPage {
         allQuestionsError.setVisible(false);
 
         // Rebuild the left side to include controls + error + list
-        VBox leftSide = new VBox(10, newQuestionBtn, filterBox, allQuestionsError, displayQuestions);
+        VBox leftSide = new VBox(4, newQuestionBtn, filterBox, allQuestionsError, displayQuestions);
         leftSide.setPadding(new Insets(10));
 
         ScrollPane scrollLeft = new ScrollPane(leftSide);
@@ -635,18 +700,15 @@ public class StudentQAPage {
         // --- Right panel (thread content) ---
         displayQuestionThread = new VBox(10);
         displayQuestionThread.setPadding(new Insets(12));
-
         ScrollPane scrollRight = new ScrollPane(displayQuestionThread);
         scrollRight.setFitToWidth(true);
-
         SplitPane split = new SplitPane(scrollLeft, scrollRight);
         split.setDividerPositions(0.35);
-
         BorderPane root = new BorderPane();
         root.setTop(topBar);
         root.setCenter(split);
         
-        // Change handler for the resolution filter
+        //handler for the filter
         resolutionFilter.setOnAction(e -> {
             allQuestionsError.setVisible(false);
             try {
@@ -745,13 +807,27 @@ public class StudentQAPage {
         Label meta1 = new Label("by " + q.getAskedBy() + " • " + q.getCreatedAt().format(TS));
         meta1.setStyle("-fx-text-fill: black; -fx-font-size:11px;");
         
+        Label meta22 = new Label("Reviewed");
+        meta22.setStyle(
+                "-fx-text-fill: white; " +
+                "-fx-font-size: 11px; " +
+                "-fx-background-color: #ff7700; " + 
+                "-fx-padding: 2px 5px 2px 5px; "
+            );
+        	meta22.setVisible(false);
+//        	if(q.hasReviewer()) {meta22.setVisible(true);}
+        	
+        if(q.isResolved()) {
+        	meta22.setText("Resolved");
+        	meta22.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-padding: 2px 5px 2px 5px; ; -fx-font-size: 11px;" );
+        	meta22.setVisible(true);
+        }
+        
         // Second metadata line: answer counts and resolution status
         StringBuilder meta2Text = new StringBuilder();
-        
         try {
             int publicAnswerCount = databaseHelper.getAnswersForQuestion(q.getId()).size();
             List<PrivateMessage> privateMessages = databaseHelper.getPrivateMessagesForQuestion(q.getId());
-            
             // Count visible private messages
             int visiblePrivateCount = 0;
             for (PrivateMessage pm : privateMessages) {
@@ -775,27 +851,34 @@ public class StudentQAPage {
         // Add resolution status
         if (q.isResolved()) {
             meta2Text.append(" • ✓ Resolved");
+            //meta2Text.setStyle("-fx-font-weight: bold; -fx-text-fill: #2e7d32; -fx-font-size:10px;");
+
         }
         
         Label meta2 = new Label(meta2Text.toString());
         meta2.setStyle("-fx-text-fill: #666; -fx-font-size:10px;");
         
         // Stack all labels vertically
-        VBox col = new VBox(2, title, meta1, meta2);
+        VBox col = new VBox(2, title, meta1, meta2, meta22);
         col.setPadding(new Insets(8));
 
         // Make whole row clickable
         HBox row = new HBox(col);
-        row.setStyle("-fx-background-color:#ffffff; -fx-border-color:#e6e6e6;");
+        row.setStyle("-fx-background-color:#ffffff; -fx-border-color:#e6e6e6; -fx-border-width:1;");
+//        if(q.hasReviewer()) {
+//        row.setStyle("-fx-background-color:#ffffaa; -fx-border-color:#ff7700; -fx-border-width:1;");	
+//        }
+        if(q.isResolved()) {
+        row.setStyle("-fx-background-color:#e8f5e9; -fx-border-color:#4CAF50; -fx-border-width:2;");
+        }
         row.setOnMouseClicked(e -> loadThread(q));
-        row.setOnMouseEntered(e -> row.setStyle("-fx-background-color:#f7faff; -fx-border-color:#cfe3ff;"));
-        row.setOnMouseExited(e -> row.setStyle("-fx-background-color:#ffffff; -fx-border-color:#e6e6e6;"));
+//        row.setOnMouseEntered(e -> row.setStyle("-fx-background-color:#f7faff; -fx-border-color:#cfe3ff; -fx-border-width:1;"));
+//        row.setOnMouseExited(e -> row.setStyle("-fx-background-color:#ffffff; -fx-border-color:#e6e6e6; -fx-border-width:1;"));
         return row;
     }
 
     private void loadThread(Question q) {
         displayQuestionThread.getChildren().clear();
-
         // header row with action buttons
         HBox headerActions = new HBox(10);
         Button logBtn = new Button("View Activity Log");
@@ -822,7 +905,7 @@ public class StudentQAPage {
             });
             headerActions.getChildren().add(editBtn);
         }
-        
+        System.out.println(!q.isResolved() && q.getAnswers().size() > 0);
         if (isAsker) {
             Button deleteBtn = new Button("Delete Question");
             deleteBtn.setStyle("-fx-background-color: #f44336; -fx-text-fill: white;");
@@ -830,7 +913,15 @@ public class StudentQAPage {
                 deleteQuestion(q);
                 refreshQuestionListAndMaybeSelect();
             });
-            headerActions.getChildren().add(deleteBtn);
+            Button closeBtn = new Button("Close Question");
+            closeBtn.setStyle("-fx-background-color: #2c2c2c; -fx-text-fill: white;");
+            closeBtn.setVisible(!q.isResolved() && q.getAnswers().size() > 0); // Only show if unresolved and has answers
+            closeBtn.setOnAction(e -> {
+                //deleteQuestion(q);
+            	closeQuestion(q);
+                refreshQuestionListAndMaybeSelect();
+            });
+            headerActions.getChildren().addAll(deleteBtn, closeBtn);
         }
 
         // header (question)
@@ -862,13 +953,10 @@ public class StudentQAPage {
         } else { // Public
             renderPublicAnswers(q);
         }
-
         // revised children list
         renderFollowups(q);
-
         // composer(s)
-        renderComposers(q, mode);
-
+        //renderComposers(q, mode);
         // react to filter changes
         viewFilter.setOnAction(ev -> loadThread(q));
     }
@@ -913,8 +1001,52 @@ public class StudentQAPage {
                     VBox card = new VBox(5);
                     
                     // Answer metadata and content
+                    Label status = new Label("STATUS");
+                    String role = databaseHelper.getUserRole(a.getAnsweredBy());
+                	status.setText(role);
+                    if("Admin".equals(role)) {
+                        status.setStyle(
+                                "-fx-text-fill: white; " +
+                                "-fx-font-size: 11px; " +
+                                "-fx-background-color: #C00000; " + 
+                                "-fx-padding: 2px 5px 2px 5px;" // Top: 2px, Right: 5px, Bottom: 2px, Left: 5px
+                            );
+                    }
+                    if("Reviewer".equals(role)) {
+                        status.setStyle(
+                                "-fx-text-fill: white; " +
+                                "-fx-font-size: 11px; " +
+                                "-fx-background-color: #ff7700; " + 
+                                "-fx-padding: 2px 5px 2px 5px; " // Top: 2px, Right: 5px, Bottom: 2px, Left: 5px
+//								"-fx-border-color: #ff7700; " +    
+//								"-fx-border-width: 1px; " +      
+//								"-fx-border-style: solid;"
+                            );
+                    }
+                    if("Staff".equals(role)) {
+                        status.setStyle(
+                                "-fx-text-fill: white; " +
+                                "-fx-font-size: 11px; " +
+                                "-fx-background-color: #900FE0; " + 
+                                "-fx-padding: 2px 5px 2px 5px;" // Top: 2px, Right: 5px, Bottom: 2px, Left: 5px
+                            );
+                    }
+                    if("User".equals(role)) {
+                        status.setStyle(
+                                "-fx-text-fill: white; " +
+                                "-fx-font-size: 11px; " +
+                                "-fx-background-color: #0099ff; " + 
+                                "-fx-padding: 2px 5px 2px 5px;" // Top: 2px, Right: 5px, Bottom: 2px, Left: 5px
+                            );
+                    }
+                    
+                    
                     Label aMeta = new Label(a.getAnsweredBy() + " • " + a.getCreatedAt().format(TS) + " • " + a.getUpvotes() + " upvotes");
-                    aMeta.setStyle("-fx-text-fill: black; -fx-font-size:11px;");
+                    aMeta.setStyle(
+                            "-fx-text-fill: black; " +
+                            "-fx-font-size: 11px; " +
+                            "-fx-padding: 2px 5px 2px 5px;" // Top: 2px, Right: 5px, Bottom: 2px, Left: 5px
+                        );
                     Label aText = new Label(a.getContent());
                     aText.setWrapText(true);
                     aText.setStyle("-fx-text-fill: black;");
@@ -977,8 +1109,9 @@ public class StudentQAPage {
                         
                         actionBox.getChildren().addAll(editBtn, deleteBtn);
                     }
-                    
-                    card.getChildren().addAll(aMeta, aText, actionBox);
+                    HBox box = new HBox(6, status, aMeta);
+                    //box.setPadding(new Insets(10,0,0,0));
+                    card.getChildren().addAll(box, aText, actionBox);
                     
                     // Highlight if this is the accepted answer
                     if (q.isResolved() && a.getId() == q.getResolvedAnswerId()) {
@@ -988,6 +1121,9 @@ public class StudentQAPage {
                         card.getChildren().add(0, acceptedLabel);
                     } else {
                         card.setStyle("-fx-background-color:#f9f9f9; -fx-border-color:#eee; -fx-padding:8;");
+                        if("Reviewer".equals(role)) {
+                        card.setStyle("-fx-background-color:#ffffaa; -fx-border-color:#eee; -fx-padding:8; -fx-border-color: #ff7700; -fx-border-width: 1px; -fx-border-style: solid;");
+                        }
                     }
                     
                     answersBox.getChildren().add(card);
@@ -997,86 +1133,9 @@ public class StudentQAPage {
         } catch (SQLException ex) {
             showError("Answers load failed", ex.getMessage());
         }
+        displayQuestionThread.getChildren().add(answerComposer(q));
     }
-
-    private void renderPrivateSection(Question q) {
-        VBox box = new VBox(8);
-        
-        try {
-            List<PrivateMessage> all = databaseHelper.getPrivateMessagesForQuestion(q.getId());
-            
-            // Count visible messages first
-            int visibleCount = 0;
-            for (PrivateMessage pm : all) {
-                if (canSeePrivate(q, pm)) {
-                    visibleCount++;
-                }
-            }
-            
-            // Create the title with the count
-            Label title = new Label("Private feedback (" + visibleCount + ")");
-            title.setStyle("-fx-font-weight:bold; -fx-text-fill: black;");
-            box.getChildren().add(title);
-            
-            // Render the messages
-            boolean any = false;
-            for (PrivateMessage pm : all) {
-                if (!canSeePrivate(q, pm)) continue;
-                any = true;
-                VBox card = new VBox(3);
-                Label meta = new Label(pm.getSender() + " • " + pm.getCreatedAt().format(TS) + " • " + pm.getMessageType());
-                meta.setStyle("-fx-text-fill: black; -fx-font-size:11px;");
-                Label text = new Label(pm.getContent());
-                text.setWrapText(true);
-                text.setStyle("-fx-text-fill: black;");
-                card.getChildren().addAll(meta, text);
-                card.setStyle("-fx-background-color:#fffbea; -fx-border-color:#ffe08a; -fx-padding:8;");
-                box.getChildren().add(card);
-            }
-            
-            if (!any) {
-                Label none = new Label("No private feedback yet.");
-                none.setStyle("-fx-text-fill: black;");
-                box.getChildren().add(none);
-            }
-        } catch (SQLException ex) {
-            showError("Private messages load failed", ex.getMessage());
-        }
-
-        displayQuestionThread.getChildren().add(box);
-    }
-
-    private void renderFollowups(Question q) {
-        try {
-            List<Question> kids = databaseHelper.getFollowupQuestions(q.getId());
-            if (kids == null || kids.isEmpty()) return;
-            Label head = new Label("Revised questions");
-            head.setStyle("-fx-font-weight:bold;");
-            VBox list = new VBox(6);
-            for (Question k : kids) {
-                Hyperlink link = new Hyperlink(k.getTitle() + " — " + k.getCreatedAt().format(TS));
-                link.setOnAction(e -> loadThread(k));
-                list.getChildren().add(link);
-            }
-            VBox wrap = new VBox(6, head, list);
-            wrap.setPadding(new Insets(8,0,0,0));
-            displayQuestionThread.getChildren().add(wrap);
-        } catch (SQLException ex) {
-            showError("Followups load failed", ex.getMessage());
-        }
-    }
-
-    private void renderComposers(Question q, String mode) {
-        // public composer
-        if (!"Private".equals(mode)) {
-            displayQuestionThread.getChildren().add(answerComposer(q));
-        }
-        // private composer
-        if (!"Public".equals(mode)) {
-            displayQuestionThread.getChildren().add(privateComposer(q));
-        }
-    }
-
+    //add public review field
     private VBox answerComposer(Question q) {
         Label lbl = new Label("Add a public answer");
         lbl.setStyle("-fx-font-weight:bold; -fx-text-fill: black;");
@@ -1103,10 +1162,90 @@ public class StudentQAPage {
         box.setPadding(new Insets(10,0,0,0));
         return box;
     }
+    private void renderPrivateSection(Question q) {
+        VBox box = new VBox(8);
+        int visibleCount=0;
+        try {
+            List<PrivateMessage> allPM = databaseHelper.getPrivateMessagesForQuestion(q.getId());
+            // Count visible messages first
+            for (PrivateMessage pm : allPM) {
+                if (canSeePrivate(q, pm)) {
+                    visibleCount++;
+                }
+            }
+            // Create the title with the count
+            Label title = new Label("Private feedback (" + visibleCount + ")");
+            title.setStyle("-fx-font-weight:bold; -fx-text-fill: black;");
+            box.getChildren().add(title);
+            
+            // Render the messages
+            boolean any = false;
+            for (PrivateMessage pm : allPM) {
+                if (!canSeePrivate(q, pm)) continue;
+                any = true;
+                VBox card = new VBox(3);
+                Label meta = new Label(pm.getSender() + " • " + pm.getCreatedAt().format(TS) + " • " + pm.getMessageType()+ " -->"+ pm.getTo());
+                meta.setStyle("-fx-text-fill: black; -fx-font-size:11px;");
+                Label text = new Label(pm.getContent());
+                text.setWrapText(true);
+                text.setStyle("-fx-text-fill: black;");
+                card.getChildren().addAll(meta, text);
+                card.setStyle("-fx-background-color:#fffbea; -fx-border-color:#ffe08a; -fx-padding:8;");
+                box.getChildren().add(card);
+            }
+            
+            if (!any) {
+                Label none = new Label("No private feedback yet.");
+                none.setStyle("-fx-text-fill: black;");
+                box.getChildren().add(none);
+            }
+        } catch (SQLException ex) {
+            showError("Private messages load failed", ex.getMessage());
+        }
+        displayQuestionThread.getChildren().add(box);
+        //add private submission field
+        if(currentUser.getUserName().equals(q.getAskedBy())&&visibleCount>=1) {
+    		  if (!"Public".equals(viewFilter.getValue())) {
+    		      displayQuestionThread.getChildren().add(privateComposer(q));
+    		  }	
+        }else if(!currentUser.getUserName().equals(q.getAskedBy())){
+  		  if (!"Public".equals(viewFilter.getValue())) {
+		      displayQuestionThread.getChildren().add(privateComposer(q));
+		  }	
+        }
 
+    }
+
+    private void renderFollowups(Question q) {
+        try {
+            List<Question> kids = databaseHelper.getFollowupQuestions(q.getId());
+            if (kids == null || kids.isEmpty()) return;
+            Label head = new Label("Revised questions");
+            head.setStyle("-fx-font-weight:bold;");
+            VBox list = new VBox(6);
+            for (Question k : kids) {
+                Hyperlink link = new Hyperlink(k.getTitle() + " — " + k.getCreatedAt().format(TS));
+                link.setOnAction(e -> loadThread(k));
+                list.getChildren().add(link);
+            }
+            VBox wrap = new VBox(6, head, list);
+            wrap.setPadding(new Insets(8,0,0,0));
+            displayQuestionThread.getChildren().add(wrap);
+        } catch (SQLException ex) {
+            showError("Followups load failed", ex.getMessage());
+        }
+    }
+
+	String to="";
+	//add private review
     private VBox privateComposer(Question q) {
-        Label lbl = new Label("Send private feedback to the asker");
+        ComboBox<String> privateUsers = new ComboBox<>();
+        privateUsers.setVisible(true);
+        Label lbl = new Label("Send private feedback");
         lbl.setStyle("-fx-font-weight:bold; -fx-text-fill: black;");
+        Label lbl2 = new Label("to User:");
+        lbl2.setStyle("-fx-text-fill: black;");
+        lbl2.setVisible(false);
         ComboBox<String> kind = new ComboBox<>();
         kind.getItems().addAll("Question", "Answer");
         kind.setValue("Question");
@@ -1122,13 +1261,32 @@ public class StudentQAPage {
                 return;
             }
             try {
-                databaseHelper.addPrivateMessage(q.getId(), currentUser.getUserName(), kind.getValue().toUpperCase(), content);
+            	if(privateUsers.getValue()!=null) {
+            	to = privateUsers.getValue().toString();
+            	}
+                databaseHelper.addPrivateMessage(q.getId(), to, currentUser.getUserName(), kind.getValue().toUpperCase(), content);
                 loadThread(q);
             } catch (SQLException ex) {
                 showError("Send failed", ex.getMessage());
             }
         });
-        VBox box = new VBox(6, lbl, new HBox(6, new Label("Type:") {{ setStyle("-fx-text-fill: black;"); }}, kind), text, send);
+        if(currentUser.getUserName().equals(q.getAskedBy())) {
+	        lbl2.setVisible(true);
+	
+	        try {
+	            List<PrivateMessage> kids = databaseHelper.getPrivateMessagesForQuestion(q.getId());
+	            for (PrivateMessage k : kids) {
+	            	if(!privateUsers.getItems().contains(k.getSender())) {
+	            		if(currentUser.getUserName().equals(k.getSender())) {}else {
+	            		privateUsers.getItems().add(k.getSender());
+	            		}
+	            		//System.out.println(k.getSender());
+	            	}
+	            }
+	        } catch (SQLException ex) {showError("load failed", ex.getMessage());}
+        }else {privateUsers.setVisible(false);}
+        //privateUsers.setValue();
+        VBox box = new VBox(6, lbl, new HBox(6, new Label("Type:") {{ setStyle("-fx-text-fill: black;"); }}, kind, lbl2, privateUsers), text, send);
         box.setPadding(new Insets(10,0,0,0));
         return box;
     }
@@ -1267,8 +1425,9 @@ public class StudentQAPage {
                 currentUser.getUserName().equalsIgnoreCase(q.getAskedBy());
         boolean isSender = currentUser.getUserName() != null &&
                 currentUser.getUserName().equalsIgnoreCase(pm.getSender());
+        boolean isTo = currentUser.getUserName().equals(pm.getTo());
         boolean isStaff = isStaff(currentUser.getRole());
-        return isAsker || isSender || isStaff;
+        return isAsker || isSender || isStaff || isTo;
     }
 
     private boolean isStaff(String role) {
@@ -1294,98 +1453,6 @@ public class StudentQAPage {
         LocalDateTime t;
         String text;
         EventRecord(LocalDateTime t, String text) { this.t = t; this.text = text; }
-    }
-
-    // Display all questions
-    private void displayAllQuestions(VBox container, List<Question> questions) {
-        container.getChildren().clear();
-        if (questions.isEmpty()) {
-            Label emptyLabel = new Label("No questions found.");
-            emptyLabel.setStyle("-fx-text-fill: #2c2c2c; -fx-font-style: italic;");
-            container.getChildren().add(emptyLabel);
-            return;
-        }
-
-        for (Question q : questions) {
-            VBox questionCard = createAllQuestionCard(q);
-            container.getChildren().add(questionCard);
-        }
-    }
-
-	
-    private VBox createAllQuestionCard(Question question) {
-        VBox card = new VBox(10);
-        card.setPadding(new Insets(15));
-        card.setStyle("-fx-border-color: #ddd; -fx-border-width: 1; -fx-background-color: white;");
-
-		
-        // Header
-        HBox headerBox = new HBox(10);
-        headerBox.setAlignment(Pos.CENTER_LEFT);
-
-        Label titleLabel = new Label(question.getTitle());
-        titleLabel.setStyle("-fx-font-size:18px; -fx-font-weight:bold; -fx-text-fill:#2c2c2c;");
-
-        Label statusLabel = new Label(question.isResolved() ? "✓ RESOLVED" : "");
-        statusLabel.setStyle("-fx-background-color:#4CAF50; -fx-text-fill:white; -fx-padding:3 8; -fx-font-size:10px;");
-        statusLabel.setVisible(question.isResolved());
-
-        headerBox.getChildren().addAll(titleLabel, statusLabel);
-
-		
-        // Content
-        Label contentLabel = new Label(question.getContent());
-        contentLabel.setWrapText(true);
-        contentLabel.setStyle("-fx-padding:8; -fx-background-color:#fff; -fx-border-color:#ddd;");
-
-		
-        // Metadata
-        int unreadCount = 0 ;
-		try {
-			unreadCount = databaseHelper.getUnreadAnswersCount(question.getId());
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-        Label metaLabel = new Label(
-            "Asked by: " + question.getAskedBy() + 
-            " • " + question.getAnswers().size() + " answers" +
-            (unreadCount > 0 ? " (" + unreadCount + " unread)" : "") +
-            " • " + question.getFormattedDate()
-        );
-        metaLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #666;");
-
-		
-        // Show resolved answer if exists
-        if (question.isResolved()) {
-            Optional<Answer> resolvedAnswer = question.getAnswers().stream()
-                .filter(a -> a.getId() == question.getResolvedAnswerId())
-                .findFirst();
-            if (resolvedAnswer.isPresent()) {
-                VBox resolvedBox = new VBox(5);
-                resolvedBox.setStyle("-fx-background-color: #e8f5e9; -fx-padding: 10; -fx-border-color: #4CAF50; -fx-border-width: 1;");
-                Label resolvedLabel = new Label("✓ Accepted Answer:");
-                resolvedLabel.setStyle("-fx-font-weight: bold; -fx-text-fill: #2e7d32;");
-                Label answerContent = new Label(resolvedAnswer.get().getContent());
-                answerContent.setWrapText(true);
-                answerContent.setStyle(" -fx-text-fill: #2c2c2c;");
-                Label answerMeta = new Label("by " + resolvedAnswer.get().getAnsweredBy() + 
-                                            " • " + resolvedAnswer.get().getUpvotes() + " upvotes");
-                answerMeta.setStyle("-fx-font-size: 10px; -fx-text-fill: #666;");
-                resolvedBox.getChildren().addAll(resolvedLabel, answerContent, answerMeta);
-                card.getChildren().add(resolvedBox);
-            }
-        }
-        // Buttons
-        Button viewBtn = new Button("View All Answers");
-        viewBtn.setStyle("-fx-background-color: #0099ff; -fx-text-fill: white;");
-        viewBtn.setOnAction(e -> showAnswersDialog(question));
-        Button answerBtn = new Button("Provide Answer");
-        answerBtn.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white;");
-        answerBtn.setOnAction(e -> provideAnswer(question));
-        HBox buttonBox = new HBox(10, viewBtn, answerBtn);
-        card.getChildren().addAll(headerBox, contentLabel, metaLabel, buttonBox);
-        return card;
     }
 
 	
@@ -1518,155 +1585,6 @@ public class StudentQAPage {
         refreshAllTabs();
     }
 
-
-	// Method to provide an answer to a question
-    private void provideAnswer(Question question) {
-        Dialog<String> dialog = new Dialog<>();
-        dialog.setTitle("Provide Answer");
-        dialog.setHeaderText("Answer to: " + question.getTitle());
-        dialog.initOwner(primaryStage); // ADD THIS LINE - ensures proper parent
-        
-        VBox content = new VBox(10);
-        content.setPadding(new Insets(15));
-        
-        Label infoLabel = new Label("Share your knowledge to help others!");
-        infoLabel.setStyle("-fx-text-fill: #666;");
-        
-        TextArea answerArea = new TextArea();
-        answerArea.setPromptText("Enter your answer (5-500 characters)");
-        answerArea.setWrapText(true);
-        answerArea.setPrefRowCount(8);
-        answerArea.setMaxWidth(500);
-        
-        Label counter = new Label("0/" + Answer.CONTENT_MAX_LENGTH);
-        counter.setStyle("-fx-font-size: 10px; -fx-text-fill: #666;");
-        
-        Label validation = new Label();
-        validation.setWrapText(true);
-        validation.setMaxWidth(500);
-
-		// Listener to keep answer under max length and check input
-        answerArea.textProperty().addListener((obs, old, newVal) -> {
-            counter.setText(newVal.length() + "/" + Answer.CONTENT_MAX_LENGTH);
-            counter.setStyle(newVal.length() > Answer.CONTENT_MAX_LENGTH ? 
-                "-fx-font-size: 10px; -fx-text-fill: red;" : 
-                "-fx-font-size: 10px; -fx-text-fill: #666;");
-            
-            if (newVal.length() > Answer.CONTENT_MAX_LENGTH) {
-                answerArea.setText(newVal.substring(0, Answer.CONTENT_MAX_LENGTH));
-            }
-            
-            if (!newVal.trim().isEmpty()) {
-                InputValidator.ValidationReport report = InputValidator.validateAnswerContent(newVal);
-                if (report.hasIssues()) {
-                    validation.setText(report.getFullReport());
-                    validation.setStyle(report.canSubmit() ? 
-                        "-fx-text-fill: orange; -fx-font-size: 11px;" : 
-                        "-fx-text-fill: red; -fx-font-size: 11px;");
-                } else {
-                    validation.setText("✓ Answer looks good!");
-                    validation.setStyle("-fx-text-fill: green; -fx-font-size: 11px;");
-                }
-            } else {
-                validation.setText("");
-            }
-        });
-        
-        content.getChildren().addAll(infoLabel, answerArea, counter, validation);
-        
-        dialog.getDialogPane().setContent(content);
-        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
-
-		
-        // Disable OK button when text is empty or too short
-        Button okButton = (Button) dialog.getDialogPane().lookupButton(ButtonType.OK);
-        okButton.setDisable(true);
-        answerArea.textProperty().addListener((obs, old, newVal) -> {
-            okButton.setDisable(newVal.trim().length() < Answer.CONTENT_MIN_LENGTH);
-        });
-
-        dialog.setResultConverter(button -> {
-            if (button == ButtonType.OK) {
-                return answerArea.getText().trim();
-            }
-            return null;
-        });
-
-        Optional<String> result = dialog.showAndWait();
-        result.ifPresent(answerText -> {
-            if (!answerText.isEmpty()) {
-                // Validate
-                InputValidator.ValidationReport report = InputValidator.validateAnswerContent(answerText);
-                
-                if (!report.canSubmit()) {
-                    Alert errorAlert = new Alert(AlertType.ERROR);
-                    errorAlert.initOwner(primaryStage); // ADD THIS
-                    errorAlert.setTitle("Validation Error");
-                    errorAlert.setHeaderText("Answer Validation Failed");
-                    errorAlert.setContentText(report.getFullReport());
-                    errorAlert.showAndWait();
-                    return;
-                }
-                
-                String finalAnswer = answerText;
-				
-                // Show warnings and offer corrections
-                if (report.hasIssues()) {
-                    Alert warningAlert = new Alert(AlertType.CONFIRMATION);
-                    warningAlert.initOwner(primaryStage); // ADD THIS
-                    warningAlert.setTitle("Validation Warnings");
-                    warningAlert.setHeaderText("Your answer has some suggestions:");
-                    
-                    ButtonType applyButton = new ButtonType("Apply Corrections", ButtonBar.ButtonData.OK_DONE);
-                    ButtonType submitAsIsButton = new ButtonType("Submit As-Is", ButtonBar.ButtonData.NO);
-                    ButtonType cancelButton = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
-                    
-                    warningAlert.getButtonTypes().setAll(applyButton, submitAsIsButton, cancelButton);
-                    warningAlert.setContentText(report.getFullReport());
-                    
-                    Optional<ButtonType> warningResult = warningAlert.showAndWait();
-                    if (warningResult.isPresent()) {
-                        if (warningResult.get() == applyButton) {
-                            finalAnswer = report.getCorrectedText().isEmpty() ? answerText : report.getCorrectedText();
-                        } else if (warningResult.get() == cancelButton) {
-                            return; // Don't submit
-                        }
-                        // If submitAsIsButton, use original
-                    } else {
-                        return; // Dialog closed, don't submit
-                    }
-                }
-                
-                try {
-                    Answer answer = new Answer(question.getId(), finalAnswer, currentUser.getUserName());
-                    databaseHelper.createAnswer(answer);
-                    
-                    Alert successAlert = new Alert(AlertType.INFORMATION);
-                    successAlert.initOwner(primaryStage); // ADD THIS
-                    successAlert.setTitle("Success");
-                    successAlert.setHeaderText("Answer Posted!");
-                    successAlert.setContentText("Your answer has been posted successfully.");
-                    successAlert.showAndWait();
-                    
-                    refreshAllTabs();
-                } catch (IllegalArgumentException ex) {
-                    Alert errorAlert = new Alert(AlertType.ERROR);
-                    errorAlert.initOwner(primaryStage); // ADD THIS
-                    errorAlert.setTitle("Error");
-                    errorAlert.setContentText(ex.getMessage());
-                    errorAlert.showAndWait();
-                } catch (SQLException ex) {
-                    Alert errorAlert = new Alert(AlertType.ERROR);
-                    errorAlert.initOwner(primaryStage); // ADD THIS
-                    errorAlert.setTitle("Database Error");
-                    errorAlert.setContentText("Failed to post answer: " + ex.getMessage());
-                    errorAlert.showAndWait();
-                }
-            }
-        });
-    }
-
-    
 	// Method to edit existing question
     private void editQuestion(Question question) {
         Dialog<Question> dialog = new Dialog<>();
@@ -1791,9 +1709,10 @@ public class StudentQAPage {
         Tab newAskTab = createAskQuestionTab();
         Tab newMyQuestionsTab = createMyQuestionsTab();
         Tab newAllQuestionsTab = createAllQuestionsTab();
+        Tab newReviewerRequestTab = createReviewerRequestTab();
         // Replace tabs
         tabPane.getTabs().clear();
-        tabPane.getTabs().addAll(newAskTab, newMyQuestionsTab, newAllQuestionsTab);
+        tabPane.getTabs().addAll(newAskTab, newMyQuestionsTab, newAllQuestionsTab, newReviewerRequestTab);
         // Restore selection
         if (selectedIndex >= 0 && selectedIndex < tabPane.getTabs().size()) {
             tabPane.getSelectionModel().select(selectedIndex);
@@ -1802,9 +1721,12 @@ public class StudentQAPage {
         askQuestionTab = newAskTab;
         myQuestionsTab = newMyQuestionsTab;
         allQuestionsTab = newAllQuestionsTab;
+        reviewerRequestTab = newReviewerRequestTab;
     }
 
     
+
+
 	// Method to show alert
     private void showAlert(String title, String content, AlertType type) {
         Alert alert = new Alert(type);
