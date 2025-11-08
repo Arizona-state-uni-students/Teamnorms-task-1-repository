@@ -310,10 +310,6 @@ public class DatabaseHelper {
      * @throws SQLException If a database error occurs.
      */
     public boolean deleteUser(String username) throws SQLException {
-        if (isLastAdmin(username)) {
-            System.err.println("Cannot delete the last admin user!");
-            return false;
-        }
         String sql = "DELETE FROM cse360users WHERE userName = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setString(1, username);
@@ -322,31 +318,6 @@ public class DatabaseHelper {
         }
     }
     
-    /**
-     * Checks whether a user is the last admin in the database.
-     * 
-     * @param username Username to check.
-     * @return True or False based on function success.
-     * @throws SQLException If a database error occurs.
-     */
-    private boolean isLastAdmin(String username) throws SQLException {
-        String roleQuery = "SELECT role FROM cse360users WHERE userName = ?";
-        try (PreparedStatement pstmt = connection.prepareStatement(roleQuery)) {
-            pstmt.setString(1, username);
-            ResultSet rs = pstmt.executeQuery();
-            if (rs.next() && !"admin".equals(rs.getString("role"))) {
-                return false;
-            }
-        }
-        String countQuery = "SELECT COUNT(*) AS count FROM cse360users WHERE role = 'admin'";
-        try (PreparedStatement pstmt = connection.prepareStatement(countQuery)) {
-            ResultSet rs = pstmt.executeQuery();
-            if (rs.next()) {
-                return rs.getInt("count") <= 1;
-            }
-        }
-        return false;
-    }
 
     /**
      * Gets the number of users currently in the database.
@@ -560,10 +531,6 @@ public class DatabaseHelper {
      * @throws SQLException If a database error occurs.
      */
     public boolean updateUserRole(String username, String newRole) throws SQLException {
-        if (isLastAdmin(username) && !"admin".equals(newRole)) {
-            System.err.println("Cannot remove admin role from the last admin!");
-            return false;
-        }
         String sql = "UPDATE cse360users SET role = ? WHERE userName = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setString(1, newRole);
