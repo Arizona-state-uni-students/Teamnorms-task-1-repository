@@ -16,7 +16,7 @@ public class SpellChecker {
 
     
 
-    // Primary dictionary of correct words
+    /** Primary dictionary of correct words */ 
 
     private static final Set<String> DICTIONARY = new HashSet<>(Arrays.asList(
 
@@ -70,7 +70,7 @@ public class SpellChecker {
 
     
 
-    // Common misspellings mapped to correct spellings
+    /** Common misspellings mapped to correct spellings */ 
 
     private static final Map<String, String> COMMON_MISSPELLINGS = new HashMap<>();
 
@@ -174,7 +174,7 @@ public class SpellChecker {
 
     
 
-    // Reverse mapping: correct word -> list of common misspellings
+    /** Reverse mapping: correct word to the list of common misspellings */
 
     private static final Map<String, List<String>> REVERSE_MISSPELLINGS = new HashMap<>();
 
@@ -229,23 +229,60 @@ public class SpellChecker {
         }
 
         
-
+        /**
+         * Gets isValid
+         * 
+         * @return isValid
+         */
         public boolean isValid() { return isValid; }
 
+        /**
+         * Sets isValid
+         * 
+         * @param Boolean to set isValid to.
+         */
         public void setValid(boolean valid) { this.isValid = valid; }
 
+        /**
+         * Gets errors
+         * 
+         * @return List of errors
+         */
         public List<String> getErrors() { return errors; }
 
+        /**
+         * Gets warnings
+         * 
+         * @return warnings
+         */
         public List<String> getWarnings() { return warnings; }
 
+        /**
+         * Gets correctedText
+         * 
+         * @return correctedText
+         */
         public String getCorrectedText() { return correctedText; }
 
+        /**
+         * Sets correctedText
+         * 
+         * @param text String to set correctedText to.
+         */
         public void setCorrectedText(String text) { this.correctedText = text; }
 
+        /**
+         * Gets corrections
+         * 
+         * @return Map of corrections.
+         */
         public Map<String, String> getCorrections() { return corrections; }
 
-        
-
+        /**
+         * Method to add error
+         * 
+         * @param error String of the error
+         */
         public void addError(String error) {
 
             errors.add(error);
@@ -253,33 +290,46 @@ public class SpellChecker {
             isValid = false;
 
         }
-
         
-
+        /**
+         * Method to add warning
+         * 
+         * @param warning String of the warning
+         */
         public void addWarning(String warning) {
 
             warnings.add(warning);
 
         }
-
         
-
+        /**
+         * Method to add corrections
+         * 
+         * @param original Original string
+         * @param corrected Corrected string
+         */
         public void addCorrection(String original, String corrected) {
 
             corrections.put(original, corrected);
 
         }
-
         
-
+        /**
+         * Returns a boolean based on if there are issues.
+         * 
+         * @return True or false based on if there are issues or not.
+         */
         public boolean hasIssues() {
 
             return !errors.isEmpty() || !warnings.isEmpty();
 
         }
-
         
-
+        /**
+         * Gets a summary of errors, warnings, and corrections.
+         * 
+         * @return String of the summary.
+         */
         public String getSummary() {
 
             StringBuilder sb = new StringBuilder();
@@ -329,11 +379,11 @@ public class SpellChecker {
     
 
     /**
-
-     * Validates text for spelling and basic grammar
-
+     * Validates text for spelling and basic grammar.
+     * 
+     * @param text String to check
+     * @return Validation result
      */
-
     public static ValidationResult validateText(String text) {
 
         ValidationResult result = new ValidationResult();
@@ -395,11 +445,12 @@ public class SpellChecker {
     
 
     /**
-
-     * Checks for basic grammar issues
-
+     * Checks for basic grammar issues.
+     * 
+     * @param text String to check
+     * @param result Validation result
+     * @return Corrected string
      */
-
     private static String checkBasicGrammar(String text, ValidationResult result) {
 
         String corrected = text;
@@ -467,11 +518,12 @@ public class SpellChecker {
     
 
     /**
-
-     * Enhanced spell checking with edit distance for suggestions
-
+     * Enhanced spell checking with edit distance for suggestions.
+     * 
+     * @param text String to check
+     * @param result Validation result
+     * @return Corrected string
      */
-
     private static String checkSpelling(String text, ValidationResult result) {
 
         String corrected = text;
@@ -577,11 +629,11 @@ public class SpellChecker {
     
 
     /**
-
-     * Finds the closest matching word using edit distance
-
+     * Finds the closest matching word using edit distance.
+     * 
+     * @param word String to check.
+     * @return The closest matching word.
      */
-
     private static String findClosestMatch(String word) {
 
         int minDistance = Integer.MAX_VALUE;
@@ -643,11 +695,12 @@ public class SpellChecker {
     
 
     /**
-
-     * Calculates Levenshtein edit distance between two strings
-
+     * Calculates Levenshtein edit distance between two strings.
+     * 
+     * @param s1 First string
+     * @param s2 Second string
+     * @return The edit distance between the two strings.
      */
-
     private static int editDistance(String s1, String s2) {
 
         int[][] dp = new int[s1.length() + 1][s2.length() + 1];
@@ -699,11 +752,12 @@ public class SpellChecker {
     
 
     /**
-
-     * Preserves the case pattern of the original word
-
+     * Preserves the case pattern of the original word.
+     * 
+     * @param original Original string
+     * @param corrected Corrected string
+     * @return Corrected string
      */
-
     private static String preserveCase(String original, String corrected) {
 
         if (original.isEmpty() || corrected.isEmpty()) {
@@ -743,11 +797,11 @@ public class SpellChecker {
     
 
     /**
-
-     * Checks if a word looks like a technical term
-
+     * Checks if a word looks like a technical term.
+     * 
+     * @param word Word to check
+     * @return True or false depending on success.
      */
-
     private static boolean looksLikeTechnicalTerm(String word) {
 
         // Check for camelCase
@@ -775,11 +829,11 @@ public class SpellChecker {
     
 
     /**
-
      * Checks for excessive punctuation
-
+     * 
+     * @param text String to check
+     * @param result Validation result
      */
-
     private static void checkPunctuation(String text, ValidationResult result) {
 
         if (text.contains("!!")) {
@@ -809,11 +863,11 @@ public class SpellChecker {
     
 
     /**
-
      * Checks for all caps text (considered shouting)
-
+     * 
+     * @param text String to check
+     * @param result Validation result
      */
-
     private static void checkAllCaps(String text, ValidationResult result) {
 
         String[] words = text.split("\\s+");
@@ -853,11 +907,11 @@ public class SpellChecker {
     
 
     /**
-
      * Checks for repeated words
-
+     * 
+     * @param text String to check
+     * @param result Validation result
      */
-
     private static void checkRepeatedWords(String text, ValidationResult result) {
 
         String[] words = text.toLowerCase().split("\\s+");
@@ -877,11 +931,11 @@ public class SpellChecker {
     
 
     /**
-
-     * Quick check for minimal validation
-
+     * Quick check for minimal validation.
+     * 
+     * @param text String to check.
+     * @return True or False depending on success.
      */
-
     public static boolean isValidBasic(String text) {
 
         if (text == null || text.trim().isEmpty()) return false;
@@ -897,11 +951,11 @@ public class SpellChecker {
     
 
     /**
-
-     * Auto-corrects text without validation warnings
-
+     * Auto corrects text without validation warnings.
+     * 
+     * @param text String to auto correct
+     * @return auto corrected string.
      */
-
     public static String autoCorrect(String text) {
 
         if (text == null || text.trim().isEmpty()) {
