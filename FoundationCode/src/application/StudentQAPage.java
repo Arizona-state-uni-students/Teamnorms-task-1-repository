@@ -7,6 +7,9 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.image.Image;
@@ -53,10 +56,6 @@ public class StudentQAPage {
         this.currentUser = currentUser;
     }
     
-    /**
-     * StudentQAPage provides the interface for students to interact with the Q&A system.
-     * Students can ask questions, view questions, provide answers, and mark questions as resolved.
-     */
     public void show(Stage primaryStage) {
         this.primaryStage = primaryStage;
         mainLayout = new VBox(-2);
@@ -125,11 +124,6 @@ public class StudentQAPage {
     }
 
     // ========== REVIEWER REQUEST TAB ==========
-    /**
-     * Creates the reviewer request tab.
-     * 
-     * @return Reviewer request tab
-     */
     private Tab createReviewersTab() {
     	 Tab tab = new Tab("Reviewers");
          tab.setStyle("-fx-background-color: transparent; -fx-background: transparent;");
@@ -142,8 +136,16 @@ public class StudentQAPage {
      	int weight = databaseHelper.getUserWeight(currentUser.getUserName());
      	
      	Button loadAllReviews = new Button("Load all reviews");
-        loadAllReviews.setOnAction(e -> {loadAllReviews();});
-     	
+        loadAllReviews.setOnAction(e -> {
+        	loadAllReviews(null);
+        });
+     	Button loadAllReviewerAnswers = new Button("Load all reviewer answers");
+        loadAllReviewerAnswers.setOnAction(e -> {
+        	loadAllAnswersByReviewers();
+        });
+        Button loadReviewers = new Button("Load Reviewers");
+        loadReviewers.setOnAction(e -> loadReviewers());
+        
      	Label infoLabel = new Label("info label");
         infoLabel.setStyle("-fx-font-weight:bold; -fx-text-fill:#000;");
         if (currentUser.getPrivileges() > 1) {
@@ -169,19 +171,21 @@ public class StudentQAPage {
          
          //standard page
 	   	loadReviewers();
-	   	content.getChildren().addAll(infoLabel, loadAllReviews, displayReviewers);
+	   	HBox topcontent = new HBox(10);
+        topcontent.setPadding(new Insets(20));
+        topcontent.setStyle("-fx-background-color: white;");
+        topcontent.getChildren().addAll(loadReviewers, loadAllReviews, loadAllReviewerAnswers);
+	   	content.getChildren().addAll(infoLabel, topcontent, displayReviewers);
         ScrollPane scrollPane = new ScrollPane(content);
         scrollPane.setFitToWidth(true);
         tab.setContent(scrollPane);
         return tab;
     }
  
-    /**
-     * Method to load and display reviewers.
-     */
     private void loadReviewers() {
     	displayReviewers.getChildren().clear();
     	try {
+    		//admin, instructor will not show up on this list if they create reviews, because they are not "Reviewers"
 			List<User> reviewers = databaseHelper.getUsers_Role("Reviewer");
 			for(User r : reviewers) {
 	              Label head = new Label();
@@ -194,13 +198,15 @@ public class StudentQAPage {
 		          });
 		       	  demoteReviewer.setVisible(currentUser.getPrivileges() > 2); //hide button if not instructor+
 	              Button loadReviews = new Button("Load Reviews");
-	              loadReviews.setOnAction(e -> loadReviewsFor(r.getUserName()));
+	              loadReviews.setOnAction(e -> loadAllReviews(r.getUserName()));
+	              Button loadAnswers = new Button("Load Answers");
+	              loadAnswers.setOnAction(e -> loadAllAnswersBy(r.getUserName()));
 	              head.setStyle("-fx-font-weight:bold; -fx-text-fill:#000;");
 	              HBox wrap = new HBox(6);
 	              wrap.setPadding(new Insets(8,0,0,0));
-	              wrap.getChildren().addAll(head, loadReviews, demoteReviewer);
+	              wrap.getChildren().addAll(head, loadReviews, loadAnswers, demoteReviewer);
 	              displayReviewers.getChildren().add(wrap);
-				System.out.println(r.getUserName());
+				//System.out.println(r.getUserName());
 			}
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
@@ -208,12 +214,6 @@ public class StudentQAPage {
 		}
     }
 
-    /**
-     * Truncates text
-     * 
-     * @param text Text to truncate.
-     * @param maxLength Max length of the text.
-     */
     private String truncateText(String text, int maxLength) {
         if (text == null) return "";
         if (text.length() > maxLength) {
@@ -222,11 +222,6 @@ public class StudentQAPage {
         return text;
     }
     
-    /**
-     * Method to demote a reviewer.
-     * 
-     * @param reviewer Username of the reviewer to demote.
-     */
     private void demoteReviewer(String reviewer) {
     	try {
 			databaseHelper.updateUserRole(reviewer, "Student");
@@ -237,10 +232,10 @@ public class StudentQAPage {
 		}
     }
     
-    private void loadReviewsFor(String reviewer) {
+    private void loadAllAnswersBy(String reviewer) {
         displayReviewers.getChildren().clear(); // Clear previous content
 
-        Label infoLabel = new Label("Showing reviews for " + reviewer);
+        Label infoLabel = new Label("Showing answers by " + reviewer);
         infoLabel.setStyle("-fx-font-weight: bold; -fx-text-fill: #000;");
         displayReviewers.getChildren().add(infoLabel);
 
@@ -250,22 +245,103 @@ public class StudentQAPage {
                 displayReviewers.getChildren().add(new Label("No answers found for this user."));
                 return;
             }else {
-            	loadReviewsGUI(answers);
+            	loadReviewerAnswersGUI(answers);
             }
 
-            
-            Button loadReviewers = new Button("Load Reviewers");
-            loadReviewers.setOnAction(e -> loadReviewers());
-            displayReviewers.getChildren().add(loadReviewers);
         } catch (SQLException e) {
             displayReviewers.getChildren().add(new Label("Error loading answers: " + e.getMessage()));
             e.printStackTrace();
         }
     }
-    
-    private void loadAllReviews() {
+    private void loadAllReviews(String username) {
     	displayReviewers.getChildren().clear(); // Clear previous content
         Label infoLabel = new Label("Showing all reviews");
+        infoLabel.setStyle("-fx-font-weight: bold; -fx-text-fill: #000;");
+        if (username == null || username.trim().isEmpty()) {
+            infoLabel.setText("Showing all reviews");
+        } else {
+            infoLabel.setText("Showing reviews by " + username);
+        }
+        displayReviewers.getChildren().add(infoLabel);
+    	try {
+    		List<Review> reviewsToDisplay;
+
+            if (username == null || username.trim().isEmpty()) {
+                reviewsToDisplay = databaseHelper.getAllReviews(null); 
+            } else {
+                reviewsToDisplay = databaseHelper.getAllReviews(username);
+            }
+            loadAllReviewsGUI(reviewsToDisplay);
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    }
+    private void loadAllReviewsGUI(List<Review> reviews) {
+        GridPane headerGrid = new GridPane();
+        headerGrid.setHgap(10);
+        headerGrid.setVgap(5);
+        headerGrid.setPadding(new Insets(5, 0, 5, 0));
+        headerGrid.setStyle("-fx-border-color: #ccc; -fx-border-width: 0 0 1 0;");
+        headerGrid.getColumnConstraints().addAll(
+            new ColumnConstraints(300, 450, 600), // Review Text
+            new ColumnConstraints(70),             // Rating
+            new ColumnConstraints(120, 150, 200),  // Reviewer
+            new ColumnConstraints(100)             // Posted Date
+        );
+        headerGrid.add(new Label("Review") {{ setStyle("-fx-font-weight: bold; -fx-text-fill: black;"); }}, 0, 0);
+        headerGrid.add(new Label("Question") {{ setStyle("-fx-font-weight: bold; -fx-text-fill: black;"); }}, 1, 0);
+        headerGrid.add(new Label("Reviewer") {{ setStyle("-fx-font-weight: bold; -fx-text-fill: black;"); }}, 2, 0);
+        headerGrid.add(new Label("Posted") {{ setStyle("-fx-font-weight: bold; -fx-text-fill: black;"); }}, 3, 0);
+        
+        displayReviewers.getChildren().add(headerGrid);
+        for (Review review : reviews) {
+        	try {
+        	System.out.println(review.getAnswerId());
+            
+            Label contentLabel = new Label(truncateText(review.getReviewText(), 100));
+            contentLabel.setWrapText(true);
+            contentLabel.setStyle("-fx-text-fill:#333;");
+            contentLabel.setTooltip(new Tooltip(review.getReviewText()));
+
+            String questionTitle = databaseHelper.getQuestionByAnswerId(review.getAnswerId()).getTitle();
+            Hyperlink qTitle = new Hyperlink(truncateText(questionTitle, 40));
+            qTitle.setStyle("-fx-font-weight:bold; -fx-text-fill:#0099ff; -fx-border-color: transparent; -fx-padding: 0;");
+            qTitle.setTooltip(new Tooltip(questionTitle));
+            qTitle.setOnAction(e -> {
+                    	viewReview(review);
+            });
+            
+            
+            
+            
+            
+            
+            Label reviewerLabel = new Label(review.getWrittenBy());
+            reviewerLabel.setStyle("-fx-font-weight: bold; -fx-text-fill:#0099ff;");
+            String timestamp = review.getCreatedAt().format(TS);
+            Label tsLabel = new Label(timestamp);
+            tsLabel.setStyle("-fx-text-fill:#666; -fx-font-size:11px;");
+            GridPane reviewRow = new GridPane();
+            reviewRow.setHgap(10);
+            reviewRow.setPadding(new Insets(8, 0, 8, 0));
+            reviewRow.setStyle("-fx-border-color: #eee; -fx-border-width: 0 0 1 0;");
+            reviewRow.getColumnConstraints().addAll(headerGrid.getColumnConstraints());
+            reviewRow.add(contentLabel, 0, 0);
+            reviewRow.add(qTitle, 1, 0);
+            reviewRow.add(reviewerLabel, 2, 0);
+            reviewRow.add(tsLabel, 3, 0);
+            displayReviewers.getChildren().add(reviewRow);
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+        }
+    }
+    
+    private void loadAllAnswersByReviewers() {
+    	displayReviewers.getChildren().clear(); // Clear previous content
+        Label infoLabel = new Label("Showing all answers by reviewers");
         infoLabel.setStyle("-fx-font-weight: bold; -fx-text-fill: #000;");
         displayReviewers.getChildren().add(infoLabel);
     	try {
@@ -278,7 +354,7 @@ public class StudentQAPage {
 //			for(Answer a : allAnswers) {
 //				System.out.println(a.getContent()+" : "+a.getAnsweredBy());
 //			}
-			loadReviewsGUI(allAnswers);
+			loadReviewerAnswersGUI(allAnswers);
 			 Button loadReviewers = new Button("Load Reviewers");
 	            loadReviewers.setOnAction(e -> loadReviewers());
 	            displayReviewers.getChildren().add(loadReviewers);
@@ -288,7 +364,8 @@ public class StudentQAPage {
 		}
     }
     
-    private void loadReviewsGUI(List<Answer> answers) {
+    
+    private void loadReviewerAnswersGUI(List<Answer> answers) {
     	GridPane headerGrid = new GridPane();
         headerGrid.setHgap(10);
         headerGrid.setVgap(5);
@@ -360,6 +437,140 @@ public class StudentQAPage {
 				e.printStackTrace();
 			}
         }
+    }
+    private void addReview(Answer a) {
+    	    Stage popupStage = new Stage();
+    	    popupStage.initModality(Modality.APPLICATION_MODAL); // Blocks interaction with the main window
+    	    popupStage.setTitle("Add New Review");
+
+    	    Label headerLabel = new Label("Enter your review text:");
+    	    TextArea reviewInput = new TextArea();
+    	    reviewInput.setWrapText(true);
+    	    reviewInput.setPrefRowCount(5); 
+    	    Button submitButton = new Button("Submit Review");
+    	    Button cancelButton = new Button("Cancel");
+
+    	    submitButton.setOnAction(submitEvent -> {
+    	        String reviewText = reviewInput.getText().trim();
+    	        if (reviewText.isEmpty()) {
+    	            System.out.println("Review cannot be empty!"); 
+    	            return; 
+    	        }
+
+    	        try {
+    	            databaseHelper.addReview(a.getId(), currentUser.getUserName(), reviewText);
+    	            System.out.println("Review submitted for Question ID: " + a.getId());
+    	            popupStage.close();
+    	        } catch (Exception dbException) {
+    	            System.err.println("Database error submitting review: " + dbException.getMessage());
+    	        }
+    	    });
+    	    cancelButton.setOnAction(cancelEvent -> {
+    	        popupStage.close();
+    	    });
+
+    	    VBox layout = new VBox(10, headerLabel, reviewInput, submitButton, cancelButton);
+    	    layout.setAlignment(Pos.CENTER);
+    	    layout.setPadding(new Insets(20));
+    	    Scene scene = new Scene(layout, 400, 300); 
+    	    popupStage.setScene(scene);
+    	    popupStage.showAndWait();
+    }
+    //1367
+    private void viewReview(Review review) {
+        Stage popupStage = new Stage();
+        popupStage.initModality(Modality.APPLICATION_MODAL);
+        popupStage.setTitle("Review and Replies");
+
+        VBox contentVBox = new VBox(15);
+        contentVBox.setPadding(new Insets(20));
+
+        try {
+            Label reviewHeader = new Label("Review by: " + review.getWrittenBy());
+            reviewHeader.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+            Label reviewContent = new Label(review.getReviewText());
+            reviewContent.setWrapText(true);
+            reviewContent.setFont(Font.font("Arial", 12));
+            contentVBox.getChildren().addAll(reviewHeader, reviewContent);
+
+            List<ReviewReply> replies = databaseHelper.getRepliesForReview(review.getId());
+            Label repliesHeader = new Label("\n--- Replies (" + replies.size() + ") ---");
+            repliesHeader.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+            contentVBox.getChildren().add(repliesHeader);
+
+            if (replies.isEmpty()) {
+                contentVBox.getChildren().add(new Label("No replies yet."));
+            } else {
+                VBox repliesContainer = new VBox(5);
+                for (ReviewReply reply : replies) {
+                    Label replyLabel = new Label(reply.getRepliedBy() + " said (" + 
+                                               reply.getCreatedAt().toLocalTime().toString().substring(0, 5) + 
+                                               "): " + reply.getReplyText());
+                    replyLabel.setWrapText(true);
+                    repliesContainer.getChildren().add(replyLabel);
+                }
+                contentVBox.getChildren().add(repliesContainer);
+            }
+            Label replyLabel = new Label("\nAdd a Reply:");
+            replyLabel.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+            
+            TextArea replyInput = new TextArea();
+            replyInput.setWrapText(true);
+            replyInput.setPrefRowCount(3);
+            
+            Button submitReplyButton = new Button("Submit Reply");
+
+            submitReplyButton.setOnAction(submitEvent -> {
+                String replyText = replyInput.getText().trim();
+                
+                if (replyText.isEmpty()) {
+                    System.out.println("Reply text cannot be empty."); 
+                    return;
+                }
+
+                try {
+                    databaseHelper.addReviewReply(review.getId(), currentUser.getUserName(), replyText);
+                    System.out.println("Reply submitted successfully.");
+                    popupStage.close(); 
+                    
+                } catch (SQLException dbException) {
+                    System.err.println("Database error submitting reply: " + dbException.getMessage());
+                }
+            });
+            Hyperlink qLink = new Hyperlink("View Source");
+            qLink.setStyle("-fx-font-weight:bold; -fx-text-fill:#0099ff; -fx-border-color: transparent; -fx-padding: 0;");
+            qLink.setTooltip(new Tooltip("Takes you to the beginning..."));
+            qLink.setOnAction(e -> {
+                try {
+                    Question q = databaseHelper.getQuestionByAnswerId(review.getAnswerId());
+                    if (q != null) {
+                        // switch tabs and load question
+                        tabPane.getSelectionModel().select(allQuestionsTab);
+                        loadThread(q);
+                    } else {
+                        showAlert("Error", "Question thread not found.", AlertType.ERROR);
+                    }
+                } catch (SQLException ex) {
+                    showAlert("Error", "Failed to load question details: " + ex.getMessage(), AlertType.ERROR);
+                }
+            });
+            contentVBox.getChildren().addAll(
+                replyLabel, 
+                replyInput, 
+                submitReplyButton,
+                qLink
+            );
+
+        } catch (SQLException e) {
+            contentVBox.getChildren().add(new Label("Error loading review content: " + e.getMessage()));
+            e.printStackTrace();
+        }
+        ScrollPane scrollPane = new ScrollPane(contentVBox);
+        scrollPane.setFitToWidth(true); 
+
+        Scene scene = new Scene(scrollPane, 550, 500);
+        popupStage.setScene(scene);
+        popupStage.showAndWait();
     }
     
     // ========== END REVIEWER REQUEST TAB =-=====
@@ -1272,6 +1483,10 @@ public class StudentQAPage {
                         status.setStyle("-fx-text-fill: white; -fx-font-size: 11px; " +
                                        "-fx-background-color: #0099ff; -fx-padding: 2px 5px 2px 5px;");
                     }
+                    if("Student".equals(role)) {
+                        status.setStyle("-fx-text-fill: white; -fx-font-size: 11px; " +
+                                       "-fx-background-color: #0099ff; -fx-padding: 2px 5px 2px 5px;");
+                    }
                     
                     Label aMeta = new Label(a.getAnsweredBy() + " • " + a.getCreatedAt().format(TS) + 
                                            " • " + a.getUpvotes() + " upvotes");
@@ -1339,10 +1554,29 @@ public class StudentQAPage {
                                 showAlert("Error", "Failed to delete answer: " + ex.getMessage(), AlertType.ERROR);
                             }
                         });
-                        
+
                         actionBox.getChildren().addAll(editBtn, deleteBtn);
                     }
-                    
+                    Button addReview = new Button("Add Review");
+                    addReview.setVisible(false);
+                    if(currentUser.getPrivileges()>1) { //can initiate review
+                    	addReview.setVisible(true);
+                    	}
+                    if(databaseHelper.getAnswerHasReview(a.getId())) {
+                    	addReview.setText("View Reviews");
+                    	addReview.setVisible(true);
+                    }
+                    addReview.setOnAction(e->{
+                   		try {
+                    	if(databaseHelper.getAnswerHasReview(a.getId())) {
+								viewReview(databaseHelper.getReviewById(a.getId()));
+                    		}else {addReview(a);}
+						} catch (SQLException e1) {
+							// TODO Auto-generated catch block
+							e1.printStackTrace();
+						}
+                    	});
+                    actionBox.getChildren().add(addReview);
                     HBox box = new HBox(6, status, aMeta);
                     card.getChildren().addAll(box, aText, actionBox);
                     
@@ -1751,13 +1985,7 @@ public class StudentQAPage {
     }
 
     // --- utils ---
-    /**
-     * Method to determine whether a user can see a private message.
-     * 
-     * @param q Question the private message is attached to.
-     * @param pm Private message in question.
-     * @return True if the user can see the message, false otherwise.
-     */
+
     private boolean canSeePrivate(Question q, PrivateMessage pm) {
         boolean isAsker = currentUser.getUserName() != null &&
                 currentUser.getUserName().equalsIgnoreCase(q.getAskedBy());
@@ -1768,34 +1996,17 @@ public class StudentQAPage {
         return isAsker || isSender || isStaff || isTo;
     }
 
-    /**
-     * Method to determine if a user is considered staff.
-     * 
-     * @param role Role the user holds.
-     * @return True if the user is considered staff, false otherwise.
-     */
     private boolean isStaff(String role) {
         if (role == null) return false;
         String r = role.toLowerCase();
         return r.contains("admin") || r.contains("instructor") || r.contains("staff");
     }
 
-    /**
-     * Method to trim a string or empty it if it's null.
-     * 
-     * @param s String to check.
-     * @return Empty string or a trimmed string.
-     */
     private String trimOrEmpty(String s) {
         return (s == null) ? "" : s.trim();
     }
     
-    /**
-     * Simple error alert helper used by posting/loading actions.
-     * 
-     * @param title Error title
-     * @param message Error message
-     */
+    // Simple error alert helper used by posting/loading actions.
     private void showError(String title, String message) {
         Alert alert = new Alert(Alert.AlertType.ERROR, message, ButtonType.OK);
         alert.setTitle(title);
@@ -1803,9 +2014,7 @@ public class StudentQAPage {
         alert.showAndWait();
     }  
 
-    /**
-     * simple record for the log
-     */
+    // simple record for the log
     private static class EventRecord {
         LocalDateTime t;
         String text;
@@ -1814,11 +2023,6 @@ public class StudentQAPage {
 
 	
     // ========== DIALOG METHODS ==========
-    /**
-     * Method to show the answers dialog
-     * 
-     * @param question Question to show answers for
-     */
     private void showAnswersDialog(Question question) {
         Dialog<Void> dialog = new Dialog<>();
         dialog.setTitle("Answers for: " + question.getTitle());
@@ -1947,11 +2151,7 @@ public class StudentQAPage {
         refreshAllTabs();
     }
 
-    /**
-     * Method to edit existing question
-     * 
-     * @param question Question to edit.
-     */
+	// Method to edit existing question
     private void editQuestion(Question question) {
         Dialog<Question> dialog = new Dialog<>();
         dialog.setTitle("Edit Question");
@@ -2123,11 +2323,7 @@ public class StudentQAPage {
     }
 
     
-    /**
-     * Method to delete a question
-     * 
-     * @param question Question to delete.
-     */
+	// Method to delete question
     private void deleteQuestion(Question question) {
         Alert confirm = new Alert(AlertType.CONFIRMATION);
         confirm.setTitle("Delete Question");
@@ -2147,11 +2343,7 @@ public class StudentQAPage {
     }
 
 
-    /**
-     * Method to edit an existing answer
-     * 
-     * @param answer Answer to edit.
-     */
+	// Method to edit existing answer
     private void editAnswer(Answer answer) {
         Dialog<String> dialog = new Dialog<>();
         dialog.setTitle("Edit Answer");
@@ -2255,9 +2447,6 @@ public class StudentQAPage {
 
 
     // ========== UTILITY METHODS ==========
-    /**
-     * Method to refresh all tabs.
-     */
     private void refreshAllTabs() {
         // Store current selection
         int selectedIndex = tabPane.getSelectionModel().getSelectedIndex();
@@ -2284,13 +2473,7 @@ public class StudentQAPage {
         reviewersTab = newReviewersTab;
     }
 
-    /**
-     * Method to show an alert to the user.
-     * 
-     * @param title Title of the alert.
-     * @param content Content of the alert.
-     * @param type AlertType
-     */
+	// Method to show alert
     private void showAlert(String title, String content, AlertType type) {
         Alert alert = new Alert(type);
         alert.setTitle(title);
@@ -2300,9 +2483,6 @@ public class StudentQAPage {
     
     /**
      * Creates a composer for public answers
-     * 
-     * @param q Question to add answer to.
-     * @return VBox for composing answer.
      */
     private VBox answerComposer(Question q) {
         Label lbl = new Label("Add a public answer");
@@ -2394,8 +2574,6 @@ public class StudentQAPage {
 
     /**
      * Renders the private message section
-     * 
-     * @param q Question to render private messages for.
      */
     private void renderPrivateSection(Question q) {
         VBox box = new VBox(8);
