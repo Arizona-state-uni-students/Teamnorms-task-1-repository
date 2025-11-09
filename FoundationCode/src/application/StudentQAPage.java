@@ -56,6 +56,7 @@ public class StudentQAPage {
         this.databaseHelper = databaseHelper;
         this.currentUser = currentUser;
     }
+    
     /**
      * StudentQAPage provides the interface for students to interact with the Q&A system.
      * Students can ask questions, view questions, provide answers, and mark questions as resolved.
@@ -200,6 +201,7 @@ public class StudentQAPage {
         tab.setContent(scrollPane);
         return tab;
     }
+    
     /**
      * Method to load and display reviewers.
      */
@@ -234,6 +236,7 @@ public class StudentQAPage {
 			e.printStackTrace();
 		}
     }
+    
     /**
      * Truncates text
      * 
@@ -247,6 +250,7 @@ public class StudentQAPage {
         }
         return text;
     }
+    
     /**
      * Method to demote a reviewer.
      * 
@@ -262,6 +266,11 @@ public class StudentQAPage {
 		}
     }
     
+    /**
+     * Loads all the answers by a specific reviewer.
+     * 
+     * @param reviewer Reviewer to load answers for
+     */
     private void loadAllAnswersBy(String reviewer) {
         displayReviewers.getChildren().clear(); // Clear previous content
 
@@ -283,6 +292,12 @@ public class StudentQAPage {
             e.printStackTrace();
         }
     }
+    
+    /**
+     * Method to load all reviews by a specific reviewer
+     * 
+     * @param username Username of the user to load reviews from.
+     */
     private void loadAllReviews(String username) {
     	displayReviewers.getChildren().clear(); // Clear previous content
         Label infoLabel = new Label("Showing all reviews");
@@ -307,6 +322,12 @@ public class StudentQAPage {
 			e.printStackTrace();
 		}
     }
+    
+    /**
+     * Loads the GUI to display all reviews.
+     * 
+     * @param reviews The list of all reviews in the system.
+     */
     private void loadAllReviewsGUI(List<Review> reviews) {
         GridPane headerGrid = new GridPane();
         headerGrid.setHgap(10);
@@ -364,6 +385,9 @@ public class StudentQAPage {
         }
     }
     
+    /**
+     * Loads all answers by a specific reviewer.
+     */
     private void loadAllAnswersByReviewers() {
     	displayReviewers.getChildren().clear(); // Clear previous content
         Label infoLabel = new Label("Showing all answers by reviewers");
@@ -389,7 +413,11 @@ public class StudentQAPage {
 		}
     }
     
-    
+    /**
+     * Loads the reviewer answer UI.
+     * 
+     * @param answers List of answers.
+     */
     private void loadReviewerAnswersGUI(List<Answer> answers) {
     	GridPane headerGrid = new GridPane();
         headerGrid.setHgap(10);
@@ -463,6 +491,12 @@ public class StudentQAPage {
 			}
         }
     }
+    
+    /**
+     * Method to add a review.
+     * 
+     * @param a Answer to add the review for.
+     */
     private void addReview(Answer a) {
     	    Stage popupStage = new Stage();
     	    popupStage.initModality(Modality.APPLICATION_MODAL); // Blocks interaction with the main window
@@ -501,7 +535,12 @@ public class StudentQAPage {
     	    popupStage.setScene(scene);
     	    popupStage.showAndWait();
     }
-    //1367
+    
+    /**
+     * Method to view a review.
+     * 
+     * @param review Review to display.
+     */
     private void viewReview(Review review) {
         Stage popupStage = new Stage();
         popupStage.initModality(Modality.APPLICATION_MODAL);
@@ -597,6 +636,10 @@ public class StudentQAPage {
         popupStage.setScene(scene);
         popupStage.showAndWait();
     }
+    
+    /**
+     * Method to display the list of pending reviewer requests.
+     */
     private void getPendingReviews() {
     	displayReviewers.getChildren().clear();
 		List<User> users;
@@ -629,13 +672,30 @@ public class StudentQAPage {
 			}
 		
     	}
+    
+    /**
+     * Method to approve a reviewer request.
+     * 
+     * @param user Username of the user to approve the request for.
+     */
 	private void approveRequest(String user) {try {databaseHelper.updateHasRequest(user, false);databaseHelper.updateUserRole(user, "Reviewer"); getPendingReviews();}catch(Exception e) {e.printStackTrace();}}
+	
+	/**
+     * Method to deny a reviewer request.
+     * 
+     * @param user Username of the user to deny the request for.
+     */
 	private void declineRequest(String user) {try {databaseHelper.updateHasRequest(user, false); getPendingReviews();} catch (SQLException e) {e.printStackTrace();}}
     // ========== END REVIEWER REQUEST TAB =-=====
     
     
     
     // ========== CREATE QUESTION TAB ============
+	/**
+	 * Creates the question tab where a user can ask questions.
+	 * 
+	 * @return Ask question tab
+	 */
     private Tab createAskQuestionTab() {
         Tab tab = new Tab("Ask Question");
         tab.setStyle("-fx-background-color: transparent; -fx-background: transparent;");
@@ -992,8 +1052,12 @@ public class StudentQAPage {
         return tab;
     }
 
-	
-	// Method to display searched question
+    /**
+     * Method to display searched questions.
+     * 
+     * @param container VBox to add question boxes to.
+     * @param results List of questions matching the search.
+     */
     private void displaySearchResults(VBox container, List<Question> results) {
         container.getChildren().clear();
         if (results.isEmpty()) {
@@ -1034,6 +1098,11 @@ public class StudentQAPage {
     // ==========END CREATE QUESTION TAB ============
     
     // ========== MY QUESTIONS TAB ==========
+    /**
+     * Creates the question tab where a user can view their questions.
+     * 
+     * @return My question tab
+     */
     private Tab createMyQuestionsTab() {
 		// Create tab to view your user questions
         Tab tab = new Tab("My Questions");
@@ -1065,8 +1134,12 @@ public class StudentQAPage {
         return tab;
     }
 
-
-	// Display only questions asked by current user
+    /**
+     * Method to display only questions asked by current user.
+     * 
+     * @param container VBox to add question cards to.
+     * @param questions List of questions to display.
+     */
     private void displayMyQuestions(VBox container, List<Question> questions) {
         container.getChildren().clear();
         if (questions.isEmpty()) {
@@ -1082,7 +1155,12 @@ public class StudentQAPage {
         }
     }
 
-	
+	/**
+	 * Creates the question card for each question displayed in the my questions tab.
+	 * 
+	 * @param question Question to create card for.
+	 * @return VBox of the card containing the details of the question.
+	 */
     private VBox createMyQuestionCard(Question question) {
         VBox card = new VBox(10);
         card.setPadding(new Insets(15));
@@ -1148,8 +1226,12 @@ public class StudentQAPage {
         return card;
     }
     
-
-	// Mark question as resolved (close it)
+    
+    /**
+     * Method to mark a question as resolved (close it).
+     * 
+     * @param question Question to mark as resolved.
+     */
     private void closeQuestion(Question question) {
         Alert confirm = new Alert(AlertType.CONFIRMATION);
         confirm.setTitle("Close Question");
@@ -1175,6 +1257,11 @@ public class StudentQAPage {
     //========== END MY QUESTIONS TAB ==========
 	
     // ========== ALL QUESTIONS TAB ==========
+    /**
+     * Creates the all questions tab where all questions in the database will be displayed.
+     * 
+     * @return All questions tab
+     */
     private Tab createAllQuestionsTab() {
         Tab tab = new Tab("All Questions");
         tab.setClosable(false);
@@ -1288,6 +1375,10 @@ public class StudentQAPage {
         return tab;
     }
     
+    
+    /**
+     * Method to refresh the question list to display any changes.
+     */
     private void refreshQuestionListAndMaybeSelect() {
         displayQuestions.getChildren().clear();
         try {
@@ -1306,7 +1397,10 @@ public class StudentQAPage {
             showError("Load failed", ex.getMessage());
         }
     }
-
+    
+    /**
+     * Method to display an empty left side panel.
+     */
     private void showEmptyLeftState() {
         Label none = new Label("No questions yet.");
         none.setStyle("-fx-text-fill: black;");
@@ -1315,6 +1409,9 @@ public class StudentQAPage {
         displayQuestions.getChildren().add(box);
     }
 
+    /**
+     * Method to display an empty right side panel.
+     */
     private void showEmptyRightState() {
         displayQuestionThread.getChildren().clear();
         Label title = new Label("Start the discussion");
@@ -1328,6 +1425,12 @@ public class StudentQAPage {
         displayQuestionThread.getChildren().add(inner);
     }
 
+    /**
+     * Gets an HBox with the answer count and private messages for a question along with their details.
+     * 
+     * @param q Question to get answer count and private messages for.
+     * @return HBox containing answer count and private messages.
+     */
     private HBox questionRow(Question q) {
         // Title
         Label title = new Label(q.getTitle());
@@ -1399,6 +1502,11 @@ public class StudentQAPage {
         return row;
     }
 
+    /**
+     * Method to display a question thread.
+     * 
+     * @param q Question to display thread of.
+     */
     private void loadThread(Question q) {
         displayQuestionThread.getChildren().clear();
         // header row with action buttons
@@ -1481,7 +1589,9 @@ public class StudentQAPage {
     }
 
     /**
-     * Renders public answers for a question with feedback functionality
+     * Renders public answers for a question with feedback functionality.
+     * 
+     * @param q Question to render public answers for.
      */
     private void renderPublicAnswers(Question q) {
         try {
@@ -1687,6 +1797,11 @@ public class StudentQAPage {
         }
     }
 
+    /**
+     * Method to render follow up questions.
+     * 
+     * @param q Question to render follow ups for.
+     */
     private void renderFollowups(Question q) {
         try {
             List<Question> kids = databaseHelper.getFollowupQuestions(q.getId());
@@ -1710,6 +1825,9 @@ public class StudentQAPage {
 	String to="";
 	/**
 	 * Creates a composer for private messages
+	 * 
+	 * @param q Question to create private message for.
+	 * @return VBox of the private message composer.
 	 */
 	private VBox privateComposer(Question q) {
 	    VBox box = new VBox(6);
@@ -1915,6 +2033,9 @@ public class StudentQAPage {
 	    return box;
 	}
 
+	/**
+	 * Opens a dialog to create a question.
+	 */
     private void openCreateQuestionDialog() {
         Dialog<ButtonType> dialog = new Dialog<>();
         dialog.setTitle("New Question");
@@ -1958,6 +2079,11 @@ public class StudentQAPage {
         });
     }
 
+    /**
+     * Opens a dialog to create a follow up question.
+     * 
+     * @param parent Parent question to create child for.
+     */
     private void openCreateFollowupDialog(Question parent) {
         Dialog<ButtonType> dialog = new Dialog<>();
         dialog.setTitle("Create revised question");
@@ -1998,6 +2124,11 @@ public class StudentQAPage {
         });
     }
 
+    /**
+     * Opens a dialog showing an activity log.
+     * 
+     * @param q Question to show activity for.
+     */
     private void openLogDialog(Question q) {
         Dialog<Void> dialog = new Dialog<>();
         dialog.setTitle("Activity Log");
