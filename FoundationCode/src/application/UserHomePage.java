@@ -270,7 +270,7 @@ public class UserHomePage {
         // NEEDS TO BE COMPLETED
         reviewerRequest.setOnAction(e -> {
         	try {
-        		if (databaseHelper.updateHasRequest(currentUser.getUserName())) {
+        		if (databaseHelper.updateHasRequest(currentUser.getUserName(), true)) {
         			currentUser.setReviewerApplicant(true);
         			reviewerRequest.setText("Reviewer Request Pending");
         			reviewerRequest.setDisable(true);
