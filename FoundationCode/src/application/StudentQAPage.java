@@ -131,6 +131,10 @@ public class StudentQAPage {
          
      	String thisrole = currentUser.getRole();
      	int weight = databaseHelper.getUserWeight(currentUser.getUserName());
+     	
+     	Button loadAllReviews = new Button("Load all reviews");
+        loadAllReviews.setOnAction(e -> {loadAllReviews();});
+     	
      	Label infoLabel = new Label("info label");
         infoLabel.setStyle("-fx-font-weight:bold; -fx-text-fill:#000;");
         if (currentUser.getPrivileges() > 1) {
@@ -156,7 +160,7 @@ public class StudentQAPage {
          
          //standard page
 	   	loadReviewers();
-	   	content.getChildren().addAll(infoLabel, displayReviewers);
+	   	content.getChildren().addAll(infoLabel, loadAllReviews, displayReviewers);
         ScrollPane scrollPane = new ScrollPane(content);
         scrollPane.setFitToWidth(true);
         tab.setContent(scrollPane);
@@ -178,7 +182,7 @@ public class StudentQAPage {
 		          });
 		       	  demoteReviewer.setVisible(currentUser.getPrivileges() > 2); //hide button if not instructor+
 	              Button loadReviews = new Button("Load Reviews");
-	              loadReviews.setOnAction(e -> loadReviews(r.getUserName()));
+	              loadReviews.setOnAction(e -> loadReviewsFor(r.getUserName()));
 	              head.setStyle("-fx-font-weight:bold; -fx-text-fill:#000;");
 	              HBox wrap = new HBox(6);
 	              wrap.setPadding(new Insets(8,0,0,0));
@@ -190,77 +194,6 @@ public class StudentQAPage {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-    }
-    
-    private void loadReviews(String reviewer) {
-        displayReviewers.getChildren().clear(); // Clear previous content
-
-        Label infoLabel = new Label("Showing reviews for " + reviewer);
-        infoLabel.setStyle("-fx-font-weight: bold; -fx-text-fill: #000;");
-        displayReviewers.getChildren().add(infoLabel);
-
-        try {
-            List<Answer> answers = databaseHelper.getAnswersByUser(reviewer);
-
-            if (answers.isEmpty()) {
-                displayReviewers.getChildren().add(new Label("No answers found for this user."));
-                return;
-            }
-
-            GridPane headerGrid = new GridPane();
-            headerGrid.setHgap(10);
-            headerGrid.setVgap(5);
-            headerGrid.setPadding(new Insets(5, 0, 5, 0));
-            headerGrid.setStyle("-fx-border-color: #ccc; -fx-border-width: 0 0 1 0;");
-
-            // Define Column Constraints for alignment
-            // QuestionTitle (Wider), Content (Wider), Upvotes (Narrow), Timestamp (Narrow)
-            headerGrid.getColumnConstraints().addAll(
-                new ColumnConstraints(150, 200, 300), 
-                new ColumnConstraints(200, 300, 400),
-                new ColumnConstraints(60),
-                new ColumnConstraints(120)
-            );
-            headerGrid.add(new Label("Question Title"){{setStyle("-fx-font-weight: bold; -fx-text-fill: black;");}}, 0, 0);
-            headerGrid.add(new Label("Answer Content"){{setStyle("-fx-font-weight: bold; -fx-text-fill: black;");}}, 1, 0);
-            headerGrid.add(new Label("Upvotes"){{setStyle("-fx-font-weight: bold; -fx-text-fill: black;");}}, 2, 0);
-            headerGrid.add(new Label("Posted"){{setStyle("-fx-font-weight: bold; -fx-text-fill: black;");}}, 3, 0);
-            
-            displayReviewers.getChildren().add(headerGrid);
-
-            for (Answer a : answers) {
-                int qId = a.getQuestionId();
-                String qTitle = databaseHelper.getQuestionById(qId).getTitle();
-                String timestamp = a.getCreatedAt().format(TS);
-                Label qLabel = new Label(truncateText(qTitle, 40));
-                qLabel.setStyle("-fx-font-weight:bold; -fx-text-fill:#000;");
-                qLabel.setTooltip(new Tooltip(qTitle)); // Show full title on hover
-                Label answerContentLabel = new Label(truncateText(a.getContent(), 80));
-                answerContentLabel.setWrapText(true);
-                answerContentLabel.setStyle("-fx-text-fill:#333;");
-                answerContentLabel.setTooltip(new Tooltip(a.getContent())); // Show full content on hover
-                Label upvotesLabel = new Label(String.valueOf(a.getUpvotes()));
-                upvotesLabel.setStyle("-fx-font-weight:bold; -fx-text-fill:#0099ff;");
-                Label tsLabel = new Label(timestamp);
-                tsLabel.setStyle("-fx-text-fill:#666; -fx-font-size:11px;");
-                GridPane answerRow = new GridPane();
-                answerRow.setHgap(10);
-                answerRow.setPadding(new Insets(8, 0, 8, 0));
-                answerRow.setStyle("-fx-border-color: #eee; -fx-border-width: 0 0 1 0;");
-                answerRow.getColumnConstraints().addAll(headerGrid.getColumnConstraints());
-                answerRow.add(qLabel, 0, 0);
-                answerRow.add(answerContentLabel, 1, 0);
-                answerRow.add(upvotesLabel, 2, 0);
-                answerRow.add(tsLabel, 3, 0);
-                displayReviewers.getChildren().add(answerRow);
-            }
-            Button loadReviewers = new Button("Load Reviewers");
-            loadReviewers.setOnAction(e -> loadReviewers());
-            displayReviewers.getChildren().add(loadReviewers);
-        } catch (SQLException e) {
-            displayReviewers.getChildren().add(new Label("Error loading answers: " + e.getMessage()));
-            e.printStackTrace();
-        }
     }
 
     private String truncateText(String text, int maxLength) {
@@ -280,6 +213,132 @@ public class StudentQAPage {
 			e.printStackTrace();
 		}
     }
+    
+    private void loadReviewsFor(String reviewer) {
+        displayReviewers.getChildren().clear(); // Clear previous content
+
+        Label infoLabel = new Label("Showing reviews for " + reviewer);
+        infoLabel.setStyle("-fx-font-weight: bold; -fx-text-fill: #000;");
+        displayReviewers.getChildren().add(infoLabel);
+
+        try {
+            List<Answer> answers = databaseHelper.getAnswersByUser(reviewer);
+            if (answers.isEmpty()) {
+                displayReviewers.getChildren().add(new Label("No answers found for this user."));
+                return;
+            }else {
+            	loadReviewsGUI(answers);
+            }
+
+            
+            Button loadReviewers = new Button("Load Reviewers");
+            loadReviewers.setOnAction(e -> loadReviewers());
+            displayReviewers.getChildren().add(loadReviewers);
+        } catch (SQLException e) {
+            displayReviewers.getChildren().add(new Label("Error loading answers: " + e.getMessage()));
+            e.printStackTrace();
+        }
+    }
+    
+    private void loadAllReviews() {
+    	displayReviewers.getChildren().clear(); // Clear previous content
+        Label infoLabel = new Label("Showing all reviews");
+        infoLabel.setStyle("-fx-font-weight: bold; -fx-text-fill: #000;");
+        displayReviewers.getChildren().add(infoLabel);
+    	try {
+			List<User> reviewers = databaseHelper.getUsers_Role("Reviewer");
+			List<Answer> allAnswers = new ArrayList<>();
+			for(User r : reviewers) {
+			    List<Answer> reviewerAnswers = databaseHelper.getAnswersByUser(r.getUserName());
+			    allAnswers.addAll(reviewerAnswers);
+			}
+//			for(Answer a : allAnswers) {
+//				System.out.println(a.getContent()+" : "+a.getAnsweredBy());
+//			}
+			loadReviewsGUI(allAnswers);
+			 Button loadReviewers = new Button("Load Reviewers");
+	            loadReviewers.setOnAction(e -> loadReviewers());
+	            displayReviewers.getChildren().add(loadReviewers);
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    }
+    
+    private void loadReviewsGUI(List<Answer> answers) {
+    	GridPane headerGrid = new GridPane();
+        headerGrid.setHgap(10);
+        headerGrid.setVgap(5);
+        headerGrid.setPadding(new Insets(5, 0, 5, 0));
+        headerGrid.setStyle("-fx-border-color: #ccc; -fx-border-width: 0 0 1 0;");
+
+        // Define Column Constraints for alignment
+        // QuestionTitle (Wider), Content (Wider), Upvotes (Narrow), Timestamp (Narrow)
+        headerGrid.getColumnConstraints().addAll(
+            new ColumnConstraints(150, 200, 300), 
+            new ColumnConstraints(200, 300, 400),
+            new ColumnConstraints(60),
+            new ColumnConstraints(120)
+        );
+        headerGrid.add(new Label("Question Title"){{setStyle("-fx-font-weight: bold; -fx-text-fill: black;");}}, 0, 0);
+        headerGrid.add(new Label("Answer Content"){{setStyle("-fx-font-weight: bold; -fx-text-fill: black;");}}, 1, 0);
+        headerGrid.add(new Label("Upvotes"){{setStyle("-fx-font-weight: bold; -fx-text-fill: black;");}}, 2, 0);
+        headerGrid.add(new Label("Posted"){{setStyle("-fx-font-weight: bold; -fx-text-fill: black;");}}, 3, 0);
+        
+        displayReviewers.getChildren().add(headerGrid);
+
+        for (Answer a : answers) {
+            int qId = a.getQuestionId();
+            String qTitle;
+			try {
+				qTitle = databaseHelper.getQuestionById(qId).getTitle();
+            String timestamp = a.getCreatedAt().format(TS);
+            Hyperlink qLink = new Hyperlink(truncateText(qTitle, 40));
+            qLink.setStyle("-fx-font-weight:bold; -fx-text-fill:#0099ff; -fx-border-color: transparent; -fx-padding: 0;");
+            qLink.setTooltip(new Tooltip(qTitle));
+            qLink.setOnAction(e -> {
+                try {
+                    Question q = databaseHelper.getQuestionById(qId);
+                    if (q != null) {
+                        // switch tabs and load question
+                        tabPane.getSelectionModel().select(allQuestionsTab);
+                        loadThread(q);
+                    } else {
+                        showAlert("Error", "Question thread not found.", AlertType.ERROR);
+                    }
+                } catch (SQLException ex) {
+                    showAlert("Error", "Failed to load question details: " + ex.getMessage(), AlertType.ERROR);
+                }
+            });
+            
+//            Label qLabel = new Label(truncateText(qTitle, 40));
+//            qLabel.setStyle("-fx-font-weight:bold; -fx-text-fill:#000;");
+//            qLabel.setTooltip(new Tooltip(qTitle)); // Show full title on hover
+            Label answerContentLabel = new Label(truncateText(a.getContent(), 80));
+            answerContentLabel.setWrapText(true);
+            answerContentLabel.setStyle("-fx-text-fill:#333;");
+            answerContentLabel.setTooltip(new Tooltip(a.getContent()));
+            Label upvotesLabel = new Label(String.valueOf(a.getUpvotes()));
+            upvotesLabel.setStyle("-fx-font-weight:bold; -fx-text-fill:#0099ff;");
+            Label tsLabel = new Label(timestamp);
+            tsLabel.setStyle("-fx-text-fill:#666; -fx-font-size:11px;");
+            GridPane answerRow = new GridPane();
+            answerRow.setHgap(10);
+            answerRow.setPadding(new Insets(8, 0, 8, 0));
+            answerRow.setStyle("-fx-border-color: #eee; -fx-border-width: 0 0 1 0;");
+            answerRow.getColumnConstraints().addAll(headerGrid.getColumnConstraints());
+            answerRow.add(qLink, 0, 0);
+            answerRow.add(answerContentLabel, 1, 0);
+            answerRow.add(upvotesLabel, 2, 0);
+            answerRow.add(tsLabel, 3, 0);
+            displayReviewers.getChildren().add(answerRow);
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+        }
+    }
+    
     // ========== END REVIEWER REQUEST TAB =-=====
     
     
