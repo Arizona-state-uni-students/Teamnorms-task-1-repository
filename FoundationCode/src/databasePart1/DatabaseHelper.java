@@ -2,12 +2,12 @@ package databasePart1;
 import java.sql.*;
 import java.util.*;
 import application.Question;  
-import application.Answer;    
+import application.Answer;
+import application.AnswerFeedback;
 import application.User;
 import javafx.application.Platform;
 import javafx.scene.control.Alert;
 import java.time.LocalDateTime;
-import application.AnswerFeedback;
 
 /**
  * The DatabaseHelper class is responsible for managing the connection to the database,
@@ -244,30 +244,23 @@ public class DatabaseHelper {
     @return a list of users and their information
     @throws SQLException If a database error occurs.*/
     public List<User> getReviewers() throws SQLException {
-        ensureConnected();
+    	ensureConnected();
         List<User> users = new ArrayList<>();
-
-        String sql = "SELECT userName, email, firstName, lastName, role, weight, reviewerapplicant " +
-                     "FROM cse360users WHERE role NOT IN ('User', 'Student')";
-
-        try (PreparedStatement pstmt = connection.prepareStatement(sql);
-             ResultSet rs = pstmt.executeQuery()) {
-
-            while (rs.next()) {
-                User u = new User(
-                    rs.getString("userName"),
-                    rs.getString("role"),
-                    rs.getString("email"),
-                    rs.getString("firstName"),
-                    rs.getString("lastName"),
-                    rs.getInt("weight"),
-                    rs.getBoolean("hasRequest")
-                );
-                users.add(u);
-            }
-        }
-        return users;
-    }
+        String sql = "SELECT * FROM cse360users WHERE role != User AND Student";
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    User u = new User(
+                        rs.getString("userName"),
+                        rs.getString("role"),
+                        rs.getString("email"),
+                        rs.getString("firstname"),
+                        rs.getString("lastname"),
+                        rs.getInt("weight"),
+                        rs.getBoolean("hasRequest")
+                    );
+                    users.add(u);}}}
+        return users;}
     
 
     /**
@@ -886,7 +879,6 @@ public class DatabaseHelper {
         statement.execute(answerFeedbackTable);
     }
     
-    
     /**
      * Adds feedback/comment to an answer
      * 
@@ -940,7 +932,6 @@ public class DatabaseHelper {
         }
         return feedback;
     }
-    
     
     
     /**
@@ -1261,6 +1252,66 @@ public class DatabaseHelper {
     }
     
     /**
+     * Gets the list of answers for a user
+     * 
+     * @param String Username of the answers to search
+     * @return List of Answers
+     * @throws SQLException If a database error occurs.
+     */
+    public List<Answer> getAnswersByUser(String user) throws SQLException {
+        List<Answer> answers = new ArrayList<>();
+        String sql = "SELECT * FROM answers WHERE answeredBy = ? ORDER BY upvotes DESC, createdAt ASC";
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setString(1, user);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    Answer a = new Answer(
+                        rs.getInt("id"),
+                        rs.getInt("questionId"),
+                        rs.getString("content"),
+                        rs.getString("answeredBy"),
+                        rs.getTimestamp("createdAt").toLocalDateTime(),
+                        rs.getBoolean("isRead"),
+                        rs.getInt("upvotes")
+                    );
+                    answers.add(a);
+                }
+            }
+        }
+        return answers;
+    }
+    
+    /**
+     * Gets the list of answers for users with a certain role
+     * 
+     * @param String Role to search to retrieve the answers of.
+     * @return List of Answers
+     * @throws SQLException If a database error occurs.
+     */
+    public List<Answer> getAnswersByRole(String role) throws SQLException {
+        List<Answer> answers = new ArrayList<>();
+        String sql = "SELECT * FROM answers WHERE questionId = ? ORDER BY upvotes DESC, createdAt ASC";
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setString(1, role);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    Answer a = new Answer(
+                        rs.getInt("id"),
+                        rs.getInt("questionId"),
+                        rs.getString("content"),
+                        rs.getString("answeredBy"),
+                        rs.getTimestamp("createdAt").toLocalDateTime(),
+                        rs.getBoolean("isRead"),
+                        rs.getInt("upvotes")
+                    );
+                    answers.add(a);
+                }
+            }
+        }
+        return answers;
+    }
+    
+    /**
      * Gets the list of answers for a particular question.
      * 
      * @param questionId ID of the question to retrieve the answers for.
@@ -1289,6 +1340,7 @@ public class DatabaseHelper {
         }
         return answers;
     }
+    
 
     /**
      * Updates an answers information (Content, id, answeredBy).

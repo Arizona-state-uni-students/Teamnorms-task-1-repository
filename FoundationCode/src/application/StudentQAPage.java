@@ -122,38 +122,165 @@ public class StudentQAPage {
 
     // ========== REVIEWER REQUEST TAB ==========
     private Tab createReviewersTab() {
-        Tab tab = new Tab("Reviewers");
-        tab.setStyle("-fx-background-color: transparent; -fx-background: transparent;");
-        tab.setClosable(false);
-        
-        VBox content = new VBox(10);
-        content.setPadding(new Insets(20));
-        content.setStyle("-fx-background-color: white;");
-
-        Label signedIn = new Label("Signed in as: " + currentUser.getUserName() + " (" + currentUser.getRole() + ")");
-        signedIn.setStyle("-fx-text-fill:#444; -fx-font-size:12px;");
-
-        ComboBox<String> reviewerFilterCombo = new ComboBox<>();
-        reviewerFilterCombo.getItems().addAll("All Reviewers", "Favorite Reviewers", "Pending Reviewers");
-        reviewerFilterCombo.setValue("All Reviewers");
-        reviewerFilterCombo.setTooltip(new Tooltip("Choose which reviewers to show"));
-
-        HBox topBar = new HBox(12, new Separator(), signedIn, new Label("View:") {{ setStyle("-fx-text-fill: black;"); }}, reviewerFilterCombo);
-        topBar.setAlignment(Pos.CENTER_LEFT);
-        topBar.setPadding(new Insets(8, 10, 8, 10));
-        topBar.setStyle("-fx-background-color:#f3f3f3;");
-
-        displayReviewers = new VBox(8);
-
-        content.getChildren().addAll(topBar, displayReviewers);
-
-		// Make scrollable
+    	 Tab tab = new Tab("Reviewers");
+         tab.setStyle("-fx-background-color: transparent; -fx-background: transparent;");
+         tab.setClosable(false);
+         VBox content = new VBox(10);
+         content.setPadding(new Insets(20));
+         content.setStyle("-fx-background-color: white;");
+         
+     	String thisrole = currentUser.getRole();
+     	int weight = databaseHelper.getUserWeight(currentUser.getUserName());
+     	Label infoLabel = new Label("info label");
+        infoLabel.setStyle("-fx-font-weight:bold; -fx-text-fill:#000;");
+        if (currentUser.getPrivileges() > 1) {
+     		//currently a reviewer
+     		//drop role? congratulations?
+     		infoLabel.setText("you are already a reviewer. your current weight is:"+weight);
+     	}else{
+     		//not a reviewer, not an instructor
+     		//create application
+     		//requirements: certain weights? total contributions? nice application? 
+     		infoLabel.setText("you can apply to be a reviewer in your user settings page. your current weight is: "+weight);
+     	}
+     	if(currentUser.getPrivileges() > 2) {
+     		//has instructor+ privileges
+     		//check requests to be a reviewer
+     		//approve or deny
+     		infoLabel.setText("you are an instructor");
+     	}
+         
+         
+         displayReviewers = new VBox(8);
+         
+         
+         //standard page
+	   	loadReviewers();
+	   	content.getChildren().addAll(infoLabel, displayReviewers);
         ScrollPane scrollPane = new ScrollPane(content);
         scrollPane.setFitToWidth(true);
         tab.setContent(scrollPane);
         return tab;
     }
-    // ========== END REVIEWER REQUEST TAB ==========
+ 
+    private void loadReviewers() {
+    	displayReviewers.getChildren().clear();
+    	try {
+			List<User> reviewers = databaseHelper.getUsers_Role("Reviewer");
+			for(User r : reviewers) {
+	              Label head = new Label();
+	              head.setStyle("-fx-font-weight:bold; -fx-text-fill:#000;");
+	              head.setText(r.getUserName());
+	              
+	              Button demoteReviewer = new Button("Demote");
+		          demoteReviewer.setOnAction(e -> {
+		              demoteReviewer(r.getUserName());
+		          });
+		       	  demoteReviewer.setVisible(currentUser.getPrivileges() > 2); //hide button if not instructor+
+	              Button loadReviews = new Button("Load Reviews");
+	              loadReviews.setOnAction(e -> loadReviews(r.getUserName()));
+	              head.setStyle("-fx-font-weight:bold; -fx-text-fill:#000;");
+	              HBox wrap = new HBox(6);
+	              wrap.setPadding(new Insets(8,0,0,0));
+	              wrap.getChildren().addAll(head, loadReviews, demoteReviewer);
+	              displayReviewers.getChildren().add(wrap);
+				System.out.println(r.getUserName());
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    }
+    
+    private void loadReviews(String reviewer) {
+        displayReviewers.getChildren().clear(); // Clear previous content
+
+        Label infoLabel = new Label("Showing reviews for " + reviewer);
+        infoLabel.setStyle("-fx-font-weight: bold; -fx-text-fill: #000;");
+        displayReviewers.getChildren().add(infoLabel);
+
+        try {
+            List<Answer> answers = databaseHelper.getAnswersByUser(reviewer);
+
+            if (answers.isEmpty()) {
+                displayReviewers.getChildren().add(new Label("No answers found for this user."));
+                return;
+            }
+
+            GridPane headerGrid = new GridPane();
+            headerGrid.setHgap(10);
+            headerGrid.setVgap(5);
+            headerGrid.setPadding(new Insets(5, 0, 5, 0));
+            headerGrid.setStyle("-fx-border-color: #ccc; -fx-border-width: 0 0 1 0;");
+
+            // Define Column Constraints for alignment
+            // QuestionTitle (Wider), Content (Wider), Upvotes (Narrow), Timestamp (Narrow)
+            headerGrid.getColumnConstraints().addAll(
+                new ColumnConstraints(150, 200, 300), 
+                new ColumnConstraints(200, 300, 400),
+                new ColumnConstraints(60),
+                new ColumnConstraints(120)
+            );
+            headerGrid.add(new Label("Question Title"){{setStyle("-fx-font-weight: bold; -fx-text-fill: black;");}}, 0, 0);
+            headerGrid.add(new Label("Answer Content"){{setStyle("-fx-font-weight: bold; -fx-text-fill: black;");}}, 1, 0);
+            headerGrid.add(new Label("Upvotes"){{setStyle("-fx-font-weight: bold; -fx-text-fill: black;");}}, 2, 0);
+            headerGrid.add(new Label("Posted"){{setStyle("-fx-font-weight: bold; -fx-text-fill: black;");}}, 3, 0);
+            
+            displayReviewers.getChildren().add(headerGrid);
+
+            for (Answer a : answers) {
+                int qId = a.getQuestionId();
+                String qTitle = databaseHelper.getQuestionById(qId).getTitle();
+                String timestamp = a.getCreatedAt().format(TS);
+                Label qLabel = new Label(truncateText(qTitle, 40));
+                qLabel.setStyle("-fx-font-weight:bold; -fx-text-fill:#000;");
+                qLabel.setTooltip(new Tooltip(qTitle)); // Show full title on hover
+                Label answerContentLabel = new Label(truncateText(a.getContent(), 80));
+                answerContentLabel.setWrapText(true);
+                answerContentLabel.setStyle("-fx-text-fill:#333;");
+                answerContentLabel.setTooltip(new Tooltip(a.getContent())); // Show full content on hover
+                Label upvotesLabel = new Label(String.valueOf(a.getUpvotes()));
+                upvotesLabel.setStyle("-fx-font-weight:bold; -fx-text-fill:#0099ff;");
+                Label tsLabel = new Label(timestamp);
+                tsLabel.setStyle("-fx-text-fill:#666; -fx-font-size:11px;");
+                GridPane answerRow = new GridPane();
+                answerRow.setHgap(10);
+                answerRow.setPadding(new Insets(8, 0, 8, 0));
+                answerRow.setStyle("-fx-border-color: #eee; -fx-border-width: 0 0 1 0;");
+                answerRow.getColumnConstraints().addAll(headerGrid.getColumnConstraints());
+                answerRow.add(qLabel, 0, 0);
+                answerRow.add(answerContentLabel, 1, 0);
+                answerRow.add(upvotesLabel, 2, 0);
+                answerRow.add(tsLabel, 3, 0);
+                displayReviewers.getChildren().add(answerRow);
+            }
+            Button loadReviewers = new Button("Load Reviewers");
+            loadReviewers.setOnAction(e -> loadReviewers());
+            displayReviewers.getChildren().add(loadReviewers);
+        } catch (SQLException e) {
+            displayReviewers.getChildren().add(new Label("Error loading answers: " + e.getMessage()));
+            e.printStackTrace();
+        }
+    }
+
+    private String truncateText(String text, int maxLength) {
+        if (text == null) return "";
+        if (text.length() > maxLength) {
+            return text.substring(0, maxLength - 3) + "...";
+        }
+        return text;
+    }
+    
+    private void demoteReviewer(String reviewer) {
+    	try {
+			databaseHelper.updateUserRole(reviewer, "Student");
+			loadReviewers();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    }
+    // ========== END REVIEWER REQUEST TAB =-=====
     
     
     
