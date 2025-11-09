@@ -164,7 +164,7 @@ public class StudentQAPage {
 
         viewFilter = new ComboBox<>();
         viewFilter.getItems().addAll("All Reviewers", "Favorite Reviewers", "Pending Reviewers");
-        viewFilter.setValue("All"); // default
+        viewFilter.setValue("All Reviewers"); // default
         viewFilter.setTooltip(new Tooltip("Choose which posts to show in the thread"));
 
         HBox topBar = new HBox(12, new Separator(), signedIn, new Label("View:") {{ setStyle("-fx-text-fill: black;"); }}, viewFilter);
