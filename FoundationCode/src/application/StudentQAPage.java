@@ -55,7 +55,10 @@ public class StudentQAPage {
         this.databaseHelper = databaseHelper;
         this.currentUser = currentUser;
     }
-    
+    /**
+     * StudentQAPage provides the interface for students to interact with the Q&A system.
+     * Students can ask questions, view questions, provide answers, and mark questions as resolved.
+     */
     public void show(Stage primaryStage) {
         this.primaryStage = primaryStage;
         mainLayout = new VBox(-2);
@@ -124,6 +127,11 @@ public class StudentQAPage {
     }
 
     // ========== REVIEWER REQUEST TAB ==========
+    /**
+     * Creates the reviewer request tab.
+     * 
+     * @return Reviewer request tab
+     */
     private Tab createReviewersTab() {
     	 Tab tab = new Tab("Reviewers");
          tab.setStyle("-fx-background-color: transparent; -fx-background: transparent;");
@@ -181,7 +189,9 @@ public class StudentQAPage {
         tab.setContent(scrollPane);
         return tab;
     }
- 
+    /**
+     * Method to load and display reviewers.
+     */
     private void loadReviewers() {
     	displayReviewers.getChildren().clear();
     	try {
@@ -213,7 +223,12 @@ public class StudentQAPage {
 			e.printStackTrace();
 		}
     }
-
+    /**
+     * Truncates text
+     * 
+     * @param text Text to truncate.
+     * @param maxLength Max length of the text.
+     */
     private String truncateText(String text, int maxLength) {
         if (text == null) return "";
         if (text.length() > maxLength) {
@@ -221,7 +236,11 @@ public class StudentQAPage {
         }
         return text;
     }
-    
+    /**
+     * Method to demote a reviewer.
+     * 
+     * @param reviewer Username of the reviewer to demote.
+     */
     private void demoteReviewer(String reviewer) {
     	try {
 			databaseHelper.updateUserRole(reviewer, "Student");
@@ -1985,7 +2004,13 @@ public class StudentQAPage {
     }
 
     // --- utils ---
-
+    /**
+     * Method to determine whether a user can see a private message.
+     * 
+     * @param q Question the private message is attached to.
+     * @param pm Private message in question.
+     * @return True if the user can see the message, false otherwise.
+     */
     private boolean canSeePrivate(Question q, PrivateMessage pm) {
         boolean isAsker = currentUser.getUserName() != null &&
                 currentUser.getUserName().equalsIgnoreCase(q.getAskedBy());
@@ -1995,18 +2020,33 @@ public class StudentQAPage {
         boolean isStaff = isStaff(currentUser.getRole());
         return isAsker || isSender || isStaff || isTo;
     }
-
+    /**
+     * Method to determine if a user is considered staff.
+     * 
+     * @param role Role the user holds.
+     * @return True if the user is considered staff, false otherwise.
+     */
     private boolean isStaff(String role) {
         if (role == null) return false;
         String r = role.toLowerCase();
         return r.contains("admin") || r.contains("instructor") || r.contains("staff");
     }
-
+    /**
+     * Method to trim a string or empty it if it's null.
+     * 
+     * @param s String to check.
+     * @return Empty string or a trimmed string.
+     */
     private String trimOrEmpty(String s) {
         return (s == null) ? "" : s.trim();
     }
     
-    // Simple error alert helper used by posting/loading actions.
+    /**
+     * Simple error alert helper used by posting/loading actions.
+     * 
+     * @param title Error title
+     * @param message Error message
+     */
     private void showError(String title, String message) {
         Alert alert = new Alert(Alert.AlertType.ERROR, message, ButtonType.OK);
         alert.setTitle(title);
@@ -2014,7 +2054,9 @@ public class StudentQAPage {
         alert.showAndWait();
     }  
 
-    // simple record for the log
+    /**
+     * simple record for the log
+     */
     private static class EventRecord {
         LocalDateTime t;
         String text;
@@ -2023,6 +2065,11 @@ public class StudentQAPage {
 
 	
     // ========== DIALOG METHODS ==========
+    /**
+     * Method to show the answers dialog
+     * 
+     * @param question Question to show answers for
+     */
     private void showAnswersDialog(Question question) {
         Dialog<Void> dialog = new Dialog<>();
         dialog.setTitle("Answers for: " + question.getTitle());
@@ -2151,7 +2198,11 @@ public class StudentQAPage {
         refreshAllTabs();
     }
 
-	// Method to edit existing question
+    /**
+     * Method to edit existing question
+     * 
+     * @param question Question to edit.
+     */
     private void editQuestion(Question question) {
         Dialog<Question> dialog = new Dialog<>();
         dialog.setTitle("Edit Question");
@@ -2323,7 +2374,11 @@ public class StudentQAPage {
     }
 
     
-	// Method to delete question
+    /**
+     * Method to delete a question
+     * 
+     * @param question Question to delete.
+     */
     private void deleteQuestion(Question question) {
         Alert confirm = new Alert(AlertType.CONFIRMATION);
         confirm.setTitle("Delete Question");
@@ -2343,7 +2398,11 @@ public class StudentQAPage {
     }
 
 
-	// Method to edit existing answer
+    /**
+     * Method to edit an existing answer
+     * 
+     * @param answer Answer to edit.
+     */
     private void editAnswer(Answer answer) {
         Dialog<String> dialog = new Dialog<>();
         dialog.setTitle("Edit Answer");
@@ -2447,6 +2506,9 @@ public class StudentQAPage {
 
 
     // ========== UTILITY METHODS ==========
+    /**
+     * Method to refresh all tabs.
+     */
     private void refreshAllTabs() {
         // Store current selection
         int selectedIndex = tabPane.getSelectionModel().getSelectedIndex();
@@ -2473,7 +2535,13 @@ public class StudentQAPage {
         reviewersTab = newReviewersTab;
     }
 
-	// Method to show alert
+    /**
+     * Method to show an alert to the user.
+     * 
+     * @param title Title of the alert.
+     * @param content Content of the alert.
+     * @param type AlertType
+     */
     private void showAlert(String title, String content, AlertType type) {
         Alert alert = new Alert(type);
         alert.setTitle(title);
@@ -2483,6 +2551,9 @@ public class StudentQAPage {
     
     /**
      * Creates a composer for public answers
+     * 
+     * @param q Question to add answer to.
+     * @return VBox for composing answer.
      */
     private VBox answerComposer(Question q) {
         Label lbl = new Label("Add a public answer");
@@ -2574,6 +2645,8 @@ public class StudentQAPage {
 
     /**
      * Renders the private message section
+     * 
+     * @param q Question to render private messages for.
      */
     private void renderPrivateSection(Question q) {
         VBox box = new VBox(8);
