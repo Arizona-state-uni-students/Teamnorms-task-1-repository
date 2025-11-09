@@ -53,6 +53,10 @@ public class StudentQAPage {
         this.currentUser = currentUser;
     }
     
+    /**
+     * Displays the student QA page in the primary stage.
+     * @param primaryStage The primary stage where the scene will be displayed.
+     */
     public void show(Stage primaryStage) {
         this.primaryStage = primaryStage;
         mainLayout = new VBox(-2);
@@ -121,6 +125,11 @@ public class StudentQAPage {
     }
 
     // ========== REVIEWER REQUEST TAB ==========
+    /**
+     * Creates the reviewer request tab.
+     * 
+     * @return Reviewer request tab
+     */
     private Tab createReviewersTab() {
     	 Tab tab = new Tab("Reviewers");
          tab.setStyle("-fx-background-color: transparent; -fx-background: transparent;");
@@ -162,7 +171,10 @@ public class StudentQAPage {
         tab.setContent(scrollPane);
         return tab;
     }
- 
+
+    /**
+     * Method to load and display reviewers.
+     */
     private void loadReviewers() {
     	displayReviewers.getChildren().clear();
     	try {
@@ -192,6 +204,11 @@ public class StudentQAPage {
 		}
     }
     
+    /**
+     * Method to load the reviews made by reviewers.
+     * 
+     * @param reviewer Username of the reviewer.
+     */
     private void loadReviews(String reviewer) {
         displayReviewers.getChildren().clear(); // Clear previous content
 
@@ -262,7 +279,13 @@ public class StudentQAPage {
             e.printStackTrace();
         }
     }
-
+    
+    /**
+     * Truncates text
+     * 
+     * @param text Text to truncate.
+     * @param maxLength Max length of the text.
+     */
     private String truncateText(String text, int maxLength) {
         if (text == null) return "";
         if (text.length() > maxLength) {
@@ -271,6 +294,11 @@ public class StudentQAPage {
         return text;
     }
     
+    /**
+     * Method to demote a reviewer.
+     * 
+     * @param reviewer Username of the reviewer to demote.
+     */
     private void demoteReviewer(String reviewer) {
     	try {
 			databaseHelper.updateUserRole(reviewer, "Student");
@@ -285,6 +313,9 @@ public class StudentQAPage {
     
     
     // ========== CREATE QUESTION TAB ============
+    /**
+     * 
+     */
     private Tab createAskQuestionTab() {
         Tab tab = new Tab("Ask Question");
         tab.setStyle("-fx-background-color: transparent; -fx-background: transparent;");
@@ -2026,8 +2057,12 @@ public class StudentQAPage {
         }
     }
 
-
-	// Method to edit existing answer
+    
+    /**
+     * Method to edit an existing answer
+     * 
+     * @param answer Answer to edit.
+     */
     private void editAnswer(Answer answer) {
         Dialog<String> dialog = new Dialog<>();
         dialog.setTitle("Edit Answer");
@@ -2131,6 +2166,9 @@ public class StudentQAPage {
 
 
     // ========== UTILITY METHODS ==========
+    /**
+     * Method to refresh all tabs.
+     */
     private void refreshAllTabs() {
         // Store current selection
         int selectedIndex = tabPane.getSelectionModel().getSelectedIndex();
@@ -2157,7 +2195,13 @@ public class StudentQAPage {
         reviewersTab = newReviewersTab;
     }
 
-	// Method to show alert
+    /**
+     * Method to show an alert to the user.
+     * 
+     * @param title Title of the alert.
+     * @param content Content of the alert.
+     * @param type AlertType
+     */
     private void showAlert(String title, String content, AlertType type) {
         Alert alert = new Alert(type);
         alert.setTitle(title);
@@ -2167,6 +2211,9 @@ public class StudentQAPage {
     
     /**
      * Creates a composer for public answers
+     * 
+     * @param q Question to add answer to.
+     * @return VBox for composing answer.
      */
     private VBox answerComposer(Question q) {
         Label lbl = new Label("Add a public answer");
@@ -2258,6 +2305,8 @@ public class StudentQAPage {
 
     /**
      * Renders the private message section
+     * 
+     * @param q Question to render private messages for.
      */
     private void renderPrivateSection(Question q) {
         VBox box = new VBox(8);
