@@ -243,23 +243,30 @@ public class DatabaseHelper {
     @return a list of users and their information
     @throws SQLException If a database error occurs.*/
     public List<User> getReviewers() throws SQLException {
-    	ensureConnected();
+        ensureConnected();
         List<User> users = new ArrayList<>();
-        String sql = "SELECT * FROM cse360users WHERE role != User AND Student";
-        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            try (ResultSet rs = pstmt.executeQuery()) {
-                while (rs.next()) {
-                    User u = new User(
-                        rs.getString("userName"),
-                        rs.getString("role"),
-                        rs.getString("email"),
-                        rs.getString("firstname"),
-                        rs.getString("lastname"),
-                        rs.getInt("weight"),
-                        rs.getBoolean("hasRequest")
-                    );
-                    users.add(u);}}}
-        return users;}
+
+        String sql = "SELECT userName, email, firstName, lastName, role, weight, reviewerapplicant " +
+                     "FROM cse360users WHERE role NOT IN ('User', 'Student')";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(sql);
+             ResultSet rs = pstmt.executeQuery()) {
+
+            while (rs.next()) {
+                User u = new User(
+                    rs.getString("userName"),
+                    rs.getString("role"),
+                    rs.getString("email"),
+                    rs.getString("firstName"),
+                    rs.getString("lastName"),
+                    rs.getInt("weight"),
+                    rs.getBoolean("hasRequest")
+                );
+                users.add(u);
+            }
+        }
+        return users;
+    }
     
 
     /**
