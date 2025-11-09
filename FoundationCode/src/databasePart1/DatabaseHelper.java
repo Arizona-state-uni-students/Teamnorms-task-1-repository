@@ -365,6 +365,38 @@ public class DatabaseHelper {
         return Optional.empty();
     }
     
+    
+    /* Gets a User object from the Database
+    @param username The User to search for
+    @return a user and their information
+    @throws SQLException If a database error occurs.*/
+    public User getUser(String username) throws SQLException {
+        if (username == null || username.trim().isEmpty()) {
+            return null;
+        }
+
+        String sql = "SELECT * FROM cse360users WHERE username = ?";
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setString(1, username);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) { 
+                    return new User(
+                        rs.getString("userName"),
+                        rs.getString("role"),
+                        rs.getString("email"),
+                        rs.getString("firstname"),
+                        rs.getString("lastname"),
+                        rs.getInt("weight"),
+                        rs.getBoolean("reviewerapplicant")
+                    );
+                } else {
+                    return null; 
+                }
+            }
+        }
+    }   
+    
+    
     /**
      * Gets a list of users by their role
      * 
@@ -623,6 +655,24 @@ public class DatabaseHelper {
             e.printStackTrace();
         }
     }
+    
+    
+    
+    public boolean hasPendingRequest(String username) throws SQLException {
+        ensureConnected();
+
+        String sql = "SELECT hasRequest FROM cse360users WHERE userName = ?";
+
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, username);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getBoolean("hasRequest");
+                }
+            }
+        }
+        return false; // User not found → no request
+    }
 
 
     /**
@@ -633,11 +683,10 @@ public class DatabaseHelper {
      * @return True or False based on function success.
      * @throws SQLException If a database error occurs.
      */
-    public boolean updateHasRequest(String username, Boolean tf) throws SQLException {
-        String sql = "UPDATE cse360users SET hasRequest = ? WHERE userName = ?";
+    public boolean updateHasRequest(String username) throws SQLException {
+        String sql = "UPDATE cse360users SET hasRequest = TRUE WHERE userName = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            pstmt.setBoolean(1, tf);
-            pstmt.setString(2, username);
+            pstmt.setString(1, username);
             int rowsAffected = pstmt.executeUpdate();
             return rowsAffected > 0;
         }
@@ -688,10 +737,10 @@ public class DatabaseHelper {
                     System.out.println("Middle Initial column added successfully!");
                 }
             }
-            try (ResultSet rs = meta.getColumns(null, null, "CSE360USERS", "REVIEWERAPPLICANT")) {
+            try (ResultSet rs = meta.getColumns(null, null, "CSE360USERS", "HASREQUEST")) {
                 if (!rs.next()) {
                     System.out.println("Adding reviewerapplicant column to database...");
-                    statement.execute("ALTER TABLE cse360users ADD COLUMN reviewerapplicant BOOLEAN DEFAULT FALSE");
+                    statement.execute("ALTER TABLE cse360users ADD COLUMN hasRequest BOOLEAN DEFAULT FALSE");
                     System.out.println("reviewerapplicant added successfully!");
                 }
             }
@@ -746,6 +795,8 @@ public class DatabaseHelper {
             System.out.println("Note: Could not add columns — they may already exist: " + e.getMessage());
         }
     }
+    
+    
 
     /**
      * Creates tables in database for questions, answers, and private messages.

@@ -19,12 +19,17 @@ public class UserHomePage {
     public UserHomePage(DatabaseHelper databaseHelper) {
         this.databaseHelper = databaseHelper;
     }
+<<<<<<< Updated upstream
     
     /**
      * Displays the user home page in the primary stage. 
      * @param primaryStage The primary stage where the scene will be displayed.
      */
     public void show(Stage primaryStage, User currentUser) {
+=======
+    public void show(Stage primaryStage, User currentUser) throws SQLException {
+
+>>>>>>> Stashed changes
         GridPane grid = new GridPane();
         grid.setPadding(new Insets(20));
         grid.setHgap(10);
@@ -43,6 +48,8 @@ public class UserHomePage {
         usernameField.setEditable(false);
         usernameField.setMaxWidth(250);
         usernameField.setStyle("-fx-background-color: #e0e0e0;");
+        
+
         
         // Email section
         Label emailLabel = new Label("Email");
@@ -113,9 +120,38 @@ public class UserHomePage {
         HBox passwordBox = new HBox(10);
         Button revertButton = new Button("Revert");
         Button savePasswordButton = new Button("Save Changes");
-        savePasswordButton.setStyle("-fx-background-color: #0099ff; -fx-text-fill: white;");
+        savePasswordButton.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white;");
         
         passwordBox.getChildren().addAll(revertButton, savePasswordButton);
+        
+        // Reviewer section
+        Label reviewerLabel = new Label("Reviewer Status");
+        reviewerLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
+        
+        TextField reviewerField = new TextField();
+        if (databaseHelper.hasPendingRequest(currentUser.getUserName())) {reviewerField.setText("You are not a Reviewer");}
+        else {reviewerField.setText("You are a Reviewer");}
+        reviewerField.setEditable(false);
+        reviewerField.setMaxWidth(250);
+        reviewerField.setStyle("-fx-background-color: #e0e0e0;");        
+        System.out.println(databaseHelper.hasPendingRequest(currentUser.getUserName()));
+        
+        Button reviewerRequest = new Button("Request to be a reviewer");
+			if (databaseHelper.hasPendingRequest(currentUser.getUserName())) {
+				reviewerRequest.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white;");
+				reviewerRequest.setDisable(true);
+				reviewerRequest.setText("Reviewer Request Pending");        	
+			}
+			else if (currentUser.getPrivileges() != 0) {
+				reviewerRequest.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white;");
+				reviewerRequest.setDisable(true);
+				reviewerRequest.setText("Already a reviewer");
+			}
+			else {
+				
+				reviewerRequest.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white;");
+			}
+        	
         
         // Status/Error label
         Label statusLabel = new Label();
@@ -144,10 +180,13 @@ public class UserHomePage {
         grid.add(passwordLabel, 0, 7);
         grid.add(passwordField, 0, 8);
         grid.add(passwordBox, 0, 9);
+        grid.add(reviewerLabel, 0, 10);
+        grid.add(reviewerField, 0, 11);
+        grid.add(reviewerRequest, 0, 12);
         
-        grid.add(statusLabel, 0, 10, 2, 1);
-        grid.add(goBackButton, 0, 11);
-        grid.add(logoutButton, 1, 11);
+        grid.add(statusLabel, 0, 13, 2, 1);
+        grid.add(goBackButton, 0, 14);
+        grid.add(logoutButton, 1, 14);
         
         // Email update action
         updateEmailButton.setOnAction(e -> {
@@ -230,6 +269,27 @@ public class UserHomePage {
             }
         });
         
+        // Request to be a reviewer action
+        // NEEDS TO BE COMPLETED
+        reviewerRequest.setOnAction(e -> {
+        	try {
+        		if (databaseHelper.updateHasRequest(currentUser.getUserName())) {
+        			currentUser.setReviewerApplicant(true);
+        			reviewerRequest.setText("Reviewer Request Pending");
+        			reviewerRequest.setDisable(true);
+        		}
+        		else {
+                    statusLabel.setText("Failed to request a reviewer role");
+                    statusLabel.setStyle("-fx-text-fill: red; -fx-font-size: 12px;");
+                }
+        		}
+        	catch (SQLException ex) {
+                statusLabel.setText("Database error: " + ex.getMessage());
+                statusLabel.setStyle("-fx-text-fill: red; -fx-font-size: 12px;");
+                ex.printStackTrace();
+            }
+        });
+        
         // Revert password field
         revertButton.setOnAction(e -> {
             passwordField.clear();
@@ -242,7 +302,7 @@ public class UserHomePage {
             new WelcomeLoginPage(databaseHelper).show(primaryStage, currentUser);
         });
         
-        Scene scene = new Scene(grid, 500, 500);
+        Scene scene = new Scene(grid, 500, 600);
         primaryStage.setScene(scene);
         primaryStage.setTitle("sQaaS™ - User Profile");
         primaryStage.setResizable(false);
