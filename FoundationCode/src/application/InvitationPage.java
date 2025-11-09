@@ -20,6 +20,7 @@ public class InvitationPage {
      * 
      * @param databaseHelper An instance of DatabaseHelper to handle database operations.
      * @param primaryStage   The primary stage where the scene will be displayed.
+     * @param user User currently using the system.
      */
     public void show(DatabaseHelper databaseHelper,Stage primaryStage, User user) {
     	VBox layout = new VBox();

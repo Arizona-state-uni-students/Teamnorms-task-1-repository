@@ -113,6 +113,10 @@ public class PasswordEvaluationTestingAutomation {
 		displayPasswordEvaluation();
 	}
 	
+	
+	/**
+	 * Method to display the results of the password evaluation.
+	 */
 	private static void displayPasswordEvaluation() {
 		if (PasswordEvaluator.PfoundUpperCase)
 			System.out.println("At least one upper case letter - Satisfied");

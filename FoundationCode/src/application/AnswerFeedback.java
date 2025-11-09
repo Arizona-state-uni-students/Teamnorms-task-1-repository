@@ -15,6 +15,10 @@ public class AnswerFeedback {
     
     /**
      * Constructor for creating new feedback
+     * 
+     * @param answerId ID of the answer the feedback is for.
+     * @param feedbackText Text content of the feedback.
+     * @param givenBy Username of the user giving feedback.
      */
     public AnswerFeedback(int answerId, String feedbackText, String givenBy) {
         this.answerId = answerId;
@@ -25,6 +29,12 @@ public class AnswerFeedback {
     
     /**
      * Constructor for loading from database
+     * 
+     * @param id ID of feedback.
+     * @param answerId ID of the answer the feedback is for.
+     * @param feedbackText Text content of the feedback.
+     * @param givenBy Username of the user giving feedback.
+     * @param createdAt Date and Time the feedback was created.
      */
     public AnswerFeedback(int id, int answerId, String feedbackText, String givenBy, LocalDateTime createdAt) {
         this.id = id;
@@ -35,14 +45,53 @@ public class AnswerFeedback {
     }
     
     // Getters
+    /**
+     * Gets the id.
+     * 
+     * @return id
+     */
     public int getId() { return id; }
+    
+    /**
+     * Gets the answer id.
+     * 
+     * @return answerId
+     */
     public int getAnswerId() { return answerId; }
+    
+    /**
+     * Gets the feedback text
+     * 
+     * @return feedbackText
+     */
     public String getFeedbackText() { return feedbackText; }
+    
+    /**
+     * Gets the username of the user giving feedback.
+     * 
+     * @return givenBy
+     */
     public String getGivenBy() { return givenBy; }
+    
+    /**
+     * Gets createdAt
+     * 
+     * @return createdAt
+     */
     public LocalDateTime getCreatedAt() { return createdAt; }
     
+    /**
+     * Sets the id.
+     * 
+     * @param id id to set.
+     */
     public void setId(int id) { this.id = id; }
     
+    /**
+     * Gets the data and time but formatted.
+     * 
+     * @return createdAt in a format.
+     */
     public String getFormattedDate() {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM dd, yyyy HH:mm");
         return createdAt.format(formatter);

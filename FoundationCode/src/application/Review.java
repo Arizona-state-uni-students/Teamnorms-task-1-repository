@@ -37,7 +37,6 @@ public class Review {
      * @param reviewText the text content of the review
      * @param writtenBy  the user who authored the review
      * @param createdAt  the timestamp when the review was created
-     * @throws NullPointerException 
      */
     public Review(int id, int answerId, String reviewText, String writtenBy, LocalDateTime createdAt) {
         this.id = id;
