@@ -139,7 +139,7 @@ public class UserHomePage {
 				reviewerRequest.setDisable(true);
 				reviewerRequest.setText("Reviewer Request Pending");        	
 			}
-			else if (currentUser.getPrivileges() != 0) {
+			else if (currentUser.getPrivileges() > 1) {
 				reviewerRequest.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white;");
 				reviewerRequest.setDisable(true);
 				reviewerRequest.setText("Already a reviewer");
