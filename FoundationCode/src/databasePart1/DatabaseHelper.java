@@ -7,6 +7,7 @@ import application.User;
 import javafx.application.Platform;
 import javafx.scene.control.Alert;
 import java.time.LocalDateTime;
+import application.AnswerFeedback;
 
 /**
  * The DatabaseHelper class is responsible for managing the connection to the database,
@@ -840,7 +841,75 @@ public class DatabaseHelper {
                 + "FOREIGN KEY (questionId) REFERENCES questions(id) ON DELETE CASCADE, "
                 + "FOREIGN KEY (from_user) REFERENCES cse360users(userName))";
         statement.execute(privateMessagesTable);
+        
+        String answerFeedbackTable = "CREATE TABLE IF NOT EXISTS answer_feedback ("
+                + "id INT AUTO_INCREMENT PRIMARY KEY, "
+                + "answerId INT NOT NULL, "
+                + "feedbackText VARCHAR(500) NOT NULL, "
+                + "givenBy VARCHAR(20) NOT NULL, "
+                + "createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP, "
+                + "FOREIGN KEY (answerId) REFERENCES answers(id) ON DELETE CASCADE, "
+                + "FOREIGN KEY (givenBy) REFERENCES cse360users(userName))";
+        statement.execute(answerFeedbackTable);
     }
+    
+    
+    /**
+     * Adds feedback/comment to an answer
+     * 
+     * @param feedback AnswerFeedback object to add
+     * @return The generated feedback ID
+     * @throws SQLException If a database error occurs
+     */
+    public int addAnswerFeedback(AnswerFeedback feedback) throws SQLException {
+        String sql = "INSERT INTO answer_feedback (answerId, feedbackText, givenBy, createdAt) VALUES (?, ?, ?, ?)";
+        try (PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            ps.setInt(1, feedback.getAnswerId());
+            ps.setString(2, feedback.getFeedbackText());
+            ps.setString(3, feedback.getGivenBy());
+            ps.setTimestamp(4, Timestamp.valueOf(feedback.getCreatedAt()));
+            
+            ps.executeUpdate();
+            try (ResultSet keys = ps.getGeneratedKeys()) {
+                if (keys.next()) {
+                    int id = keys.getInt(1);
+                    feedback.setId(id);
+                    return id;
+                }
+            }
+        }
+        throw new SQLException("Failed to add answer feedback");
+    }
+
+    /**
+     * Gets all feedback for a specific answer
+     * 
+     * @param answerId The answer ID
+     * @return List of feedback
+     * @throws SQLException If a database error occurs
+     */
+    public List<AnswerFeedback> getFeedbackForAnswer(int answerId) throws SQLException {
+        List<AnswerFeedback> feedback = new ArrayList<>();
+        String sql = "SELECT * FROM answer_feedback WHERE answerId = ? ORDER BY createdAt ASC";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, answerId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    feedback.add(new AnswerFeedback(
+                        rs.getInt("id"),
+                        rs.getInt("answerId"),
+                        rs.getString("feedbackText"),
+                        rs.getString("givenBy"),
+                        rs.getTimestamp("createdAt").toLocalDateTime()
+                    ));
+                }
+            }
+        }
+        return feedback;
+    }
+    
+    
+    
     /**
      * Creates a new question in the database.
      * 
