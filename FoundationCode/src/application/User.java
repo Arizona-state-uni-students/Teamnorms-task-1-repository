@@ -186,17 +186,17 @@ public class User {
      */
     public int getPrivileges() {
         switch (role) {
-            case "user":
+            case "User":
                 return 0;
-            case "student":
+            case "Student":
                 return 1;
-            case "reviewer":
+            case "Reviewer":
                 return 2;
-            case "instructor":
+            case "Instructor":
                 return 3;
-            case "staff":
+            case "Staff":
                 return 4;
-            case "admin":
+            case "Admin":
                 return 99;
             default:
                 return 0;
@@ -247,6 +247,8 @@ public class User {
     public int getWeight() {
         return weight;
     }
+    
+    
 
     /**
      * Sets the user's privilege weight.

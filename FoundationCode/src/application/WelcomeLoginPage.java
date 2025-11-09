@@ -62,7 +62,12 @@ public class WelcomeLoginPage {
         Button userButton = new Button("Continue to User Page");
         userButton.setStyle("-fx-font-size: 14px; -fx-padding: 5 20; -fx-background-color: #0099ff; -fx-text-fill: white;");
         userButton.setOnAction(a -> {
-                new UserHomePage(databaseHelper).show(primaryStage, user);
+                try {
+					new UserHomePage(databaseHelper).show(primaryStage, user);
+				} catch (SQLException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
         });
         
         // ADD THIS Q&A BUTTON FOR ALL USERS
