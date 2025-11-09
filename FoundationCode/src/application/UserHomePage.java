@@ -19,17 +19,14 @@ public class UserHomePage {
     public UserHomePage(DatabaseHelper databaseHelper) {
         this.databaseHelper = databaseHelper;
     }
-<<<<<<< Updated upstream
     
     /**
      * Displays the user home page in the primary stage. 
      * @param primaryStage The primary stage where the scene will be displayed.
+	 * @throws SQLException If a database error occurs.
      */
-    public void show(Stage primaryStage, User currentUser) {
-=======
     public void show(Stage primaryStage, User currentUser) throws SQLException {
 
->>>>>>> Stashed changes
         GridPane grid = new GridPane();
         grid.setPadding(new Insets(20));
         grid.setHgap(10);
@@ -323,3 +320,4 @@ public class UserHomePage {
         alert.showAndWait();
     }
 }
+
