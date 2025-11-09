@@ -34,9 +34,11 @@ public class StudentQAPage {
     private VBox mainLayout;
     private TabPane tabPane;
     private VBox displayQuestions;
+    private VBox displayReviewers;
     private VBox displayQuestionThread;
     private ComboBox<String> viewFilter; // Public / Private / All
     private ComboBox<String> resolutionFilter;   // Resolved / Unresolved / All
+    private ComboBox<String> reviewerFilter;	// All / Favorite / Pending
     private Label allQuestionsError;             // Inline error banner for the All Questions tab
 	
     private static final DateTimeFormatter TS = DateTimeFormatter.ofPattern("MMM dd, yyyy HH:mm");
@@ -45,13 +47,13 @@ public class StudentQAPage {
     private Tab myQuestionsTab;
     private Tab allQuestionsTab;
     private Tab askQuestionTab;
-    private Tab reviewerRequestTab;
+    private Tab reviewersTab;
     
     public StudentQAPage(DatabaseHelper databaseHelper, User currentUser) {
         this.databaseHelper = databaseHelper;
         this.currentUser = currentUser;
     }
-
+    
     public void show(Stage primaryStage) {
         this.primaryStage = primaryStage;
         mainLayout = new VBox(-2);
@@ -83,8 +85,8 @@ public class StudentQAPage {
         askQuestionTab = createAskQuestionTab();
         myQuestionsTab = createMyQuestionsTab();
         allQuestionsTab = createAllQuestionsTab();
-        reviewerRequestTab = createReviewerRequestTab();
-        tabPane.getTabs().addAll(askQuestionTab, myQuestionsTab, allQuestionsTab, reviewerRequestTab);
+        reviewersTab = createReviewersTab();
+        tabPane.getTabs().addAll(askQuestionTab, myQuestionsTab, allQuestionsTab, reviewersTab);
         tabPane.setStyle("-fx-background-color: transparent; -fx-background: transparent; -fx-tab-header-background-color: transparent;");
 
         // ======= Bottom Buttons =======
@@ -119,68 +121,132 @@ public class StudentQAPage {
         primaryStage.show();
     }
 
- 
+
     // ========== REVIEWER REQUEST TAB ==========
-    private Tab createReviewerRequestTab() {
-        Tab tab = new Tab("Reviewer Requests");
+    private Tab createReviewersTab() {
+//        Label infoLabel = new Label("Reviewer requests");
+//        infoLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #666;");
+//        
+//    	String thisrole = currentUser.getRole();
+//    	int weight = databaseHelper.getUserWeight(currentUser.getUserName());
+//    	//if is reviewer
+//    	//if is not reviewer
+//    	//if is instructor (confirm or deny reviewer)
+//    	if("Reviewer".equals(thisrole)) {
+//    		//currently a reviewer
+//    		//drop role? congratulations?
+//    		infoLabel.setText("you are already a reviewer. your current weight is:"+weight);
+//    	}
+//    	else if("Instructor".equals(thisrole)) {
+//    		//check requests to be a reviewer
+//    		//approve or deny
+//    		infoLabel.setText("you are an instructor");
+//    	}
+//    	else{
+//    		//not a reviewer, not an instructor
+//    		//create application
+//    		//requirements: certain weights? total contributions? nice application? 
+//    		infoLabel.setText("you are not a reviewer. Would you like to be one? your current weight is: "+weight);
+//    	}
+//    	//standard page
+//    	loadReviewers();
+        
+        Tab tab = new Tab("Reviwers");
         tab.setStyle("-fx-background-color: transparent; -fx-background: transparent;");
         tab.setClosable(false);
         
-        Label infoLabel = new Label("Ask a new question to get help from other students");
-        infoLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #666;");
-        
-    	String thisrole = currentUser.getRole();
-    	int weight = databaseHelper.getUserWeight(currentUser.getUserName());
-    	//if is reviewer
-    	//if is not reviewer
-    	//if is instructor (confirm or deny reviewer)
-    	if("Reviewer".equals(thisrole)) {
-    		//currently a reviewer
-    		//drop role? congratulations?
-    		infoLabel.setText("you are already a reviewer. your current weight is:"+weight);
-    	}
-    	else if("Instructor".equals(thisrole)) {
-    		//check requests to be a reviewer
-    		//approve or deny
-    		infoLabel.setText("you are an instructor");
-    	}
-    	else{
-    		//not a reviewer, not an instructor
-    		//create application
-    		//requirements: certain weights? total contributions? nice application? 
-    		infoLabel.setText("you are not a reviewer. Would you like to be one? your current weight is: "+weight);
-    	}
-    	//standard page
-    	loadReviewers();
-    	
-    	
-    	
-    	//add a list of reviewers and link to their questions
-        VBox content = new VBox(5);
-        content.setPadding(new Insets(8));
+        VBox content = new VBox(10);
+        content.setPadding(new Insets(20));
         content.setStyle("-fx-background-color: white;");
 
-        Separator sep1 = new Separator();
-        Label contentLabel = new Label("Question Details:*");
-        contentLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 14px; -fx-text-fill: #2c2c2c;");
-        TextArea contentArea = new TextArea();
-        contentArea.setPromptText("Describe your question in detail (10-500 characters)");
-        contentArea.setWrapText(true);
-        contentArea.setPrefRowCount(8);
-        contentArea.setMaxWidth(600);
-        Button submitButton = new Button("Submit Question");
-        submitButton.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10 20;");
-        Button clearButton = new Button("Clear");
-        clearButton.setStyle("-fx-background-color: #999; -fx-text-fill: white;");
-        clearButton.setOnAction(e -> {
+        Label signedIn = new Label("Signed in as: " + currentUser.getUserName() + " (" + currentUser.getRole() + ")");
+        signedIn.setStyle("-fx-text-fill:#444; -fx-font-size:12px;");
 
-        });
-        HBox buttonBox = new HBox(10, clearButton, submitButton);
-        buttonBox.setAlignment(Pos.CENTER_LEFT);
-        content.getChildren().addAll(
-            infoLabel,submitButton,clearButton,
-            contentArea, contentLabel, sep1
-        );
+        viewFilter = new ComboBox<>();
+        viewFilter.getItems().addAll("All Reviewers", "Favorite Reviewers", "Pending Reviewers");
+        viewFilter.setValue("All"); // default
+        viewFilter.setTooltip(new Tooltip("Choose which posts to show in the thread"));
+
+        HBox topBar = new HBox(12, new Separator(), signedIn, new Label("View:") {{ setStyle("-fx-text-fill: black;"); }}, viewFilter);
+        topBar.setAlignment(Pos.CENTER_LEFT);
+        topBar.setPadding(new Insets(8, 10, 8, 10));
+        topBar.setStyle("-fx-background-color:#f3f3f3;");
+
+        displayReviewers = new VBox(8);
+        
+//        private void renderReviewers() {
+//            try {
+//                List<User> users = databaseHelper.getUsers_Role();
+//                if (kids == null || kids.isEmpty()) return;
+//                Label head = new Label("Revised questions");
+//                head.setStyle("-fx-font-weight:bold;");
+//                VBox list = new VBox(6);
+//                for (Question k : kids) {
+//                    Hyperlink link = new Hyperlink(k.getTitle() + " — " + k.getCreatedAt().format(TS));
+//                    link.setOnAction(e -> loadThread(k));
+//                    list.getChildren().add(link);
+//                }
+//                VBox wrap = new VBox(6, head, list);
+//                wrap.setPadding(new Insets(8,0,0,0));
+//                displayQuestionThread.getChildren().add(wrap);
+//            } catch (SQLException ex) {
+//                showError("Followups load failed", ex.getMessage());
+//            }
+//        }
+        
+        
+//        // --- Left panel (questions list + New button) ---
+//        displayQuestions = new VBox(8);
+//        //displayQuestions.setPadding(new Insets(6));
+//
+//        Button newQuestionBtn = new Button("New Question");
+//        newQuestionBtn.setOnAction(e -> openCreateQuestionDialog());
+//
+//        // Resolution filter (matches Threads-style simple controls)
+//        resolutionFilter = new ComboBox<>();
+//        resolutionFilter.getItems().addAll("All Questions", "Unresolved Only", "Resolved Only", "Answers with Reviewer", "Answers without Reviewer");
+//        resolutionFilter.setValue("All Questions"); // default
+//        resolutionFilter.setTooltip(new Tooltip("Filter by resolution status"));
+//
+//        Label resolutionLbl = new Label("Filter:");
+//        resolutionLbl.setStyle("-fx-text-fill: black; -fx-font-size:12px;");
+//
+//        HBox filterBox = new HBox(4, resolutionLbl, resolutionFilter);
+//        filterBox.setAlignment(Pos.CENTER_LEFT);
+//
+//        // Inline error banner (kept subtle; only shown on failures)
+//        allQuestionsError = new Label();
+//        allQuestionsError.setStyle("-fx-text-fill: black; -fx-font-size:11px;");
+//        allQuestionsError.setVisible(false);
+//    	
+//    	
+//
+//    	//add a list of reviewers and link to their questions
+//        VBox content = new VBox(5);
+//        content.setPadding(new Insets(8));
+//        content.setStyle("-fx-background-color: white;");
+//
+//        Separator sep1 = new Separator();
+//        Label contentLabel = new Label("Question Details:*");
+//        contentLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 14px; -fx-text-fill: #2c2c2c;");
+//        TextArea contentArea = new TextArea();
+//        contentArea.setPromptText("Describe your question in detail (10-500 characters)");
+//        contentArea.setWrapText(true);
+//        contentArea.setPrefRowCount(8);
+//        contentArea.setMaxWidth(600);
+//        Button submitButton = new Button("Submit Question");
+//        submitButton.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10 20;");
+//        Button clearButton = new Button("Clear");
+//        clearButton.setStyle("-fx-background-color: #999; -fx-text-fill: white;");
+//        clearButton.setOnAction(e -> {
+//
+//        });
+//        HBox buttonBox = new HBox(10, clearButton, submitButton);
+//        buttonBox.setAlignment(Pos.CENTER_LEFT);
+//        content.getChildren().addAll(
+//            infoLabel,submitButton,clearButton,
+//            contentArea, contentLabel, sep1
+//        );
 
 		// Make scrollable
         ScrollPane scrollPane = new ScrollPane(content);
@@ -188,18 +254,21 @@ public class StudentQAPage {
         tab.setContent(scrollPane);
         return tab;
     }
-    private void loadReviewers() {
-    	try {
-			List<User> reviewers = databaseHelper.getUsers_Role("Reviewer");
-			for(User r : reviewers) {
-				System.out.println(r.getUserName());
-			}
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-    }
+//    private void loadReviewers() {
+//    	try {
+//			List<User> reviewers = databaseHelper.getUsers_Role("Reviewer");
+//			for(User r : reviewers) {
+//				System.out.println(r.getUserName());
+//			}
+//		} catch (SQLException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+//    }
     // ========== END REVIEWER REQUEST TAB =-=====
+    
+    
+    
     // ========== CREATE QUESTION TAB ============
     private Tab createAskQuestionTab() {
         Tab tab = new Tab("Ask Question");
@@ -1154,6 +1223,7 @@ public class StudentQAPage {
         displayQuestionThread.getChildren().add(answerComposer(q));
         }
     }
+    
     //add public review field
     private VBox answerComposer(Question q) {
         Label lbl = new Label("Add a public answer");
@@ -1733,10 +1803,10 @@ public class StudentQAPage {
         Tab newAskTab = createAskQuestionTab();
         Tab newMyQuestionsTab = createMyQuestionsTab();
         Tab newAllQuestionsTab = createAllQuestionsTab();
-        Tab newReviewerRequestTab = createReviewerRequestTab();
+        Tab newReviewersTab = createReviewersTab();
         // Replace tabs
         tabPane.getTabs().clear();
-        tabPane.getTabs().addAll(newAskTab, newMyQuestionsTab, newAllQuestionsTab, newReviewerRequestTab);
+        tabPane.getTabs().addAll(newAskTab, newMyQuestionsTab, newAllQuestionsTab, newReviewersTab);
         // Restore selection
         if (selectedIndex >= 0 && selectedIndex < tabPane.getTabs().size()) {
             tabPane.getSelectionModel().select(selectedIndex);
@@ -1745,7 +1815,7 @@ public class StudentQAPage {
         askQuestionTab = newAskTab;
         myQuestionsTab = newMyQuestionsTab;
         allQuestionsTab = newAllQuestionsTab;
-        reviewerRequestTab = newReviewerRequestTab;
+        reviewersTab = newReviewersTab;
     }
 
     
