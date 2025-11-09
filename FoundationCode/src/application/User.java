@@ -15,6 +15,7 @@ public class User {
     private String lastName;
     private int weight;
     private boolean isReviewerApplicant;
+    private String userFavorites;
 
     /**
      * Constructor for minimal user creation
@@ -32,6 +33,7 @@ public class User {
         this.firstName = "";
         this.lastName = "";
         this.weight = 0;
+        this.userFavorites = "";
     }
     
     /**
@@ -45,7 +47,7 @@ public class User {
      * @param weight int representing user privilege weight.
      * @param reviewerApplicant boolean representing if the user has a pending reviewer application.
      */
-    public User(String userName, String role, String email, String firstname, String lastname, int weight, boolean reviewerApplicant) {
+    public User(String userName, String role, String email, String firstname, String lastname, int weight, boolean reviewerApplicant, String userFavorites) {
         this.userName = userName;
         this.role = role;
         this.email = email;
@@ -53,6 +55,7 @@ public class User {
         this.lastName = lastname;
         this.weight = weight;
         this.isReviewerApplicant = reviewerApplicant;
+        this.userFavorites = userFavorites;
     }
 
     /**
@@ -274,5 +277,75 @@ public class User {
     public void setReviewerApplicant(boolean applicant) {
     	this.isReviewerApplicant = applicant;
     }
+    
+    /**
+     * Gets the user's favorite items as an array.
+     * Favorites are stored as a comma-separated string in userFavorites.
+     *
+     * @return String array of favorites; empty array if none.
+     */
+    public String[] getFavorites() {
+        if (userFavorites == null || userFavorites.trim().isEmpty()) {
+            return new String[0];
+        }
+        return userFavorites.split(",");
+    }
+
+    /**
+     * Adds a favorite item to the user's favorites list.
+     * Prevents duplicates and trims whitespace.
+     *
+     * @param favorite The favorite item to add.
+     */
+    public void addFavorite(String favorite) {
+        if (favorite == null || favorite.trim().isEmpty()) {
+            return;
+        }
+        favorite = favorite.trim();
+
+        String[] currentFavorites = getFavorites();
+        for (String f : currentFavorites) {
+            if (f.equals(favorite)) {
+                return; // Already exists, no action needed
+            }
+        }
+
+        if (userFavorites == null || userFavorites.isEmpty()) {
+            userFavorites = favorite;
+        } else {
+            userFavorites += "," + favorite;
+        }
+    }
+
+    /**
+     * Removes a favorite item from the user's favorites list.
+     *
+     * @param favorite The favorite item to remove.
+     */
+    public void removeFavorite(String favorite) {
+        if (favorite == null || favorite.trim().isEmpty() || userFavorites == null) {
+            return;
+        }
+        favorite = favorite.trim();
+
+        String[] favorites = getFavorites();
+        StringBuilder newFavorites = new StringBuilder();
+
+        for (String f : favorites) {
+            if (!f.equals(favorite)) {
+                if (newFavorites.length() > 0) {
+                    newFavorites.append(",");
+                }
+                newFavorites.append(f);
+            }
+        }
+
+        userFavorites = newFavorites.toString();
+        if (userFavorites.isEmpty()) {
+            userFavorites = null; // Optional: clean up empty state
+        }
+    }
+    
+    
 
 }

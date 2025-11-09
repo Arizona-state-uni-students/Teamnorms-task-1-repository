@@ -71,7 +71,9 @@ public class DatabaseHelper {
                 + "password VARCHAR(20), "
                 + "otp VARCHAR(16), "
                 + "role VARCHAR(20), "
-                + "hasRequest BOOLEAN DEFAULT FALSE)";
+                + "hasRequest BOOLEAN DEFAULT FALSE, "
+        		+ "favorites VARCHAR(500)"
+        		+ ")";
         statement.execute(userTable);
         createQATables();
         String invitationCodesTable = "CREATE TABLE IF NOT EXISTS InvitationCodes ("
@@ -264,6 +266,7 @@ public class DatabaseHelper {
         }
         return null;
     }
+    
     /**
      * Adds a reply to an existing review.
      * @param reviewId The ID of the review being replied to.
@@ -671,7 +674,8 @@ public class DatabaseHelper {
                         rs.getString("firstname"),
                         rs.getString("lastname"),
                         rs.getInt("weight"),
-                        rs.getBoolean("hasRequest")
+                        rs.getBoolean("hasRequest"),
+                        rs.getString("favorites")
                     );
                     users.add(u);}}}
         return users;}
@@ -828,7 +832,8 @@ public class DatabaseHelper {
                         rs.getString("firstname"),
                         rs.getString("lastname"),
                         rs.getInt("weight"),
-                        rs.getBoolean("hasRequest")
+                        rs.getBoolean("hasRequest"),
+                        rs.getString("favorites")
                     );
                 } else {
                     return null; 
@@ -861,8 +866,8 @@ public class DatabaseHelper {
                         rs.getString("firstname"),
                         rs.getString("lastname"),
                         rs.getInt("weight"),
-                        rs.getBoolean("hasRequest")
-                     
+                        rs.getBoolean("hasRequest"),
+                        rs.getString("favorites")
                     );
                     users.add(u);
                 }
@@ -1981,6 +1986,120 @@ public class DatabaseHelper {
             return ps.executeUpdate();
         }
     }
+    
+    
+    public boolean setFavorites() {
+    	
+    	return false;
+    }
+    
+    public String[] getFavorites(String username) throws SQLException {
+    	ensureConnected();
+
+        String sql = "SELECT favorites FROM cse360users WHERE userName = ?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, username);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    String csv = rs.getString("favorites");
+                    if (csv == null || csv.trim().isEmpty()) {
+                        return new String[0];               // empty array
+                    }
+                    // split on commas (trim spaces)
+                    String[] parts = csv.split("\\s*,\\s*");
+                    return parts;
+                }
+            }
+        }
+        return null;   // user does not exist
+    }
+
+    public boolean addFavorite(String username, String favUsername) throws SQLException {
+        ensureConnected();
+
+        String[] current = getFavorites(username);
+        if (current == null) {
+            return false;               // user not found
+        }
+
+        // ---- check for duplicate ----
+        for (String s : current) {
+            if (s.equalsIgnoreCase(favUsername)) {
+                return true;            // already present
+            }
+        }
+
+        // ---- grow the array by one element ----
+        String[] bigger = new String[current.length + 1];
+        System.arraycopy(current, 0, bigger, 0, current.length);
+        bigger[current.length] = favUsername;
+
+        // ---- write the new CSV back ----
+        String newCsv = String.join(",", bigger);
+        String sql = "UPDATE cse360users SET favorites = ? WHERE userName = ?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, newCsv);
+            ps.setString(2, username);
+            return ps.executeUpdate() > 0;
+        }
+    }
+    
+    /**
+     * Removes a username from the user's favorites list.
+     *
+     * @param username     The user whose favorites to modify
+     * @param favToRemove  The favorite username to remove
+     * @return true if the row was updated or the favorite was already absent
+     * @throws SQLException if a database error occurs
+     */
+    public boolean removeFavorite(String username, String favToRemove) throws SQLException {
+        ensureConnected();
+
+        // 1. Get current favorites as array
+        String[] current = getFavorites(username);
+        if (current == null || current.length == 0) {
+            return true; // nothing to remove
+        }
+
+        // 2. Count how many entries we will keep
+        int keepCount = 0;
+        for (String fav : current) {
+            if (!fav.equalsIgnoreCase(favToRemove)) {
+                keepCount++;
+            }
+        }
+
+        // 3. If nothing changed → already absent
+        if (keepCount == current.length) {
+            return true;
+        }
+
+        // 4. Build new smaller array
+        String[] smaller = new String[keepCount];
+        int idx = 0;
+        for (String fav : current) {
+            if (!fav.equalsIgnoreCase(favToRemove)) {
+                smaller[idx++] = fav;
+            }
+        }
+
+        // 5. Write back
+        String newCsv = keepCount == 0 ? null : String.join(",", smaller);
+
+        String sql = "UPDATE cse360users SET favorites = ? WHERE userName = ?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            if (newCsv == null) {
+                ps.setNull(1, java.sql.Types.VARCHAR);
+            } else {
+                ps.setString(1, newCsv);
+            }
+            ps.setString(2, username);
+            return ps.executeUpdate() > 0;
+        }
+    }
+    
+    
+    
 
     /**
      * Closes database connection
