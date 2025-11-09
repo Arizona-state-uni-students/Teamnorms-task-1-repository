@@ -5,8 +5,8 @@ import application.Question;
 import application.Answer;
 import application.AnswerFeedback;
 import application.User;
-import javafx.application.Platform;
-import javafx.scene.control.Alert;
+import application.Review;
+import application.ReviewReply;
 import java.time.LocalDateTime;
 
 /**
@@ -80,7 +80,421 @@ public class DatabaseHelper {
                 + "expiresAt TIMESTAMP)";
         statement.execute(invitationCodesTable);
     }
+    
+    /**
+     * Updates the database schema.
+     */
+    public void updateDatabaseSchema() {
+        try {
+            DatabaseMetaData meta = connection.getMetaData();
+            try (ResultSet rs = meta.getColumns(null, null, "CSE360USERS", "EMAIL")) {
+                if (!rs.next()) {
+                    System.out.println("Adding email column to database...");
+                    statement.execute("ALTER TABLE cse360users ADD COLUMN email VARCHAR(255)");
+                    System.out.println("Email column added successfully!");
+                }
+            }
+            try (ResultSet rs = meta.getColumns(null, null, "CSE360USERS", "MIDDLEINITIAL")) {
+                if (!rs.next()) {
+                    System.out.println("Adding middleInitial column to database...");
+                    statement.execute("ALTER TABLE cse360users ADD COLUMN middleInitial VARCHAR(1)");
+                    System.out.println("Middle Initial column added successfully!");
+                }
+            }
+            try (ResultSet rs = meta.getColumns(null, null, "CSE360USERS", "HASREQUEST")) {
+                if (!rs.next()) {
+                    System.out.println("Adding hasRequest column to database...");
+                    statement.execute("ALTER TABLE cse360users ADD COLUMN hasRequest BOOLEAN DEFAULT FALSE");
+                    System.out.println("hasRequest added successfully!");
+                }
+            }
+            try (ResultSet rs = meta.getColumns(null, null, "CSE360USERS", "OTPISUSED")) {
+                if (!rs.next()) {
+                    boolean hasOld;
+                    try (ResultSet rsOld = meta.getColumns(null, null, "CSE360USERS", "TEMPPASSWORD_ISUSED")) {
+                        hasOld = rsOld.next();
+                    }
+                    System.out.println("Adding otpIsUsed column to database...");
+                    statement.execute("ALTER TABLE cse360users ADD COLUMN otpIsUsed BOOLEAN DEFAULT FALSE");
+                    if (hasOld) {
+                        statement.execute("UPDATE cse360users SET otpIsUsed = tempPassword_IsUsed WHERE tempPassword_IsUsed IS NOT NULL");
+                        System.out.println("otpIsUsed backfilled from tempPassword_IsUsed.");
+                    }
+                }
+            }
+            try (ResultSet rs = meta.getColumns(null, null, "CSE360USERS", "OTPEXPIRESAT")) {
+                if (!rs.next()) {
+                    System.out.println("Adding otpExpiresAt column to database...");
+                    statement.execute("ALTER TABLE cse360users ADD COLUMN otpExpiresAt TIMESTAMP");
+                    System.out.println("otpExpiresAt column added successfully!");
+                }
+            }
+            try (ResultSet rs = meta.getColumns(null, null, "INVITATIONCODES", "EXPIRESAT")) {
+                if (!rs.next()) {
+                    System.out.println("Adding expiresAt column to InvitationCodes...");
+                    statement.execute("ALTER TABLE InvitationCodes ADD COLUMN expiresAt TIMESTAMP");
+                    System.out.println("expiresAt column added successfully!");
+                }
+            }
+            try (ResultSet rs = meta.getColumns(null, null, "CSE360USERS", "WEIGHT")) {
+                if (!rs.next()) {
+                    System.out.println("Adding weight column to database...");
+                    statement.execute("ALTER TABLE cse360users ADD COLUMN weight INT DEFAULT 0");
+                    System.out.println("Weight column added successfully!");
+                    // Set weight to 0 for existing records
+                    statement.execute("UPDATE cse360users SET weight = 0 WHERE weight IS NULL");
+                    System.out.println("Existing records updated with weight = 0.");
+                }
+            }
+            try (ResultSet rs = meta.getColumns(null, null, "QUESTIONS", "PARENTQUESTIONID")) {
+                if (!rs.next()) {
+                    System.out.println("Adding parentQuestionId to questions…");
+                    statement.execute("ALTER TABLE questions ADD COLUMN parentQuestionId INT");
+                    // Optional: FK (H2 allows this)
+                    try { statement.execute("ALTER TABLE questions ADD CONSTRAINT fk_parent_q FOREIGN KEY (parentQuestionId) REFERENCES questions(id)"); }
+                    catch (SQLException ignored) {}
+                }
+            }
 
+        } catch (SQLException e) {
+            System.out.println("Note: Could not add columns — they may already exist: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Creates tables in database for questions, answers, and private messages.
+     * 
+     * @throws SQLException If a database error occurs.
+     */
+    private void createQATables() throws SQLException {
+        String questionsTable = "CREATE TABLE IF NOT EXISTS questions ("
+                + "id INT AUTO_INCREMENT PRIMARY KEY, "
+                + "title VARCHAR(100) NOT NULL, "
+                + "content VARCHAR(500) NOT NULL, "
+                + "askedBy VARCHAR(20) NOT NULL, "
+                + "createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP, "
+                + "isResolved BOOLEAN DEFAULT FALSE, "
+                + "resolvedAnswerId INT DEFAULT -1, "
+                + "FOREIGN KEY (askedBy) REFERENCES cse360users(userName))";
+        statement.execute(questionsTable);
+
+        String answersTable = "CREATE TABLE IF NOT EXISTS answers ("
+                + "id INT AUTO_INCREMENT PRIMARY KEY, "
+                + "questionId INT NOT NULL, "
+                + "content VARCHAR(500) NOT NULL, "
+                + "answeredBy VARCHAR(20) NOT NULL, "
+                + "createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP, "
+                + "isRead BOOLEAN DEFAULT FALSE, "
+                + "hasReview BOOLEAN DEFAULT FALSE, "
+                + "upvotes INT DEFAULT 0, "
+                + "FOREIGN KEY (questionId) REFERENCES questions(id) ON DELETE CASCADE, "
+                + "FOREIGN KEY (answeredBy) REFERENCES cse360users(userName))";
+        statement.execute(answersTable);
+
+        // FIXED: Use from_user instead of sender
+        String privateMessagesTable = "CREATE TABLE IF NOT EXISTS private_messages ("
+                + "id INT AUTO_INCREMENT PRIMARY KEY, "
+                + "questionId INT NOT NULL, "
+                + "to_user VARCHAR(20) NOT NULL, "
+                + "from_user VARCHAR(20) NOT NULL, "
+                + "messageType VARCHAR(10) NOT NULL, "
+                + "content VARCHAR(500) NOT NULL, "
+                + "createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP, "
+                + "isRead BOOLEAN DEFAULT FALSE, "
+                + "FOREIGN KEY (questionId) REFERENCES questions(id) ON DELETE CASCADE, "
+                + "FOREIGN KEY (from_user) REFERENCES cse360users(userName))";
+        statement.execute(privateMessagesTable);
+        
+        String answerFeedbackTable = "CREATE TABLE IF NOT EXISTS answer_feedback ("
+                + "id INT AUTO_INCREMENT PRIMARY KEY, "
+                + "answerId INT NOT NULL, "
+                + "feedbackText VARCHAR(500) NOT NULL, "
+                + "givenBy VARCHAR(20) NOT NULL, "
+                + "createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP, "
+                + "FOREIGN KEY (answerId) REFERENCES answers(id) ON DELETE CASCADE, "
+                + "FOREIGN KEY (givenBy) REFERENCES cse360users(userName))";
+        statement.execute(answerFeedbackTable);
+        
+        String reviewsTable = "CREATE TABLE IF NOT EXISTS reviews ("
+        		+ "    id INT AUTO_INCREMENT PRIMARY KEY,"
+        		+ "    answerId INT NOT NULL,"
+        		+ "    reviewText VARCHAR(1000) NOT NULL,"
+        		+ "    writtenBy VARCHAR(20) NOT NULL,"
+        		+ "    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
+        		+ "    FOREIGN KEY (answerId) REFERENCES answers(id) ON DELETE CASCADE,"
+        		+ "    FOREIGN KEY (writtenBy) REFERENCES cse360users(userName)"
+        		+ ");";
+        statement.execute(reviewsTable);
+        
+        String reviewRepliesTable = "CREATE TABLE IF NOT EXISTS review_replies ("
+        		+ "    id INT AUTO_INCREMENT PRIMARY KEY,"
+        		+ "    reviewId INT NOT NULL,"
+        		+ "    replyText VARCHAR(500) NOT NULL,"
+        		+ "    repliedBy VARCHAR(20) NOT NULL,"
+        		+ "    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
+        		+ "    FOREIGN KEY (reviewId) REFERENCES reviews(id) ON DELETE CASCADE,"
+        		+ "    FOREIGN KEY (repliedBy) REFERENCES cse360users(userName)"
+        		+ ");";
+        statement.execute(reviewRepliesTable);
+    }
+    
+    /**
+     * Retrieves a single Review object from the database by its answer ID.
+     * @param reviewId The primary key ID of the review to retrieve.
+     * @return The Review object, or null if not found.
+     * @throws SQLException if a database access error occurs.
+     */
+    public Review getReviewById(int answerId) throws SQLException {
+        String sql = "SELECT id, answerId, reviewText, writtenBy, createdAt FROM reviews WHERE answerId = ?";
+        
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, answerId);
+            
+            try (ResultSet rs = statement.executeQuery()) {
+                if (rs.next()) {
+                    return new Review(
+                        rs.getInt("id"),
+                        rs.getInt("answerId"),
+                        rs.getString("reviewText"),
+                        rs.getString("writtenBy"),
+                        rs.getTimestamp("createdAt").toLocalDateTime()
+                    );
+                }
+            }
+        }
+        return null;
+    }
+    /**
+     * Adds a reply to an existing review.
+     * @param reviewId The ID of the review being replied to.
+     * @param userName The username of the replier.
+     * @param replyText The content of the reply.
+     * @throws SQLException if a database access error occurs.
+     */
+    public void addReviewReply(int reviewId, String userName, String replyText) throws SQLException {
+        String sql = "INSERT INTO review_replies (reviewId, replyText, repliedBy) VALUES (?, ?, ?)";
+
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, reviewId);
+            statement.setString(2, replyText);
+            statement.setString(3, userName);
+            statement.executeUpdate(); 
+        }
+    }
+    
+    /**
+     * Retrieves a list of all ReviewReply objects associated with a given review ID.
+     * @param reviewId The ID of the review to retrieve replies for.
+     * @return A List of ReviewReply objects.
+     * @throws SQLException if a database access error occurs.
+     */
+    public List<ReviewReply> getRepliesForReview(int reviewId) throws SQLException {
+        List<ReviewReply> replies = new ArrayList<>();
+        
+        String sql = "SELECT id, reviewId, replyText, repliedBy, createdAt FROM review_replies WHERE reviewId = ? ORDER BY createdAt ASC";
+        
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, reviewId);
+            
+            try (ResultSet rs = statement.executeQuery()) {
+                while (rs.next()) {
+                    ReviewReply reply = new ReviewReply(
+                        rs.getInt("id"),
+                        rs.getInt("reviewId"),
+                        rs.getString("replyText"),
+                        rs.getString("repliedBy"),
+                        rs.getTimestamp("createdAt").toLocalDateTime()
+                    );
+                    replies.add(reply);
+                }
+            }
+        }
+        return replies;
+    }
+    
+    /**
+     * Retrieves a list of all Review objects, optionally filtered by username.
+     * If username is null or an empty string, all reviews are returned.
+     * @param username The username of the user whose reviews to retrieve (optional).
+     * @return A List of Review objects.
+     * @throws SQLException if a database access error occurs.
+     */
+    public List<Review> getAllReviews(String username) throws SQLException {
+        List<Review> reviews = new ArrayList<>();
+        String sql = "SELECT id, answerId, reviewText, writtenBy, createdAt FROM reviews";
+        boolean filterByUser = username != null && !username.trim().isEmpty();
+        if (filterByUser) {
+            sql += " WHERE writtenBy = ?";
+        }
+        sql += " ORDER BY createdAt DESC";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            if (filterByUser) {
+                statement.setString(1, username);
+            }
+
+            try (ResultSet rs = statement.executeQuery()) {
+                while (rs.next()) {
+                    Review review = new Review(
+                        rs.getInt("id"),
+                        rs.getInt("answerId"),
+                        rs.getString("reviewText"),
+                        rs.getString("writtenBy"),
+                        rs.getTimestamp("createdAt").toLocalDateTime()
+                    );
+                    reviews.add(review);
+                }
+            }
+        }
+        return reviews;
+    }
+    
+    /**
+     * Retrieves a list of all Review objects associated with a given answer ID.
+     * @param answerId The ID of the answer to retrieve reviews for.
+     * @return A List of Review objects. The list will be empty if no reviews are found.
+     * @throws SQLException if a database access error occurs.
+     */
+    public List<Review> getReviewsByAnswerId(int answerId) throws SQLException {
+        List<Review> reviews = new ArrayList<>();
+        
+        // Order by createdAt ensures older reviews appear first
+        String sql = "SELECT id, answerId, reviewText, writtenBy, createdAt FROM reviews WHERE answerId = ? ORDER BY createdAt ASC";
+        
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, answerId);
+            
+            try (ResultSet rs = statement.executeQuery()) {
+                while (rs.next()) {
+                    Review review = new Review(
+                        rs.getInt("id"),
+                        rs.getInt("answerId"),
+                        rs.getString("reviewText"),
+                        rs.getString("writtenBy"),
+                        rs.getTimestamp("createdAt").toLocalDateTime()
+                    );
+                    reviews.add(review);
+                }
+            }
+        }
+        return reviews;
+    }
+    /**
+     * Adds a review to an answer
+     * @param answerId The ID of the answer to add a review to.
+     * @throws SQLException if a database access error occurs.
+     */
+    public void addReview(int id, String userName, String reviewText) throws SQLException {
+        String sql = "INSERT INTO reviews (answerId, reviewText, writtenBy) VALUES (?, ?, ?)";
+
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, id);
+            statement.setString(2, reviewText);
+            statement.setString(3, userName);
+            statement.executeUpdate(); // Execute the insertion
+            updateAnswerHasReview(true, id);
+        }
+    }
+    /**
+     * Updates an answer to show if it has a review
+     * @param tf The value to update the reviewed status to.
+     * @param answerId The ID of the answer to update.
+     * @throws SQLException if a database access error occurs.
+     */
+    public void updateAnswerHasReview(Boolean tf, int answerId) throws SQLException {
+    	String sql = "UPDATE answers SET hasReview = ? WHERE id = ?"; 
+        
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setBoolean(1, tf); 
+            statement.setInt(2, answerId);
+            statement.executeUpdate();
+  
+        }
+    }
+    
+    /**
+     * Retrieves the status of the 'hasReview' flag for a specific answer.
+     * @param answerId The ID of the answer to check.
+     * @return true if the answer has been reviewed, false otherwise.
+     * @throws SQLException if a database access error occurs.
+     */
+    public boolean getAnswerHasReview(int answerId) throws SQLException {
+        String sql = "SELECT hasReview FROM answers WHERE id = ?"; 
+        
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, answerId);
+            
+            try (ResultSet rs = statement.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getBoolean("hasReview");
+                } else {
+                    return false; 
+                }
+            }
+        }
+    }
+    /**
+     * Deletes a review record from the database by its primary key ID.
+     * Due to FOREIGN KEY ON DELETE CASCADE, all associated review_replies are also deleted.
+     * @param reviewId The ID of the review to delete.
+     * @return true if the review was successfully deleted (1 row affected), false otherwise.
+     * @throws SQLException if a database access error occurs.
+     */
+    public void deleteReviewById(int reviewId) throws SQLException {
+        String sql = "DELETE FROM reviews WHERE id = ?"; 
+        
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, reviewId);
+            statement.executeUpdate();
+            updateAnswerHasReview(false, getReviewPointsTo(reviewId));
+        }
+    }
+    
+    /**
+     * Gets the answerId the review points to
+     * @param reviewId The ID of the review to check.
+     * @return the answer ID.
+     * @throws SQLException if a database access error occurs.
+     */
+    public int getReviewPointsTo(int reviewId) throws SQLException {
+        String sql = "SELECT answerId FROM reviews WHERE id = ?"; 
+        
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, reviewId);
+            
+            try (ResultSet rs = statement.executeQuery()) {
+                if (rs.next()) {
+                    // Returns the answerId that the review points to
+                    return rs.getInt("answerId"); 
+                } else {
+                    return 0; 
+                }
+            }
+        }
+    }
+    /**
+     * Retrieves the ID of the question associated with a specific answer ID.
+     * @param answerId The ID of the answer.
+     * @return The ID of the corresponding question, or -1 if not found.
+     * @throws SQLException if a database access error occurs.
+     */
+    public Question getQuestionByAnswerId(int answerId) throws SQLException {
+        String sql = "SELECT questionId FROM answers WHERE id = ?";
+        int questionId = -1;
+
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, answerId);
+
+            try (ResultSet rs = statement.executeQuery()) {
+                if (rs.next()) {
+                    questionId = rs.getInt("questionId");
+                    Question q = getQuestionById(questionId);
+                    return q;
+                }else {
+                	return null;
+                }
+            }
+        }
+    }
     
     /**
      * Check if the database is empty.
@@ -742,141 +1156,6 @@ public class DatabaseHelper {
             }
         }
         return users;
-    }
-    
-    /**
-     * Updates the database schema.
-     */
-    public void updateDatabaseSchema() {
-        try {
-            DatabaseMetaData meta = connection.getMetaData();
-            try (ResultSet rs = meta.getColumns(null, null, "CSE360USERS", "EMAIL")) {
-                if (!rs.next()) {
-                    System.out.println("Adding email column to database...");
-                    statement.execute("ALTER TABLE cse360users ADD COLUMN email VARCHAR(255)");
-                    System.out.println("Email column added successfully!");
-                }
-            }
-            try (ResultSet rs = meta.getColumns(null, null, "CSE360USERS", "MIDDLEINITIAL")) {
-                if (!rs.next()) {
-                    System.out.println("Adding middleInitial column to database...");
-                    statement.execute("ALTER TABLE cse360users ADD COLUMN middleInitial VARCHAR(1)");
-                    System.out.println("Middle Initial column added successfully!");
-                }
-            }
-            try (ResultSet rs = meta.getColumns(null, null, "CSE360USERS", "HASREQUEST")) {
-                if (!rs.next()) {
-                    System.out.println("Adding hasRequest column to database...");
-                    statement.execute("ALTER TABLE cse360users ADD COLUMN hasRequest BOOLEAN DEFAULT FALSE");
-                    System.out.println("hasRequest added successfully!");
-                }
-            }
-            try (ResultSet rs = meta.getColumns(null, null, "CSE360USERS", "OTPISUSED")) {
-                if (!rs.next()) {
-                    boolean hasOld;
-                    try (ResultSet rsOld = meta.getColumns(null, null, "CSE360USERS", "TEMPPASSWORD_ISUSED")) {
-                        hasOld = rsOld.next();
-                    }
-                    System.out.println("Adding otpIsUsed column to database...");
-                    statement.execute("ALTER TABLE cse360users ADD COLUMN otpIsUsed BOOLEAN DEFAULT FALSE");
-                    if (hasOld) {
-                        statement.execute("UPDATE cse360users SET otpIsUsed = tempPassword_IsUsed WHERE tempPassword_IsUsed IS NOT NULL");
-                        System.out.println("otpIsUsed backfilled from tempPassword_IsUsed.");
-                    }
-                }
-            }
-            try (ResultSet rs = meta.getColumns(null, null, "CSE360USERS", "OTPEXPIRESAT")) {
-                if (!rs.next()) {
-                    System.out.println("Adding otpExpiresAt column to database...");
-                    statement.execute("ALTER TABLE cse360users ADD COLUMN otpExpiresAt TIMESTAMP");
-                    System.out.println("otpExpiresAt column added successfully!");
-                }
-            }
-            try (ResultSet rs = meta.getColumns(null, null, "INVITATIONCODES", "EXPIRESAT")) {
-                if (!rs.next()) {
-                    System.out.println("Adding expiresAt column to InvitationCodes...");
-                    statement.execute("ALTER TABLE InvitationCodes ADD COLUMN expiresAt TIMESTAMP");
-                    System.out.println("expiresAt column added successfully!");
-                }
-            }
-            try (ResultSet rs = meta.getColumns(null, null, "CSE360USERS", "WEIGHT")) {
-                if (!rs.next()) {
-                    System.out.println("Adding weight column to database...");
-                    statement.execute("ALTER TABLE cse360users ADD COLUMN weight INT DEFAULT 0");
-                    System.out.println("Weight column added successfully!");
-                    // Set weight to 0 for existing records
-                    statement.execute("UPDATE cse360users SET weight = 0 WHERE weight IS NULL");
-                    System.out.println("Existing records updated with weight = 0.");
-                }
-            }
-            try (ResultSet rs = meta.getColumns(null, null, "QUESTIONS", "PARENTQUESTIONID")) {
-                if (!rs.next()) {
-                    System.out.println("Adding parentQuestionId to questions…");
-                    statement.execute("ALTER TABLE questions ADD COLUMN parentQuestionId INT");
-                    // Optional: FK (H2 allows this)
-                    try { statement.execute("ALTER TABLE questions ADD CONSTRAINT fk_parent_q FOREIGN KEY (parentQuestionId) REFERENCES questions(id)"); }
-                    catch (SQLException ignored) {}
-                }
-            }
-        } catch (SQLException e) {
-            System.out.println("Note: Could not add columns — they may already exist: " + e.getMessage());
-        }
-    }
-    
-    
-
-    /**
-     * Creates tables in database for questions, answers, and private messages.
-     * 
-     * @throws SQLException If a database error occurs.
-     */
-    private void createQATables() throws SQLException {
-        String questionsTable = "CREATE TABLE IF NOT EXISTS questions ("
-                + "id INT AUTO_INCREMENT PRIMARY KEY, "
-                + "title VARCHAR(100) NOT NULL, "
-                + "content VARCHAR(500) NOT NULL, "
-                + "askedBy VARCHAR(20) NOT NULL, "
-                + "createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP, "
-                + "isResolved BOOLEAN DEFAULT FALSE, "
-                + "resolvedAnswerId INT DEFAULT -1, "
-                + "FOREIGN KEY (askedBy) REFERENCES cse360users(userName))";
-        statement.execute(questionsTable);
-
-        String answersTable = "CREATE TABLE IF NOT EXISTS answers ("
-                + "id INT AUTO_INCREMENT PRIMARY KEY, "
-                + "questionId INT NOT NULL, "
-                + "content VARCHAR(500) NOT NULL, "
-                + "answeredBy VARCHAR(20) NOT NULL, "
-                + "createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP, "
-                + "isRead BOOLEAN DEFAULT FALSE, "
-                + "upvotes INT DEFAULT 0, "
-                + "FOREIGN KEY (questionId) REFERENCES questions(id) ON DELETE CASCADE, "
-                + "FOREIGN KEY (answeredBy) REFERENCES cse360users(userName))";
-        statement.execute(answersTable);
-
-        // FIXED: Use from_user instead of sender
-        String privateMessagesTable = "CREATE TABLE IF NOT EXISTS private_messages ("
-                + "id INT AUTO_INCREMENT PRIMARY KEY, "
-                + "questionId INT NOT NULL, "
-                + "to_user VARCHAR(20) NOT NULL, "
-                + "from_user VARCHAR(20) NOT NULL, "
-                + "messageType VARCHAR(10) NOT NULL, "
-                + "content VARCHAR(500) NOT NULL, "
-                + "createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP, "
-                + "isRead BOOLEAN DEFAULT FALSE, "
-                + "FOREIGN KEY (questionId) REFERENCES questions(id) ON DELETE CASCADE, "
-                + "FOREIGN KEY (from_user) REFERENCES cse360users(userName))";
-        statement.execute(privateMessagesTable);
-        
-        String answerFeedbackTable = "CREATE TABLE IF NOT EXISTS answer_feedback ("
-                + "id INT AUTO_INCREMENT PRIMARY KEY, "
-                + "answerId INT NOT NULL, "
-                + "feedbackText VARCHAR(500) NOT NULL, "
-                + "givenBy VARCHAR(20) NOT NULL, "
-                + "createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP, "
-                + "FOREIGN KEY (answerId) REFERENCES answers(id) ON DELETE CASCADE, "
-                + "FOREIGN KEY (givenBy) REFERENCES cse360users(userName))";
-        statement.execute(answerFeedbackTable);
     }
     
     /**
