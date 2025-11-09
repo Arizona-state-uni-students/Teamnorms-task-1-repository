@@ -236,6 +236,39 @@ public class DatabaseHelper {
         }
         return users;
     }
+    
+    
+    /**
+    
+    Gets a list of Reviewers by their role (all but two)
+    @return a list of users and their information
+    @throws SQLException If a database error occurs.*/
+    public List<User> getReviewers() throws SQLException {
+        ensureConnected();
+        List<User> users = new ArrayList<>();
+
+        String sql = "SELECT userName, email, firstName, lastName, role, weight, reviewerapplicant " +
+                     "FROM cse360users WHERE role NOT IN ('User', 'Student')";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(sql);
+             ResultSet rs = pstmt.executeQuery()) {
+
+            while (rs.next()) {
+                User u = new User(
+                    rs.getString("userName"),
+                    rs.getString("role"),
+                    rs.getString("email"),
+                    rs.getString("firstName"),
+                    rs.getString("lastName"),
+                    rs.getInt("weight"),
+                    rs.getBoolean("hasRequest")
+                );
+                users.add(u);
+            }
+        }
+        return users;
+    }
+    
 
     /**
      * Updates the middle initial of a user in the database.
@@ -388,7 +421,7 @@ public class DatabaseHelper {
                         rs.getString("firstname"),
                         rs.getString("lastname"),
                         rs.getInt("weight"),
-                        rs.getBoolean("reviewerapplicant")
+                        rs.getBoolean("hasRequest")
                     );
                 } else {
                     return null; 
@@ -421,7 +454,7 @@ public class DatabaseHelper {
                         rs.getString("firstname"),
                         rs.getString("lastname"),
                         rs.getInt("weight"),
-                        rs.getBoolean("reviewerapplicant")
+                        rs.getBoolean("hasRequest")
                      
                     );
                     users.add(u);
@@ -740,9 +773,9 @@ public class DatabaseHelper {
             }
             try (ResultSet rs = meta.getColumns(null, null, "CSE360USERS", "HASREQUEST")) {
                 if (!rs.next()) {
-                    System.out.println("Adding reviewerapplicant column to database...");
+                    System.out.println("Adding hasRequest column to database...");
                     statement.execute("ALTER TABLE cse360users ADD COLUMN hasRequest BOOLEAN DEFAULT FALSE");
-                    System.out.println("reviewerapplicant added successfully!");
+                    System.out.println("hasRequest added successfully!");
                 }
             }
             try (ResultSet rs = meta.getColumns(null, null, "CSE360USERS", "OTPISUSED")) {

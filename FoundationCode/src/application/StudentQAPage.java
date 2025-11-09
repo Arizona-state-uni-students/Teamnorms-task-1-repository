@@ -23,13 +23,9 @@ import java.util.Map;
 import java.util.HashMap;
 
 /**
-
  * StudentQAPage provides the interface for students to interact with the Q&A system.
-
  * Students can ask questions, view questions, provide answers, and mark questions as resolved.
-
  */
-
 public class StudentQAPage {
     private final DatabaseHelper databaseHelper;
     private final User currentUser;
@@ -37,9 +33,11 @@ public class StudentQAPage {
     private VBox mainLayout;
     private TabPane tabPane;
     private VBox displayQuestions;
+    private VBox displayReviewers;
     private VBox displayQuestionThread;
     private ComboBox<String> viewFilter; // Public / Private / All
     private ComboBox<String> resolutionFilter;   // Resolved / Unresolved / All
+    private ComboBox<String> reviewerFilter;	// All / Favorite / Pending
     private Label allQuestionsError;             // Inline error banner for the All Questions tab
 	
     private static final DateTimeFormatter TS = DateTimeFormatter.ofPattern("MMM dd, yyyy HH:mm");
@@ -48,12 +46,13 @@ public class StudentQAPage {
     private Tab myQuestionsTab;
     private Tab allQuestionsTab;
     private Tab askQuestionTab;
+    private Tab reviewersTab;
     
     public StudentQAPage(DatabaseHelper databaseHelper, User currentUser) {
         this.databaseHelper = databaseHelper;
         this.currentUser = currentUser;
     }
-
+    
     public void show(Stage primaryStage) {
         this.primaryStage = primaryStage;
         mainLayout = new VBox(-2);
@@ -85,8 +84,8 @@ public class StudentQAPage {
         askQuestionTab = createAskQuestionTab();
         myQuestionsTab = createMyQuestionsTab();
         allQuestionsTab = createAllQuestionsTab();
-        // Removed reviewerRequestTab
-        tabPane.getTabs().addAll(askQuestionTab, myQuestionsTab, allQuestionsTab);
+        reviewersTab = createReviewersTab();
+        tabPane.getTabs().addAll(askQuestionTab, myQuestionsTab, allQuestionsTab, reviewersTab);
         tabPane.setStyle("-fx-background-color: transparent; -fx-background: transparent; -fx-tab-header-background-color: transparent;");
 
         // ======= Bottom Buttons =======
@@ -121,19 +120,43 @@ public class StudentQAPage {
         primaryStage.show();
     }
 
- 
-    private void loadReviewers() {
-    	try {
-			List<User> reviewers = databaseHelper.getUsers_Role("Reviewer");
-			for(User r : reviewers) {
-				System.out.println(r.getUserName());
-			}
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+    // ========== REVIEWER REQUEST TAB ==========
+    private Tab createReviewersTab() {
+        Tab tab = new Tab("Reviewers");
+        tab.setStyle("-fx-background-color: transparent; -fx-background: transparent;");
+        tab.setClosable(false);
+        
+        VBox content = new VBox(10);
+        content.setPadding(new Insets(20));
+        content.setStyle("-fx-background-color: white;");
+
+        Label signedIn = new Label("Signed in as: " + currentUser.getUserName() + " (" + currentUser.getRole() + ")");
+        signedIn.setStyle("-fx-text-fill:#444; -fx-font-size:12px;");
+
+        ComboBox<String> reviewerFilterCombo = new ComboBox<>();
+        reviewerFilterCombo.getItems().addAll("All Reviewers", "Favorite Reviewers", "Pending Reviewers");
+        reviewerFilterCombo.setValue("All Reviewers");
+        reviewerFilterCombo.setTooltip(new Tooltip("Choose which reviewers to show"));
+
+        HBox topBar = new HBox(12, new Separator(), signedIn, new Label("View:") {{ setStyle("-fx-text-fill: black;"); }}, reviewerFilterCombo);
+        topBar.setAlignment(Pos.CENTER_LEFT);
+        topBar.setPadding(new Insets(8, 10, 8, 10));
+        topBar.setStyle("-fx-background-color:#f3f3f3;");
+
+        displayReviewers = new VBox(8);
+
+        content.getChildren().addAll(topBar, displayReviewers);
+
+		// Make scrollable
+        ScrollPane scrollPane = new ScrollPane(content);
+        scrollPane.setFitToWidth(true);
+        tab.setContent(scrollPane);
+        return tab;
     }
-    // ========== END REVIEWER REQUEST TAB =-=====
+    // ========== END REVIEWER REQUEST TAB ==========
+    
+    
+    
     // ========== CREATE QUESTION TAB ============
     private Tab createAskQuestionTab() {
         Tab tab = new Tab("Ask Question");
@@ -844,7 +867,6 @@ public class StudentQAPage {
                 "-fx-padding: 2px 5px 2px 5px; "
             );
         	meta22.setVisible(false);
-//        	if(q.hasReviewer()) {meta22.setVisible(true);}
         	
         if(q.isResolved()) {
         	meta22.setText("Resolved");
@@ -880,8 +902,6 @@ public class StudentQAPage {
         // Add resolution status
         if (q.isResolved()) {
             meta2Text.append(" • ✓ Resolved");
-            //meta2Text.setStyle("-fx-font-weight: bold; -fx-text-fill: #2e7d32; -fx-font-size:10px;");
-
         }
         
         Label meta2 = new Label(meta2Text.toString());
@@ -894,15 +914,10 @@ public class StudentQAPage {
         // Make whole row clickable
         HBox row = new HBox(col);
         row.setStyle("-fx-background-color:#ffffff; -fx-border-color:#e6e6e6; -fx-border-width:1;");
-//        if(q.hasReviewer()) {
-//        row.setStyle("-fx-background-color:#ffffaa; -fx-border-color:#ff7700; -fx-border-width:1;");	
-//        }
         if(q.isResolved()) {
         row.setStyle("-fx-background-color:#e8f5e9; -fx-border-color:#4CAF50; -fx-border-width:2;");
         }
         row.setOnMouseClicked(e -> loadThread(q));
-//        row.setOnMouseEntered(e -> row.setStyle("-fx-background-color:#f7faff; -fx-border-color:#cfe3ff; -fx-border-width:1;"));
-//        row.setOnMouseExited(e -> row.setStyle("-fx-background-color:#ffffff; -fx-border-color:#e6e6e6; -fx-border-width:1;"));
         return row;
     }
 
@@ -934,7 +949,7 @@ public class StudentQAPage {
             });
             headerActions.getChildren().add(editBtn);
         }
-        System.out.println(!q.isResolved() && q.getAnswers().size() > 0);
+
         if (isAsker) {
             Button deleteBtn = new Button("Delete Question");
             deleteBtn.setStyle("-fx-background-color: #f44336; -fx-text-fill: white;");
@@ -946,7 +961,6 @@ public class StudentQAPage {
             closeBtn.setStyle("-fx-background-color: #2c2c2c; -fx-text-fill: white;");
             closeBtn.setVisible(!q.isResolved() && q.getAnswers().size() > 0); // Only show if unresolved and has answers
             closeBtn.setOnAction(e -> {
-                //deleteQuestion(q);
             	closeQuestion(q);
                 refreshQuestionListAndMaybeSelect();
             });
@@ -984,8 +998,6 @@ public class StudentQAPage {
         }
         // revised children list
         renderFollowups(q);
-        // composer(s)
-        //renderComposers(q, mode);
         // react to filter changes
         viewFilter.setOnAction(ev -> loadThread(q));
     }
@@ -1125,7 +1137,7 @@ public class StudentQAPage {
                     HBox box = new HBox(6, status, aMeta);
                     card.getChildren().addAll(box, aText, actionBox);
                     
-                    // Show existing feedback - REMOVED the Add Feedback button from here
+                    // Show existing feedback
                     try {
                         List<AnswerFeedback> feedbackList = databaseHelper.getFeedbackForAnswer(a.getId());
                         if (!feedbackList.isEmpty()) {
@@ -1146,8 +1158,6 @@ public class StudentQAPage {
                     } catch (SQLException ex) {
                         ex.printStackTrace();
                     }
-                    
-                    // REMOVED: The "Add Feedback" button that was here
                     
                     // Highlight if this is the accepted answer
                     if (q.isResolved() && a.getId() == q.getResolvedAnswerId()) {
@@ -1174,125 +1184,6 @@ public class StudentQAPage {
         if(!q.isResolved()) {
             displayQuestionThread.getChildren().add(answerComposer(q));
         }
-    }
-    
-    
-    /**
-     * Shows dialog for providing feedback on an answer
-     */
-    private void showFeedbackDialog(Answer answer, Question question) {
-        Dialog<AnswerFeedback> dialog = new Dialog<>();
-        dialog.setTitle("Add Feedback");
-        dialog.setHeaderText("Leave feedback on this answer");
-        
-        VBox content = new VBox(10);
-        content.setPadding(new Insets(15));
-        
-        Label commentLabel = new Label("Your feedback:");
-        commentLabel.setStyle("-fx-font-weight: bold;");
-        
-        TextArea commentArea = new TextArea();
-        commentArea.setPromptText("Share your thoughts on this answer...");
-        commentArea.setWrapText(true);
-        commentArea.setPrefRowCount(4);
-        commentArea.setMaxWidth(400);
-        
-        Label charCounter = new Label("0/500");
-        charCounter.setStyle("-fx-font-size: 10px; -fx-text-fill: #666;");
-        
-        Label spellValidation = new Label();
-        spellValidation.setWrapText(true);
-        spellValidation.setMaxWidth(400);
-        spellValidation.setStyle("-fx-font-size: 10px;");
-        
-        // Character counter
-        commentArea.textProperty().addListener((obs, old, newVal) -> {
-            charCounter.setText(newVal.length() + "/500");
-            charCounter.setStyle(newVal.length() > 500 ? 
-                "-fx-font-size: 10px; -fx-text-fill: red;" : 
-                "-fx-font-size: 10px; -fx-text-fill: #666;");
-            
-            if (newVal.length() > 500) {
-                commentArea.setText(newVal.substring(0, 500));
-            }
-        });
-        
-        Button spellCheckBtn = new Button("✓ Check Spelling");
-        spellCheckBtn.setStyle("-fx-font-size: 10px; -fx-background-color: #9C27B0; -fx-text-fill: white;");
-        
-        Button applyCorrectionsBtn = new Button("Apply Corrections");
-        applyCorrectionsBtn.setStyle("-fx-font-size: 10px; -fx-background-color: #4CAF50; -fx-text-fill: white;");
-        applyCorrectionsBtn.setVisible(false);
-        
-        // Store spell check result
-        final SpellChecker.ValidationResult[] currentSpellResult = {null};
-        
-        spellCheckBtn.setOnAction(e -> {
-            String feedbackText = commentArea.getText();
-            if (feedbackText != null && !feedbackText.trim().isEmpty()) {
-                SpellChecker.ValidationResult spellResult = SpellChecker.validateText(feedbackText);
-                currentSpellResult[0] = spellResult;
-                
-                if (spellResult.hasIssues()) {
-                    spellValidation.setText("Suggestions found. Click 'Apply Corrections' to fix.\n" + spellResult.getSummary());
-                    spellValidation.setStyle("-fx-text-fill: orange; -fx-font-size: 10px;");
-                    applyCorrectionsBtn.setVisible(true);
-                } else {
-                    spellValidation.setText("✓ No spelling errors found!");
-                    spellValidation.setStyle("-fx-text-fill: green; -fx-font-size: 10px;");
-                    applyCorrectionsBtn.setVisible(false);
-                }
-            }
-        });
-        
-        applyCorrectionsBtn.setOnAction(e -> {
-            if (currentSpellResult[0] != null) {
-                commentArea.setText(currentSpellResult[0].getCorrectedText());
-                spellValidation.setText("✓ Corrections applied!");
-                spellValidation.setStyle("-fx-text-fill: green; -fx-font-size: 10px;");
-                applyCorrectionsBtn.setVisible(false);
-                currentSpellResult[0] = null;
-            }
-        });
-        
-        HBox toolBar = new HBox(10, charCounter, spellCheckBtn, applyCorrectionsBtn);
-        toolBar.setAlignment(Pos.CENTER_LEFT);
-        
-        content.getChildren().addAll(commentLabel, commentArea, toolBar, spellValidation);
-        
-        dialog.getDialogPane().setContent(content);
-        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
-        
-        dialog.setResultConverter(button -> {
-            if (button == ButtonType.OK) {
-                String text = commentArea.getText().trim();
-                
-                if (text.isEmpty()) {
-                    showAlert("Error", "Feedback cannot be empty", AlertType.ERROR);
-                    return null;
-                }
-                
-                if (text.length() < 5) {
-                    showAlert("Error", "Feedback must be at least 5 characters", AlertType.ERROR);
-                    return null;
-                }
-                
-                // Don't auto-correct - use as-is
-                return new AnswerFeedback(answer.getId(), text, currentUser.getUserName());
-            }
-            return null;
-        });
-        
-        Optional<AnswerFeedback> result = dialog.showAndWait();
-        result.ifPresent(feedback -> {
-            try {
-                databaseHelper.addAnswerFeedback(feedback);
-                showAlert("Success", "Feedback added!", AlertType.INFORMATION);
-                loadThread(question);
-            } catch (SQLException ex) {
-                showAlert("Error", "Failed to add feedback: " + ex.getMessage(), AlertType.ERROR);
-            }
-        });
     }
 
     private void renderFollowups(Question q) {
@@ -2121,10 +2012,11 @@ public class StudentQAPage {
         Tab newAskTab = createAskQuestionTab();
         Tab newMyQuestionsTab = createMyQuestionsTab();
         Tab newAllQuestionsTab = createAllQuestionsTab();
+        Tab newReviewersTab = createReviewersTab();
         
-        // Replace tabs (removed reviewerRequestTab)
+        // Replace tabs
         tabPane.getTabs().clear();
-        tabPane.getTabs().addAll(newAskTab, newMyQuestionsTab, newAllQuestionsTab);
+        tabPane.getTabs().addAll(newAskTab, newMyQuestionsTab, newAllQuestionsTab, newReviewersTab);
         
         // Restore selection
         if (selectedIndex >= 0 && selectedIndex < tabPane.getTabs().size()) {
@@ -2135,10 +2027,8 @@ public class StudentQAPage {
         askQuestionTab = newAskTab;
         myQuestionsTab = newMyQuestionsTab;
         allQuestionsTab = newAllQuestionsTab;
+        reviewersTab = newReviewersTab;
     }
-
-    
-
 
 	// Method to show alert
     private void showAlert(String title, String content, AlertType type) {
