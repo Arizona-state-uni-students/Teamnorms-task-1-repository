@@ -1124,10 +1124,11 @@ public class DatabaseHelper {
      * @return True or False based on function success.
      * @throws SQLException If a database error occurs.
      */
-    public boolean updateHasRequest(String username) throws SQLException {
-        String sql = "UPDATE cse360users SET hasRequest = TRUE WHERE userName = ?";
+    public boolean updateHasRequest(String username, Boolean tf) throws SQLException {
+        String sql = "UPDATE cse360users SET hasRequest = ? WHERE userName = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            pstmt.setString(1, username);
+        	pstmt.setBoolean(1, tf);
+        	pstmt.setString(2, username);
             int rowsAffected = pstmt.executeUpdate();
             return rowsAffected > 0;
         }

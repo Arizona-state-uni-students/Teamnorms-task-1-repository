@@ -38,6 +38,7 @@ public class StudentQAPage {
     private VBox displayQuestions;
     private VBox displayReviewers;
     private VBox displayQuestionThread;
+    private VBox instructorPanel;
     private ComboBox<String> viewFilter; // Public / Private / All
     private ComboBox<String> resolutionFilter;   // Resolved / Unresolved / All
     private ComboBox<String> reviewerFilter;	// All / Favorite / Pending
@@ -140,6 +141,9 @@ public class StudentQAPage {
          content.setPadding(new Insets(20));
          content.setStyle("-fx-background-color: white;");
          
+         displayReviewers = new VBox(8);
+         instructorPanel = new VBox(8);
+         
      	String thisrole = currentUser.getRole();
      	int weight = databaseHelper.getUserWeight(currentUser.getUserName());
      	
@@ -154,8 +158,16 @@ public class StudentQAPage {
         Button loadReviewers = new Button("Load Reviewers");
         loadReviewers.setOnAction(e -> loadReviewers());
         
+        Button loadApplicants = new Button("Show Reviewer Applicantss");
+        loadApplicants.setOnAction(e -> getPendingReviews() );
+        loadApplicants.setVisible(false);
+        
+        
      	Label infoLabel = new Label("info label");
         infoLabel.setStyle("-fx-font-weight:bold; -fx-text-fill:#000;");
+
+        
+        
         if (currentUser.getPrivileges() > 1) {
      		//currently a reviewer
      		//drop role? congratulations?
@@ -170,20 +182,19 @@ public class StudentQAPage {
      		//has instructor+ privileges
      		//check requests to be a reviewer
      		//approve or deny
-     		infoLabel.setText("you are an instructor");
+//     		infoLabel.setText("you are an instructor");
+//     		getPendingReviews();
+     		loadApplicants.setVisible(true);
      	}
-         
-         
-         displayReviewers = new VBox(8);
-         
+
          
          //standard page
 	   	loadReviewers();
 	   	HBox topcontent = new HBox(10);
         topcontent.setPadding(new Insets(20));
         topcontent.setStyle("-fx-background-color: white;");
-        topcontent.getChildren().addAll(loadReviewers, loadAllReviews, loadAllReviewerAnswers);
-	   	content.getChildren().addAll(infoLabel, topcontent, displayReviewers);
+        topcontent.getChildren().addAll(loadReviewers, loadAllReviews, loadAllReviewerAnswers, loadApplicants);
+	   	content.getChildren().addAll(infoLabel, topcontent, instructorPanel, displayReviewers);
         ScrollPane scrollPane = new ScrollPane(content);
         scrollPane.setFitToWidth(true);
         tab.setContent(scrollPane);
@@ -330,12 +341,7 @@ public class StudentQAPage {
             qTitle.setOnAction(e -> {
                     	viewReview(review);
             });
-            
-            
-            
-            
-            
-            
+
             Label reviewerLabel = new Label(review.getWrittenBy());
             reviewerLabel.setStyle("-fx-font-weight: bold; -fx-text-fill:#0099ff;");
             String timestamp = review.getCreatedAt().format(TS);
@@ -591,7 +597,40 @@ public class StudentQAPage {
         popupStage.setScene(scene);
         popupStage.showAndWait();
     }
-    
+    private void getPendingReviews() {
+    	displayReviewers.getChildren().clear();
+		List<User> users;
+		instructorPanel.getChildren().clear();
+		Label label = new Label("Pending Applications: ");
+		label.setStyle("-fx-font-weight:bold; -fx-text-fill:#000;");
+		instructorPanel.getChildren().add(label);
+		try {
+			users = databaseHelper.getUsersWithRequest();
+			if(users.size()!=0) {
+			for(User u : users) {
+				Label username = new Label(u.getUserName());
+				username.setStyle("-fx-font-weight:bold; -fx-text-fill:#000;");
+				Button acceptReview = new Button("Accept");
+				Button declineReview = new Button("Decline");
+				HBox wrap = new HBox(10, username, acceptReview, declineReview);
+				acceptReview.setOnAction(e -> {approveRequest(u.getUserName());});
+				declineReview.setOnAction(e -> {declineRequest(u.getUserName());});
+				instructorPanel.getChildren().add(wrap);
+				}
+		       Separator sep1 = new Separator();
+		       instructorPanel.getChildren().add(sep1);
+			}else {
+				label.setText("There are no pending applications.");
+			}
+
+			} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			}
+		
+    	}
+	private void approveRequest(String user) {try {databaseHelper.updateHasRequest(user, false);databaseHelper.updateUserRole(user, "Reviewer"); getPendingReviews();}catch(Exception e) {e.printStackTrace();}}
+	private void declineRequest(String user) {try {databaseHelper.updateHasRequest(user, false); getPendingReviews();} catch (SQLException e) {e.printStackTrace();}}
     // ========== END REVIEWER REQUEST TAB =-=====
     
     
