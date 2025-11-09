@@ -27,16 +27,15 @@ import databasePart1.*;
 public class AdminSetupPage {
     
     private final DatabaseHelper databaseHelper;
-
-    /**
-     * Method to display the Admin setup page.
-     * 
-     * @param databaseHelper Database Helper.
-     */
+    
     public AdminSetupPage(DatabaseHelper databaseHelper) {
         this.databaseHelper = databaseHelper;
     }
     
+    /**
+     * Displays the admin setup page in the primary stage. 
+     * @param primaryStage The primary stage where the scene will be displayed.
+     */
     public void show(Stage primaryStage) {
         // Establish GUI Grid
         GridPane grid = new GridPane();

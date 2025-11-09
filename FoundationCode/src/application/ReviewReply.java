@@ -38,7 +38,6 @@ public class ReviewReply {
      * @param replyText the text content of the reply
      * @param repliedBy the user who authored the reply
      * @param createdAt the timestamp when the reply was created
-     * @throws NullPointerException
      */
     public ReviewReply(int id, int reviewId, String replyText, String repliedBy, LocalDateTime createdAt) {
         this.id = id;

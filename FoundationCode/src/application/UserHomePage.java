@@ -23,6 +23,7 @@ public class UserHomePage {
     /**
      * Displays the user home page in the primary stage. 
      * @param primaryStage The primary stage where the scene will be displayed.
+     * @param currentUser User currently using the system.
 	 * @throws SQLException If a database error occurs.
      */
     public void show(Stage primaryStage, User currentUser) throws SQLException {

@@ -58,8 +58,8 @@ public class StudentQAPage {
     }
     
     /**
-     * StudentQAPage provides the interface for students to interact with the Q&A system.
-     * Students can ask questions, view questions, provide answers, and mark questions as resolved.
+     * Displays the student QA page in the primary stage. 
+     * @param primaryStage The primary stage where the scene will be displayed.
      */
     public void show(Stage primaryStage) {
         this.primaryStage = primaryStage;

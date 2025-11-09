@@ -24,15 +24,16 @@ import javafx.stage.Stage;
  */
 
 public class AdminHomePage {
-	/**
-     * Displays the admin page in the provided primary stage.
-     * @param primaryStage The primary stage where the scene will be displayed.
-     */
 	// Reference to the DatabaseHelper for database interactions
 	private final DatabaseHelper databaseHelper;
 	public AdminHomePage(DatabaseHelper databaseHelper) {
         this.databaseHelper = databaseHelper;
     }
+	
+	/**
+     * Displays the admin home page in the primary stage. 
+     * @param primaryStage The primary stage where the scene will be displayed.
+     */
     public void show(Stage primaryStage, User user) {
     	// Establish GUI Grid
     	GridPane grid = new GridPane();
