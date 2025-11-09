@@ -163,6 +163,9 @@ public class StudentQAPage {
         loadApplicants.setOnAction(e -> getPendingReviews() );
         loadApplicants.setVisible(false);
         
+        Button loadFavoriteReviewers = new Button("Load Favorite Reviewers");
+        loadFavoriteReviewers.setOnAction(e -> getFavoriteReviewers());
+        
         
      	Label infoLabel = new Label("info label");
         infoLabel.setStyle("-fx-font-weight:bold; -fx-text-fill:#000;");
@@ -188,13 +191,12 @@ public class StudentQAPage {
      		loadApplicants.setVisible(true);
      	}
 
-         
          //standard page
 	   	loadReviewers();
 	   	HBox topcontent = new HBox(10);
         topcontent.setPadding(new Insets(20));
         topcontent.setStyle("-fx-background-color: white;");
-        topcontent.getChildren().addAll(loadReviewers, loadAllReviews, loadAllReviewerAnswers, loadApplicants);
+        topcontent.getChildren().addAll(loadReviewers, loadAllReviews, loadAllReviewerAnswers, loadApplicants, loadFavoriteReviewers);
 	   	content.getChildren().addAll(infoLabel, topcontent, instructorPanel, displayReviewers);
         ScrollPane scrollPane = new ScrollPane(content);
         scrollPane.setFitToWidth(true);
@@ -224,10 +226,19 @@ public class StudentQAPage {
 	              loadReviews.setOnAction(e -> loadAllReviews(r.getUserName()));
 	              Button loadAnswers = new Button("Load Answers");
 	              loadAnswers.setOnAction(e -> loadAllAnswersBy(r.getUserName()));
+	              Button favoriteReviewer = new Button("Add to Favorites");
+	              favoriteReviewer.setOnAction(e -> {
+					try {
+						databaseHelper.addFavorite(currentUser.getUserName(), r.getUserName());
+					} catch (SQLException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
+				});
 	              head.setStyle("-fx-font-weight:bold; -fx-text-fill:#000;");
 	              HBox wrap = new HBox(6);
 	              wrap.setPadding(new Insets(8,0,0,0));
-	              wrap.getChildren().addAll(head, loadReviews, loadAnswers, demoteReviewer);
+	              wrap.getChildren().addAll(head, loadReviews, loadAnswers, demoteReviewer, favoriteReviewer);
 	              displayReviewers.getChildren().add(wrap);
 				//System.out.println(r.getUserName());
 			}
@@ -491,7 +502,7 @@ public class StudentQAPage {
 			}
         }
     }
-    
+
     /**
      * Method to add a review.
      * 
@@ -678,6 +689,72 @@ public class StudentQAPage {
      * 
      * @param user Username of the user to approve the request for.
      */
+    private void getFavoriteReviewers() {
+        displayReviewers.getChildren().clear();
+        List<User> users;
+        instructorPanel.getChildren().clear();
+
+        Label label = new Label("Favorite Reviewers: ");
+        label.setStyle("-fx-font-weight:bold; -fx-text-fill:#000;");
+        instructorPanel.getChildren().add(label);
+
+        try {
+            String currUser = currentUser.getUserName(); // ← set this on login
+            if (currUser == null || currUser.isEmpty()) {
+                label.setText("Error: No user logged in.");
+                return;
+            }
+
+            // Get favorite usernames
+            String[] favorites = databaseHelper.getFavorites(currUser);
+//            if (favorites == null || favorites.length == 0) {
+//                label.setText("There are no favorite reviewers.");
+//                return;
+//            }
+
+            users = new ArrayList<>();
+            for (String fav : favorites) {
+                User u = databaseHelper.getUser(fav.trim());
+                if (u != null) {
+                    users.add(u);
+                }
+            }
+
+            if (users.size() != 0) {
+                for (User u : users) {
+                    Label username = new Label(u.getUserName());
+                    username.setStyle("-fx-font-weight:bold; -fx-text-fill:#000;");
+
+                    Button removeReview = new Button("Remove");
+
+                    HBox wrap = new HBox(10, username, removeReview);
+
+                    removeReview.setOnAction(e -> {
+                        try {
+                            if (databaseHelper.removeFavorite(currUser, u.getUserName())) {
+                                getFavoriteReviewers(); // refresh the list
+                            }
+                        } catch (SQLException ex) {
+                            ex.printStackTrace();
+                        }
+                    });
+
+                    instructorPanel.getChildren().add(wrap);
+                }
+                Separator sep1 = new Separator();
+                instructorPanel.getChildren().add(sep1);
+            } else {
+                label.setText("There are no favorite reviewers.");
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            label.setText("Error loading favorites.");
+        }
+    }
+    
+    
+
 	private void approveRequest(String user) {try {databaseHelper.updateHasRequest(user, false);databaseHelper.updateUserRole(user, "Reviewer"); getPendingReviews();}catch(Exception e) {e.printStackTrace();}}
 	
 	/**
