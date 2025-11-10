@@ -25,26 +25,82 @@ public class InputValidator {
             this.correctedText = "";
         }
         
+        /**
+         * Gets canSumbit
+         * 
+         * @return canSubmit
+         */
         public boolean canSubmit() { return canSubmit; }
+        
+        /**
+         * Sets canSubmit
+         * 
+         * @param canSubmit Boolean to set canSumbit to.
+         */
         public void setCanSubmit(boolean canSubmit) { this.canSubmit = canSubmit; }
+        
+        /**
+         * Gets blockingErrors
+         * 
+         * @return List of errors
+         */
         public List<String> getBlockingErrors() { return blockingErrors; }
+        
+        /**
+         * Gets warnings 
+         * 
+         * @return List of warnings
+         */
         public List<String> getWarnings() { return warnings; }
+        
+        /**
+         * Gets correctedText
+         * 
+         * @return correctedText
+         */
         public String getCorrectedText() { return correctedText; }
+        
+        /**
+         * Sets correctedText
+         * 
+         * @param text String to set correctedText to.
+         */
         public void setCorrectedText(String text) { this.correctedText = text; }
         
+        /**
+         * Adds a blocking error
+         * 
+         * @param error String of error
+         */
         public void addBlockingError(String error) {
             blockingErrors.add(error);
             canSubmit = false;
         }
         
+        /**
+         * Adds a warning
+         * 
+         * @param warning String of warning
+         */
         public void addWarning(String warning) {
             warnings.add(warning);
         }
         
+        
+        /**
+         * Returns a boolean based on if there are issues.
+         * 
+         * @return True or false based on if there are issues or not.
+         */
         public boolean hasIssues() {
             return !blockingErrors.isEmpty() || !warnings.isEmpty();
         }
         
+        /**
+         * Gets a report of any blocking errors and warnings.
+         * 
+         * @return String of the report.
+         */
         public String getFullReport() {
             StringBuilder sb = new StringBuilder();
             
