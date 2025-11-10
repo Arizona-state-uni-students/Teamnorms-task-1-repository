@@ -12,11 +12,13 @@ Tanner Urness
 ### [Phase 1 Submission Document](https://docs.google.com/document/d/14wqnznDZ5PcifIVyaA14czP5GYDa2WvjKiTzikE76FY/edit?usp=sharing)
 ### [Phase 2 Submission Document](https://docs.google.com/document/d/1llOriFrgakeg_eskGuElmqV3B5nS_eDJ0IAuScePs9A/edit?usp=sharing)
 ### [Phase 3 Submission Document](https://docs.google.com/document/d/1dM2R8Zpxl-NGnDiY7QbAFURE1YkJaYTFgAx1bi3a8Wo/edit?usp=sharing)
-### [UML Diagram]()
+### [UML Diagrams](DesignDocuments/UML)
 
 # Code Files
   ### [Database](FoundationCode/src/databasePart1/DatabaseHelper.java)
   ### [Application](FoundationCode/src/application)
+  ### [Review](FoundationCode/src/application/Review.java)
+  ### [ReviewReply](FoundationCode/src/application/ReviewReply.java)
   ### [QA Page (Includes reviews)](FoundationCode/src/application/StudentQAPage.java)
   ### [User Home Page (Review requests)](FoundationCode/src/application/UserHomePage.java)
   ### [Automated Testing](FoundationCode/src/application/QASystemTest.java)
