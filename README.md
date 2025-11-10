@@ -40,12 +40,12 @@ Tanner Urness
     c@dTs7TK
   ### [Stand Up Meeting 5](https://us06web.zoom.us/rec/share/xUcS1kEQChBtOXzNTIntbPeq6LwuZ5ljpl2D1zFvcArahaUyFj9jqJBA1p6ljy-Z.yfVgbkDv1UNj93mb?startTime=1762729283000)
     L#nH6kgT
-  ### [Stand Up Meeting 6]()
-    
-  ### [Code and Demonstration Screencast]()
-    
-  ### [Design and Architecture Screencast]()
-    
+  ### [Stand Up Meeting 6](https://us06web.zoom.us/rec/share/yHxSnI9LI5n0K4jektVB_o072hKiNMRjCOgnWcREYNXVW9vwg4XCKF3Rty7YyY8w.biWeJJb15290iCNH?startTime=1762749983000)
+    9yzR$wF+
+  ### [Code and Demonstration Screencast](https://us06web.zoom.us/rec/share/yHxSnI9LI5n0K4jektVB_o072hKiNMRjCOgnWcREYNXVW9vwg4XCKF3Rty7YyY8w.biWeJJb15290iCNH?startTime=1762751608000)
+    9yzR$wF+
+  ### [Design and Architecture Screencast](https://us06web.zoom.us/rec/share/yHxSnI9LI5n0K4jektVB_o072hKiNMRjCOgnWcREYNXVW9vwg4XCKF3Rty7YyY8w.biWeJJb15290iCNH?startTime=1762753317000)
+    9yzR$wF+
 <br/>
 
 # Phase 2
