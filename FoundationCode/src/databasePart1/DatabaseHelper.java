@@ -164,7 +164,7 @@ public class DatabaseHelper {
     }
     
     /**
-     * Creates tables in database for questions, answers, and private messages.
+     * Creates tables in database for questions, answers, private messages, answer feedback, reviews, and review replies.
      * 
      * @throws SQLException If a database error occurs.
      */
@@ -653,13 +653,12 @@ public class DatabaseHelper {
         }
         return users;
     }
-    
-    
+
     /**
-    
-    Gets a list of Reviewers by their role (all but two)
-    @return a list of users and their information
-    @throws SQLException If a database error occurs.*/
+     * Gets a list of Reviewers by their role (all but two)
+     * @return a list of users and their information
+     * @throws SQLException If a database error occurs.
+     */
     public List<User> getReviewers() throws SQLException {
     	ensureConnected();
         List<User> users = new ArrayList<>();
@@ -809,12 +808,14 @@ public class DatabaseHelper {
         }
         return Optional.empty();
     }
-    
-    
-    /* Gets a User object from the Database
-    @param username The User to search for
-    @return a user and their information
-    @throws SQLException If a database error occurs.*/
+
+    /**
+     * Gets a User object from the Database
+     * 
+     * @param username The User to search for
+     * @return a user and their information
+     * @throws SQLException If a database error occurs.
+     */
     public User getUser(String username) throws SQLException {
         if (username == null || username.trim().isEmpty()) {
             return null;
@@ -1987,12 +1988,23 @@ public class DatabaseHelper {
         }
     }
     
-    
+    /**
+     * Sets favorites
+     * 
+     * @return false
+     */
     public boolean setFavorites() {
     	
     	return false;
     }
-    
+
+    /**
+     * Method to get a users favorited reviewers.
+     * 
+     * @param username Username of the user to get favorites for.
+     * @return String array of the users favorites.
+     * @throws SQLException If a database error occurs.
+     */
     public String[] getFavorites(String username) throws SQLException {
     	ensureConnected();
 
@@ -2014,6 +2026,14 @@ public class DatabaseHelper {
         return null;   // user does not exist
     }
 
+    /**
+     * Method to add a reviewer to a users list of favorites.
+     * 
+     * @param username Username of the user to add the favorite for.
+     * @param favUsername Username of the user to add to favorites
+     * @return True or false based on function success.
+     * @throws SQLException If a database error occurs.
+     */
     public boolean addFavorite(String username, String favUsername) throws SQLException {
         ensureConnected();
 
@@ -2047,9 +2067,9 @@ public class DatabaseHelper {
     /**
      * Removes a username from the user's favorites list.
      *
-     * @param username     The user whose favorites to modify
-     * @param favToRemove  The favorite username to remove
-     * @return true if the row was updated or the favorite was already absent
+     * @param username The user whose favorites to modify.
+     * @param favToRemove The favorite username to remove.
+     * @return true if the row was updated or the favorite was already absent.
      * @throws SQLException if a database error occurs
      */
     public boolean removeFavorite(String username, String favToRemove) throws SQLException {
@@ -2132,4 +2152,5 @@ public class DatabaseHelper {
             e.printStackTrace();
         }
     }
+
 }
