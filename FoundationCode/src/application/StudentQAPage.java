@@ -26,7 +26,7 @@ import java.util.Map;
 import java.util.HashMap;
 
 /**
- * StudentQAPage provides the interface for students to interact with the Q&A system.
+ * StudentQAPage provides the interface for students to interact with the Q&amp;A system.
  * Students can ask questions, view questions, provide answers, and mark questions as resolved.
  */
 public class StudentQAPage {

@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 /**
- * Represents an answer to a question in the Q&A system.
+ * Represents an answer to a question in the Q&amp;A system.
  */
 public class Answer {
     private int id;
