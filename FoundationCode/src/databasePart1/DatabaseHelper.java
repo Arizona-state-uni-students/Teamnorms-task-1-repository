@@ -239,6 +239,23 @@ public class DatabaseHelper {
         		+ ");";
         statement.execute(reviewRepliesTable);
     }
+    /**
+     * Updates the text of an existing review and overwrites the 'createdAt' 
+     * column to reflect the time of the update (modification).
+     * @param reviewId The ID of the review to update.
+     * @param newReviewText The new content for the review.
+     * @return true if the review was successfully updated, false otherwise.
+     * @throws SQLException if a database access error occurs.
+     */
+    public boolean editReview(int reviewId, String newReviewText) throws SQLException {
+        String sql = "UPDATE reviews SET reviewText = ?, createdAt = CURRENT_TIMESTAMP WHERE id = ?"; 
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, newReviewText);
+            statement.setInt(2, reviewId);
+            int rowsAffected = statement.executeUpdate();
+            return rowsAffected > 0;
+        }
+    }
     
     /**
      * Retrieves a single Review object from the database by its answer ID.
