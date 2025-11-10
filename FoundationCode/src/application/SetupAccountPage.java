@@ -198,7 +198,7 @@ public class SetupAccountPage {
 	                        
 	                    } else if(databaseHelper.validateInvitationCode(code)) {
 	                        // Regular user with valid invitation code
-	                    	 User user = new User(userName, password, "User");
+	                    	 User user = new User(userName, password, "Student");
 	                         user.setEmail(email);
 	                         user.setMiddleInitial(middleInitial);
 	                         databaseHelper.register(user);
