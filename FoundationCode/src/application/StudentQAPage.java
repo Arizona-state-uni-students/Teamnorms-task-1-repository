@@ -159,7 +159,7 @@ public class StudentQAPage {
         Button loadReviewers = new Button("Load Reviewers");
         loadReviewers.setOnAction(e -> loadReviewers());
         
-        Button loadApplicants = new Button("Show Reviewer Applicantss");
+        Button loadApplicants = new Button("Show Reviewer Applicants");
         loadApplicants.setOnAction(e -> getPendingReviews() );
         loadApplicants.setVisible(false);
         
@@ -218,6 +218,7 @@ public class StudentQAPage {
 	              head.setText(r.getUserName());
 	              
 	              Button demoteReviewer = new Button("Demote");
+                  demoteReviewer.setStyle("-fx-text-fill:#fff; -fx-background-color:#f00");
 		          demoteReviewer.setOnAction(e -> {
 		              demoteReviewer(r.getUserName());
 		          });
@@ -227,14 +228,27 @@ public class StudentQAPage {
 	              Button loadAnswers = new Button("Load Answers");
 	              loadAnswers.setOnAction(e -> loadAllAnswersBy(r.getUserName()));
 	              Button favoriteReviewer = new Button("Add to Favorites");
+                  favoriteReviewer.setStyle("-fx-text-fill: white; -fx-font-size: 11px; " +"-fx-background-color: #ff7700; -fx-padding: 2px 5px 2px 5px;");
 	              favoriteReviewer.setOnAction(e -> {
 					try {
 						databaseHelper.addFavorite(currentUser.getUserName(), r.getUserName());
+						favoriteReviewer.setVisible(false);
 					} catch (SQLException e1) {
 						// TODO Auto-generated catch block
 						e1.printStackTrace();
 					}
 				});
+	              //hide add favorite button if already favorited
+	              String[] current = databaseHelper.getFavorites(currentUser.getUserName());
+	              for (String s : current) {
+	            	  System.out.println(s);
+	                  if (s.equalsIgnoreCase(r.getUserName())) {
+	                      favoriteReviewer.setVisible(false);
+	                  }
+	              }
+	              if(currentUser.getUserName().equals(r.getUserName())) {
+	            	  favoriteReviewer.setVisible(false);
+	              }
 	              head.setStyle("-fx-font-weight:bold; -fx-text-fill:#000;");
 	              HBox wrap = new HBox(6);
 	              wrap.setPadding(new Insets(8,0,0,0));
@@ -411,9 +425,6 @@ public class StudentQAPage {
 			    List<Answer> reviewerAnswers = databaseHelper.getAnswersByUser(r.getUserName());
 			    allAnswers.addAll(reviewerAnswers);
 			}
-//			for(Answer a : allAnswers) {
-//				System.out.println(a.getContent()+" : "+a.getAnsweredBy());
-//			}
 			loadReviewerAnswersGUI(allAnswers);
 			 Button loadReviewers = new Button("Load Reviewers");
 	            loadReviewers.setOnAction(e -> loadReviewers());
@@ -475,9 +486,6 @@ public class StudentQAPage {
                 }
             });
             
-//            Label qLabel = new Label(truncateText(qTitle, 40));
-//            qLabel.setStyle("-fx-font-weight:bold; -fx-text-fill:#000;");
-//            qLabel.setTooltip(new Tooltip(qTitle)); // Show full title on hover
             Label answerContentLabel = new Label(truncateText(a.getContent(), 80));
             answerContentLabel.setWrapText(true);
             answerContentLabel.setStyle("-fx-text-fill:#333;");
@@ -560,13 +568,65 @@ public class StudentQAPage {
         VBox contentVBox = new VBox(15);
         contentVBox.setPadding(new Insets(20));
 
+        Label reviewContent = new Label(review.getReviewText());
         try {
             Label reviewHeader = new Label("Review by: " + review.getWrittenBy());
             reviewHeader.setFont(Font.font("Arial", FontWeight.BOLD, 14));
-            Label reviewContent = new Label(review.getReviewText());
+            Button editReview = new Button("Edit Review");
+            editReview.setStyle("-fx-border-color: orange; -fx-border-width: 0 0 1 0;");
+            editReview.setOnAction(e -> {
+            	//opens a new window to edit review
+            	Stage editPage = new Stage();
+                editPage.initModality(Modality.APPLICATION_MODAL);
+                editPage.setTitle("Edit Review");
+                VBox editBox = new VBox(15);
+                editBox.setPadding(new Insets(20));
+                
+                TextArea editArea = new TextArea();
+                editArea.setWrapText(true);
+                editArea.setPrefRowCount(3);
+                editArea.setText(reviewContent.getText());
+                editArea.setPadding(new Insets(4));
+                
+                Button cancelChanges = new Button("Cancel Changes");
+                cancelChanges.setStyle("-fx-border-color: #f00; -fx-border-width: 0 0 1 0;");
+                cancelChanges.setOnAction(c -> {editPage.close();return;});
+                Button saveChanges = new Button("Save Changes");
+                saveChanges.setStyle("-fx-text-fill:#fff; -fx-background-color:green");
+                saveChanges.setOnAction(c -> {
+                	try {
+                		if(!editArea.getText().equals(review.getReviewText())) {
+						databaseHelper.editReview(review.getId(), editArea.getText());
+						databaseHelper.addReviewReply(review.getId(), currentUser.getUserName(), "REVIEW UPDATED -- Original Review:\n---"+review.getReviewText()+"\n--- at "+review.getCreatedAt().toLocalTime().toString().substring(0, 5));
+                		}
+					} catch (SQLException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
+                reviewContent.setText(editArea.getText());
+                editPage.close();
+                });
+                
+
+                HBox hbox = new HBox(8);
+                hbox.setAlignment(Pos.CENTER);
+                hbox.getChildren().addAll(saveChanges, cancelChanges);
+                editBox.getChildren().addAll(editArea, hbox);
+                ScrollPane scrollPane2 = new ScrollPane(editBox);
+                scrollPane2.setFitToWidth(true); 
+                Scene scene2 = new Scene(scrollPane2, 550, 160);
+                editPage.setScene(scene2);
+                editPage.showAndWait();
+                
+            });
+            editReview.setVisible(false);
+            if(review.getWrittenBy().equals(currentUser.getUserName())) {
+            	editReview.setVisible(true);
+            }
             reviewContent.setWrapText(true);
             reviewContent.setFont(Font.font("Arial", 12));
-            contentVBox.getChildren().addAll(reviewHeader, reviewContent);
+            HBox hbox = new HBox(8, reviewHeader, editReview);
+            contentVBox.getChildren().addAll(hbox, reviewContent);
 
             List<ReviewReply> replies = databaseHelper.getRepliesForReview(review.getId());
             Label repliesHeader = new Label("\n--- Replies (" + replies.size() + ") ---");
@@ -578,9 +638,15 @@ public class StudentQAPage {
             } else {
                 VBox repliesContainer = new VBox(5);
                 for (ReviewReply reply : replies) {
-                    Label replyLabel = new Label(reply.getRepliedBy() + " said (" + 
-                                               reply.getCreatedAt().toLocalTime().toString().substring(0, 5) + 
-                                               "): " + reply.getReplyText());
+                    Label replyLabel = new Label();
+                    if (reply.getReplyText().startsWith("REVIEW UPDATED")) {
+                    	replyLabel.setStyle("-fx-text-fill:#eee; -fx-font-size:11px; -fx-background-color:orange;");
+                    	replyLabel.setText("---"+reply.getReplyText());
+                    	
+                    }else {
+                    	replyLabel.setStyle("-fx-text-fill:#666; -fx-font-size:11px;");
+                    	replyLabel.setText(reply.getCreatedAt().toLocalTime().toString().substring(0, 5) + " " +reply.getRepliedBy() + ": " + reply.getReplyText());
+                    }
                     replyLabel.setWrapText(true);
                     repliesContainer.getChildren().add(replyLabel);
                 }
@@ -640,9 +706,9 @@ public class StudentQAPage {
             contentVBox.getChildren().add(new Label("Error loading review content: " + e.getMessage()));
             e.printStackTrace();
         }
+        
         ScrollPane scrollPane = new ScrollPane(contentVBox);
         scrollPane.setFitToWidth(true); 
-
         Scene scene = new Scene(scrollPane, 550, 500);
         popupStage.setScene(scene);
         popupStage.showAndWait();
@@ -665,7 +731,9 @@ public class StudentQAPage {
 				Label username = new Label(u.getUserName());
 				username.setStyle("-fx-font-weight:bold; -fx-text-fill:#000;");
 				Button acceptReview = new Button("Accept");
+                acceptReview.setStyle("-fx-text-fill:#fff; -fx-background-color:green");
 				Button declineReview = new Button("Decline");
+                declineReview.setStyle("-fx-text-fill:#fff; -fx-background-color:#f00");
 				HBox wrap = new HBox(10, username, acceptReview, declineReview);
 				acceptReview.setOnAction(e -> {approveRequest(u.getUserName());});
 				declineReview.setOnAction(e -> {declineRequest(u.getUserName());});
@@ -685,9 +753,9 @@ public class StudentQAPage {
     	}
     
     /**
-     * Method to approve a reviewer request.
+     * Get favorite reviewers
      * 
-     * @param user Username of the user to approve the request for.
+     * Method to show the favorite reviewers for the person logged in.
      */
     private void getFavoriteReviewers() {
         displayReviewers.getChildren().clear();
@@ -699,7 +767,7 @@ public class StudentQAPage {
         instructorPanel.getChildren().add(label);
 
         try {
-            String currUser = currentUser.getUserName(); // ← set this on login
+            String currUser = currentUser.getUserName();
             if (currUser == null || currUser.isEmpty()) {
                 label.setText("Error: No user logged in.");
                 return;
@@ -724,11 +792,13 @@ public class StudentQAPage {
                 for (User u : users) {
                     Label username = new Label(u.getUserName());
                     username.setStyle("-fx-font-weight:bold; -fx-text-fill:#000;");
-
+                    Button showReviews = new Button("Show All Reviews");
+                    showReviews.setOnAction(e->{loadAllReviews(u.getUserName());});
+                    Button showAnswers = new Button("Show All Answers");
+                    showAnswers.setOnAction(e->{loadAllAnswersBy(u.getUserName());});
                     Button removeReview = new Button("Remove");
-
-                    HBox wrap = new HBox(10, username, removeReview);
-
+                    removeReview.setStyle("-fx-text-fill:#fff; -fx-background-color:#f00");
+                    HBox wrap = new HBox(10, username, showReviews, showAnswers, removeReview);
                     removeReview.setOnAction(e -> {
                         try {
                             if (databaseHelper.removeFavorite(currUser, u.getUserName())) {
@@ -738,13 +808,12 @@ public class StudentQAPage {
                             ex.printStackTrace();
                         }
                     });
-
                     instructorPanel.getChildren().add(wrap);
                 }
                 Separator sep1 = new Separator();
                 instructorPanel.getChildren().add(sep1);
             } else {
-                label.setText("There are no favorite reviewers.");
+                label.setText("You have no favorite reviewers.");
             }
 
         } catch (SQLException e) {
@@ -754,7 +823,11 @@ public class StudentQAPage {
     }
     
     
-
+	/**
+     * Method to approve a reviewer request.
+     * 
+     * @param user Username of the user to deny the request for.
+     */
 	private void approveRequest(String user) {try {databaseHelper.updateHasRequest(user, false);databaseHelper.updateUserRole(user, "Reviewer"); getPendingReviews();}catch(Exception e) {e.printStackTrace();}}
 	
 	/**
@@ -1815,7 +1888,7 @@ public class StudentQAPage {
                    		try {
                     	if(databaseHelper.getAnswerHasReview(a.getId())) {
 								viewReview(databaseHelper.getReviewById(a.getId()));
-                    		}else {addReview(a);}
+                    		}else {addReview(a);addReview.setText("View Reviews");}
 						} catch (SQLException e1) {
 							// TODO Auto-generated catch block
 							e1.printStackTrace();
