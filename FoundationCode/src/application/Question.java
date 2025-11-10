@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Represents a question in the Q&A system.
+ * Represents a question in the Q&amp;A system.
  * Contains question content, metadata, and associated answers.
  */
 public class Question {
