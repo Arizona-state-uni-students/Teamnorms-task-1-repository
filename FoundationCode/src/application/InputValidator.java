@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * InputValidator provides comprehensive validation for user inputs in the Q&A system.
+ * InputValidator provides comprehensive validation for user inputs in the Q&amp;A system.
  * Combines length checks, spell checking, and grammar validation.
  */
 public class InputValidator {
