@@ -102,6 +102,12 @@ public class WelcomeLoginPage {
             grid.add(adminButton, 0, 1); 
         }
         
+        Button messagesButton = new Button("Direct Messages");
+        messagesButton.setStyle("-fx-font-size: 14px; -fx-padding: 5 20; -fx-background-color: #9C27B0; -fx-text-fill: white;");
+        messagesButton.setOnAction(a -> {
+            new DirectMessages(databaseHelper, user).show(primaryStage);
+        });
+        
         Button logout = new Button("logout");
         logout.setStyle("-fx-font-size: 14px; -fx-padding: 5 20; -fx-background-color: #666; -fx-text-fill: white;");
         logout.setOnAction(a -> {
@@ -110,8 +116,9 @@ public class WelcomeLoginPage {
         
         grid.add(welcomeLabel, 0, 0);
         grid.add(userButton, 0, 2);
-        grid.add(qaButton, 0, 3);     // ADD THIS LINE - Q&A button
-        grid.add(logout, 0, 5);        // CHANGE from row 3 to row 4
+        grid.add(qaButton, 0, 3);     // Q&A button
+        grid.add(messagesButton, 0, 4);     // Private messaging
+        grid.add(logout, 0, 5);
         
         Scene welcomeScene = new Scene(grid, 800, 400);
 
