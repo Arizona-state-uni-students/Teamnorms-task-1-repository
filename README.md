@@ -12,6 +12,7 @@ Tanner Urness
 ### [Phase 1 Submission Document](https://docs.google.com/document/d/14wqnznDZ5PcifIVyaA14czP5GYDa2WvjKiTzikE76FY/edit?usp=sharing)
 ### [Phase 2 Submission Document](https://docs.google.com/document/d/1llOriFrgakeg_eskGuElmqV3B5nS_eDJ0IAuScePs9A/edit?usp=sharing)
 ### [Phase 3 Submission Document](https://docs.google.com/document/d/1dM2R8Zpxl-NGnDiY7QbAFURE1YkJaYTFgAx1bi3a8Wo/edit?usp=sharing)
+### [Phase 4 Submission Document](https://docs.google.com/document/d/1euv3C8h-uNecZu8bJKgmYCHbDsVUNUWECGd96OkSgXg/edit?usp=sharing)
 ### [UML Diagrams](DesignDocuments/UML)
 
 # Code Files
@@ -24,6 +25,14 @@ Tanner Urness
   ### [Automated Testing](FoundationCode/src/application/QASystemTest.java)
   <br/>
 
+
+# Phase 4
+## Stand Up Notes
+  ### [Meeting Notes](https://docs.google.com/document/d/1EeQvJ1wMEicjmoGZwJS6zS78svVnevnQOhFroFBvf1U/edit?usp=sharing)
+## Screencasts
+  Required Passcodes included below links
+  ### [Stand Up Meeting 1]()
+<br/>
 
 # Phase 3
 ## Stand Up Notes
