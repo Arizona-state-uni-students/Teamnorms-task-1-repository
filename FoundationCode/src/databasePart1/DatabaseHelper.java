@@ -76,6 +76,7 @@ public class DatabaseHelper {
         		+ ")";
         statement.execute(userTable);
         createQATables();
+        createDirectMessageTables();
         String invitationCodesTable = "CREATE TABLE IF NOT EXISTS InvitationCodes ("
                 + "code VARCHAR(10) PRIMARY KEY, "
                 + "isUsed BOOLEAN DEFAULT FALSE, "
@@ -239,6 +240,42 @@ public class DatabaseHelper {
         		+ ");";
         statement.execute(reviewRepliesTable);
     }
+    
+    /**
+     * Creates tables for direct messaging system.
+     * 
+     * @throws SQLException If a database error occurs.
+     */
+    private void createDirectMessageTables() throws SQLException {
+        // Direct messages table
+        String directMessagesTable = "CREATE TABLE IF NOT EXISTS direct_messages ("
+                + "id INT AUTO_INCREMENT PRIMARY KEY, "
+                + "user1 VARCHAR(20) NOT NULL, "
+                + "user2 VARCHAR(20) NOT NULL, "
+                + "fromUser VARCHAR(20) NOT NULL, "
+                + "content VARCHAR(500) NOT NULL, "
+                + "createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP, "
+                + "isRead BOOLEAN DEFAULT FALSE, "
+                + "FOREIGN KEY (user1) REFERENCES cse360users(userName), "
+                + "FOREIGN KEY (user2) REFERENCES cse360users(userName), "
+                + "FOREIGN KEY (fromUser) REFERENCES cse360users(userName), "
+                + "CONSTRAINT chk_user_order CHECK (user1 < user2))";
+        statement.execute(directMessagesTable);
+        
+        // Conversations summary table
+        String conversationsTable = "CREATE TABLE IF NOT EXISTS conversations ("
+                + "id INT AUTO_INCREMENT PRIMARY KEY, "
+                + "user1 VARCHAR(20) NOT NULL, "
+                + "user2 VARCHAR(20) NOT NULL, "
+                + "lastMessageAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP, "
+                + "lastMessageContent VARCHAR(100), "
+                + "UNIQUE(user1, user2), "
+                + "FOREIGN KEY (user1) REFERENCES cse360users(userName), "
+                + "FOREIGN KEY (user2) REFERENCES cse360users(userName), "
+                + "CONSTRAINT chk_conversation_user_order CHECK (user1 < user2))";
+        statement.execute(conversationsTable);
+    }
+    
     /**
      * Updates the text of an existing review and overwrites the 'createdAt' 
      * column to reflect the time of the update (modification).
@@ -259,7 +296,7 @@ public class DatabaseHelper {
     
     /**
      * Retrieves a single Review object from the database by its answer ID.
-     * @param reviewId The primary key ID of the review to retrieve.
+     * @param answerId The primary key ID of the review to retrieve.
      * @return The Review object, or null if not found.
      * @throws SQLException if a database access error occurs.
      */
@@ -399,8 +436,10 @@ public class DatabaseHelper {
         return reviews;
     }
     /**
-     * Adds a review to an answer
-     * @param answerId The ID of the answer to add a review to.
+     * Adds a review to an answer.
+     * @param id        The ID of the answer to add a review to.
+     * @param userName  Username of the reviewer.
+     * @param reviewText Text content of the review.
      * @throws SQLException if a database access error occurs.
      */
     public void addReview(int id, String userName, String reviewText) throws SQLException {
@@ -456,7 +495,6 @@ public class DatabaseHelper {
      * Deletes a review record from the database by its primary key ID.
      * Due to FOREIGN KEY ON DELETE CASCADE, all associated review_replies are also deleted.
      * @param reviewId The ID of the review to delete.
-     * @return true if the review was successfully deleted (1 row affected), false otherwise.
      * @throws SQLException if a database access error occurs.
      */
     public void deleteReviewById(int reviewId) throws SQLException {
@@ -1555,10 +1593,10 @@ public class DatabaseHelper {
     }
     
     /**
-     * Gets the list of answers for a user
-     * 
-     * @param String Username of the answers to search
-     * @return List of Answers
+     * Gets the list of answers for a user.
+     *
+     * @param user Username whose answers should be returned.
+     * @return List of answers written by that user.
      * @throws SQLException If a database error occurs.
      */
     public List<Answer> getAnswersByUser(String user) throws SQLException {
@@ -1585,10 +1623,10 @@ public class DatabaseHelper {
     }
     
     /**
-     * Gets the list of answers for users with a certain role
-     * 
-     * @param String Role to search to retrieve the answers of.
-     * @return List of Answers
+     * Gets the list of answers for users with a certain role.
+     *
+     * @param role Role whose answers should be returned.
+     * @return List of answers written by users with that role.
      * @throws SQLException If a database error occurs.
      */
     public List<Answer> getAnswersByRole(String role) throws SQLException {
@@ -1912,12 +1950,13 @@ public class DatabaseHelper {
 
     /**
      * Creates a private feedback message.
-     * 
-     * @param questionId ID of the question the message is in reference to.
-     * @param sender Username of the user sending the message.
-     * @param messageType Type of private message (Question or Answer).
-     * @param content Content of the private message.
-     * @return Generated keys
+     *
+     * @param questionId ID of the question the message is about.
+     * @param to         Username of the recipient.
+     * @param from       Username of the sender.
+     * @param messageType Type of private message (e.g., "QUESTION" or "ANSWER").
+     * @param content    Content of the private message.
+     * @return The generated ID of the private message.
      * @throws SQLException If a database error occurs.
      */
     public int addPrivateMessage(int questionId, String to, String from, String messageType, String content) throws SQLException {
@@ -1939,9 +1978,9 @@ public class DatabaseHelper {
 
     /**
      * Gets a list of all private messages for a question.
-     * 
-     * @param questionID ID of the question to get private messages for.
-     * @return List of private messages
+     *
+     * @param questionId ID of the question to get private messages for.
+     * @return List of private messages for that question.
      * @throws SQLException If a database error occurs.
      */
     public List<PrivateMessage> getPrivateMessagesForQuestion(int questionId) throws SQLException {
@@ -2135,8 +2174,458 @@ public class DatabaseHelper {
         }
     }
     
-    
-    
+ // ========== DIRECT MESSAGING METHODS ==========
+
+    /**
+     * Inner class representing a direct message between two users.
+     */
+    public static class DirectMessage {
+        private final int id;
+        private final String user1;
+        private final String user2;
+        private final String fromUser;
+        private final String content;
+        private final LocalDateTime createdAt;
+        private final boolean isRead;
+        
+        /**
+         * Constructor for DirectMessage.
+         * 
+         * @param id Message ID
+         * @param user1 First user (alphabetically)
+         * @param user2 Second user (alphabetically)
+         * @param fromUser Actual sender
+         * @param content Message text
+         * @param createdAt Timestamp
+         * @param isRead Read status
+         */
+        public DirectMessage(int id, String user1, String user2, String fromUser, 
+                            String content, LocalDateTime createdAt, boolean isRead) {
+            this.id = id;
+            this.user1 = user1;
+            this.user2 = user2;
+            this.fromUser = fromUser;
+            this.content = content;
+            this.createdAt = createdAt;
+            this.isRead = isRead;
+        }
+        
+        /**
+         * Gets message ID.
+         * @return id
+         */
+        public int getId() { return id; }
+        
+        /**
+         * Gets first user.
+         * @return user1
+         */
+        public String getUser1() { return user1; }
+        
+        /**
+         * Gets second user.
+         * @return user2
+         */
+        public String getUser2() { return user2; }
+        
+        /**
+         * Gets sender.
+         * @return fromUser
+         */
+        public String getFromUser() { return fromUser; }
+        
+        /**
+         * Gets message content.
+         * @return content
+         */
+        public String getContent() { return content; }
+        
+        /**
+         * Gets creation timestamp.
+         * @return createdAt
+         */
+        public LocalDateTime getCreatedAt() { return createdAt; }
+        
+        /**
+         * Gets read status.
+         * @return isRead
+         */
+        public boolean isRead() { return isRead; }
+        
+        /**
+         * Gets the other user in conversation.
+         * 
+         * @param currentUser Current user's username
+         * @return Other user's username
+         */
+        public String getOtherUser(String currentUser) {
+            return currentUser.equalsIgnoreCase(user1) ? user2 : user1;
+        }
+        
+        /**
+         * Checks if message was sent by user.
+         * 
+         * @param username Username to check
+         * @return True if sent by this user
+         */
+        public boolean isSentBy(String username) {
+            return fromUser.equalsIgnoreCase(username);
+        }
+    }
+
+    /**
+     * Inner class representing a conversation summary for inbox display.
+     */
+    public static class ConversationSummary {
+        private final String otherUser;
+        private final String lastMessageContent;
+        private final LocalDateTime lastMessageAt;
+        private final int unreadCount;
+        
+        /**
+         * Constructor for ConversationSummary.
+         * 
+         * @param otherUser Other participant
+         * @param lastMessageContent Last message preview
+         * @param lastMessageAt Last message time
+         * @param unreadCount Unread message count
+         */
+        public ConversationSummary(String otherUser, String lastMessageContent, 
+                                   LocalDateTime lastMessageAt, int unreadCount) {
+            this.otherUser = otherUser;
+            this.lastMessageContent = lastMessageContent;
+            this.lastMessageAt = lastMessageAt;
+            this.unreadCount = unreadCount;
+        }
+        
+        /**
+         * Gets other user.
+         * @return otherUser
+         */
+        public String getOtherUser() { return otherUser; }
+        
+        /**
+         * Gets last message preview.
+         * @return lastMessageContent
+         */
+        public String getLastMessageContent() { return lastMessageContent; }
+        
+        /**
+         * Gets last message time.
+         * @return lastMessageAt
+         */
+        public LocalDateTime getLastMessageAt() { return lastMessageAt; }
+        
+        /**
+         * Gets unread count.
+         * @return unreadCount
+         */
+        public int getUnreadCount() { return unreadCount; }
+    }
+
+    // ========== CREATE (C in CRUD) ==========
+
+    /**
+     * Sends a direct message between two users.
+     * 
+     * @param fromUser Sender username
+     * @param toUser Recipient username
+     * @param content Message text
+     * @return Generated message ID
+     * @throws SQLException If database error occurs
+     */
+    public int sendDirectMessage(String fromUser, String toUser, String content) throws SQLException {
+        ensureConnected();
+        
+        // Order users alphabetically
+        String user1 = fromUser.compareTo(toUser) < 0 ? fromUser : toUser;
+        String user2 = fromUser.compareTo(toUser) < 0 ? toUser : fromUser;
+        
+        String sql = "INSERT INTO direct_messages (user1, user2, fromUser, content, createdAt, isRead) "
+                   + "VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, FALSE)";
+        
+        try (PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            ps.setString(1, user1);
+            ps.setString(2, user2);
+            ps.setString(3, fromUser);
+            ps.setString(4, content);
+            ps.executeUpdate();
+            
+            updateConversationSummary(user1, user2, content);
+            
+            try (ResultSet keys = ps.getGeneratedKeys()) {
+                if (keys.next()) {
+                    return keys.getInt(1);
+                }
+            }
+        }
+        throw new SQLException("Failed to send direct message");
+    }
+
+    // ========== READ (R in CRUD) ==========
+
+    /**
+     * Gets all messages in a conversation between two users.
+     * 
+     * @param currentUser Current user's username
+     * @param otherUser Other user's username
+     * @return List of messages (oldest first)
+     * @throws SQLException If database error occurs
+     */
+    public List<DirectMessage> getConversation(String currentUser, String otherUser) throws SQLException {
+        ensureConnected();
+        
+        String user1 = currentUser.compareTo(otherUser) < 0 ? currentUser : otherUser;
+        String user2 = currentUser.compareTo(otherUser) < 0 ? otherUser : currentUser;
+        
+        List<DirectMessage> messages = new ArrayList<>();
+        String sql = "SELECT * FROM direct_messages WHERE user1 = ? AND user2 = ? ORDER BY createdAt ASC";
+        
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, user1);
+            ps.setString(2, user2);
+            
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    messages.add(new DirectMessage(
+                        rs.getInt("id"),
+                        rs.getString("user1"),
+                        rs.getString("user2"),
+                        rs.getString("fromUser"),
+                        rs.getString("content"),
+                        rs.getTimestamp("createdAt").toLocalDateTime(),
+                        rs.getBoolean("isRead")
+                    ));
+                }
+            }
+        }
+        return messages;
+    }
+
+    /**
+     * Gets conversation list for user's inbox.
+     * 
+     * @param username Current user's username
+     * @return List of conversation summaries (most recent first)
+     * @throws SQLException If database error occurs
+     */
+    public List<ConversationSummary> getConversationList(String username) throws SQLException {
+        ensureConnected();
+        
+        List<ConversationSummary> summaries = new ArrayList<>();
+        String sql = "SELECT c.user1, c.user2, c.lastMessageContent, c.lastMessageAt, "
+                   + "(SELECT COUNT(*) FROM direct_messages dm "
+                   + " WHERE ((dm.user1 = c.user1 AND dm.user2 = c.user2) "
+                   + "    OR (dm.user1 = c.user2 AND dm.user2 = c.user1)) "
+                   + "   AND dm.fromUser != ? AND dm.isRead = FALSE) AS unreadCount "
+                   + "FROM conversations c "
+                   + "WHERE c.user1 = ? OR c.user2 = ? "
+                   + "ORDER BY c.lastMessageAt DESC";
+        
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, username);
+            ps.setString(2, username);
+            ps.setString(3, username);
+            
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    String user1 = rs.getString("user1");
+                    String user2 = rs.getString("user2");
+                    String otherUser = username.equalsIgnoreCase(user1) ? user2 : user1;
+                    
+                    summaries.add(new ConversationSummary(
+                        otherUser,
+                        rs.getString("lastMessageContent"),
+                        rs.getTimestamp("lastMessageAt").toLocalDateTime(),
+                        rs.getInt("unreadCount")
+                    ));
+                }
+            }
+        }
+        return summaries;
+    }
+
+    /**
+     * Searches for users by username (for autocomplete).
+     * Filters by role-based messaging permissions.
+     * 
+     * @param searchTerm Partial username to search
+     * @param currentUser Current user's username
+     * @param currentUserRole Current user's role
+     * @return List of matching usernames (max 10)
+     * @throws SQLException If database error occurs
+     */
+    public List<String> searchUsers(String searchTerm, String currentUser, String currentUserRole) throws SQLException {
+        ensureConnected();
+        
+        List<String> users = new ArrayList<>();
+        String roleFilter = buildRoleFilter(currentUserRole);
+        
+        String sql = "SELECT userName FROM cse360users "
+                   + "WHERE userName != ? "
+                   + "AND LOWER(userName) LIKE ? "
+                   + roleFilter
+                   + "ORDER BY userName ASC LIMIT 10";
+        
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, currentUser);
+            ps.setString(2, "%" + searchTerm.toLowerCase() + "%");
+            
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    users.add(rs.getString("userName"));
+                }
+            }
+        }
+        return users;
+    }
+
+    /**
+     * Gets total unread message count for a user.
+     * 
+     * @param username User's username
+     * @return Total unread count
+     * @throws SQLException If database error occurs
+     */
+    public int getTotalUnreadCount(String username) throws SQLException {
+        ensureConnected();
+        
+        String sql = "SELECT COUNT(*) FROM direct_messages "
+                   + "WHERE (user1 = ? OR user2 = ?) AND fromUser != ? AND isRead = FALSE";
+        
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, username);
+            ps.setString(2, username);
+            ps.setString(3, username);
+            
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        }
+        return 0;
+    }
+
+    // ========== UPDATE (U in CRUD) ==========
+
+    /**
+     * Marks all messages in a conversation as read.
+     * 
+     * @param currentUser Current user's username
+     * @param otherUser Other user's username
+     * @return Number of messages marked as read
+     * @throws SQLException If database error occurs
+     */
+    public int markConversationAsRead(String currentUser, String otherUser) throws SQLException {
+        ensureConnected();
+        
+        String user1 = currentUser.compareTo(otherUser) < 0 ? currentUser : otherUser;
+        String user2 = currentUser.compareTo(otherUser) < 0 ? otherUser : currentUser;
+        
+        String sql = "UPDATE direct_messages SET isRead = TRUE "
+                   + "WHERE user1 = ? AND user2 = ? AND fromUser = ? AND isRead = FALSE";
+        
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, user1);
+            ps.setString(2, user2);
+            ps.setString(3, otherUser);
+            return ps.executeUpdate();
+        }
+    }
+
+    /**
+     * Updates a direct message's content.
+     * Only the sender can edit their own messages.
+     * 
+     * @param messageId Message ID to update
+     * @param newContent New message content
+     * @param username Username requesting edit (must be sender)
+     * @return True if updated successfully
+     * @throws SQLException If database error occurs
+     */
+    public boolean updateDirectMessage(int messageId, String newContent, String username) throws SQLException {
+        ensureConnected();
+        
+        String sql = "UPDATE direct_messages SET content = ? WHERE id = ? AND fromUser = ?";
+        
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, newContent);
+            ps.setInt(2, messageId);
+            ps.setString(3, username);
+            return ps.executeUpdate() > 0;
+        }
+    }
+
+    // ========== DELETE (D in CRUD) ==========
+
+    /**
+     * Deletes a direct message.
+     * Only the sender can delete their own messages.
+     * 
+     * @param messageId Message ID to delete
+     * @param username Username requesting deletion (must be sender)
+     * @return True if deleted successfully
+     * @throws SQLException If database error occurs
+     */
+    public boolean deleteDirectMessage(int messageId, String username) throws SQLException {
+        ensureConnected();
+        
+        String sql = "DELETE FROM direct_messages WHERE id = ? AND fromUser = ?";
+        
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, messageId);
+            ps.setString(2, username);
+            return ps.executeUpdate() > 0;
+        }
+    }
+
+    // ========== HELPER METHODS ==========
+
+    /**
+     * Builds SQL role filter for messaging permissions.
+     * 
+     * @param userRole User's role
+     * @return SQL WHERE clause fragment
+     */
+    private String buildRoleFilter(String userRole) {
+        if (userRole == null) return "";
+        
+        String role = userRole.toLowerCase();
+        
+        if (role.equals("admin")) {
+            return "";
+        } else if (role.equals("staff") || role.equals("instructor")) {
+            return "AND (role IN ('Student', 'Reviewer', 'Staff', 'Instructor'))";
+        } else if (role.equals("student") || role.equals("reviewer")) {
+            return "AND (role IN ('Student', 'Reviewer'))";
+        } else {
+            return "AND (role IN ('Student', 'Reviewer'))";
+        }
+    }
+
+    /**
+     * Updates conversation summary after sending a message.
+     * Internal helper method.
+     * 
+     * @param user1 First user
+     * @param user2 Second user
+     * @param content Message content
+     * @throws SQLException If database error occurs
+     */
+    private void updateConversationSummary(String user1, String user2, String content) throws SQLException {
+        String preview = content.length() > 100 ? content.substring(0, 97) + "..." : content;
+        
+        String sql = "MERGE INTO conversations (user1, user2, lastMessageAt, lastMessageContent) "
+                   + "KEY (user1, user2) VALUES (?, ?, CURRENT_TIMESTAMP, ?)";
+        
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, user1);
+            ps.setString(2, user2);
+            ps.setString(3, preview);
+            ps.executeUpdate();
+        }
+    }
 
     /**
      * Closes database connection
