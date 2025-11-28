@@ -26,6 +26,9 @@ public class Review {
     /** The name or identifier of the user who wrote the review. */
     private final String writtenBy;
     
+    /** Boolean of whether a review is flagged or not */
+    private boolean isFlagged;
+    
     /** The date and time when the review was created. */
     private final LocalDateTime createdAt;
 
@@ -36,13 +39,15 @@ public class Review {
      * @param answerId   the identifier of the answer being reviewed
      * @param reviewText the text content of the review
      * @param writtenBy  the user who authored the review
+     * @param isFlagged   whether the review is flagged or not
      * @param createdAt  the timestamp when the review was created
      */
-    public Review(int id, int answerId, String reviewText, String writtenBy, LocalDateTime createdAt) {
+    public Review(int id, int answerId, String reviewText, String writtenBy, boolean isFlagged, LocalDateTime createdAt) {
         this.id = id;
         this.answerId = answerId;
         this.reviewText = reviewText;
         this.writtenBy = writtenBy;
+        this.isFlagged = isFlagged;
         this.createdAt = createdAt;
     }
 
@@ -76,6 +81,19 @@ public class Review {
      */
     public String getWrittenBy() {
         return writtenBy;
+    }
+    
+    /**
+     * Gets the value of isFlagged.
+     * @return the value of isFlagged
+     */
+    public boolean isFlagged() { return this.isFlagged; }
+    
+    /**
+     * Sets the value of is flagged to true.
+     */
+    public void markAsFlagged() {
+    	this.isFlagged = true;
     }
 
     /**

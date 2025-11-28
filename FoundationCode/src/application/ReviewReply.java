@@ -27,6 +27,9 @@ public class ReviewReply {
     /** The name or identifier of the user who created the reply. */
     private final String repliedBy;
     
+    /** Boolean of whether a review is flagged or not */
+    private boolean isFlagged;
+    
     /** The date and time when the reply was created. */
     private final LocalDateTime createdAt;
 
@@ -37,13 +40,15 @@ public class ReviewReply {
      * @param reviewId  the identifier of the review being replied to
      * @param replyText the text content of the reply
      * @param repliedBy the user who authored the reply
+     * @param isFlagged whether the reply is flagged or not
      * @param createdAt the timestamp when the reply was created
      */
-    public ReviewReply(int id, int reviewId, String replyText, String repliedBy, LocalDateTime createdAt) {
+    public ReviewReply(int id, int reviewId, String replyText, String repliedBy, boolean isFlagged, LocalDateTime createdAt) {
         this.id = id;
         this.reviewId = reviewId;
         this.replyText = replyText;
         this.repliedBy = repliedBy;
+        this.isFlagged = isFlagged;
         this.createdAt = createdAt;
     }
 
@@ -77,6 +82,19 @@ public class ReviewReply {
      */
     public String getRepliedBy() {
         return repliedBy;
+    }
+    
+    /**
+     * Gets the value of isFlagged.
+     * @return the value of isFlagged
+     */
+    public boolean isFlagged() { return this.isFlagged; }
+    
+    /**
+     * Sets the value of is flagged to true.
+     */
+    public void markAsFlagged() {
+    	this.isFlagged = true;
     }
 
     /**

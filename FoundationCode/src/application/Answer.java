@@ -13,6 +13,7 @@ public class Answer {
     private String answeredBy;
     private LocalDateTime createdAt;
     private boolean isRead;
+    private boolean isFlagged;
     private int upvotes;
     
     // Constants for validation
@@ -32,6 +33,7 @@ public class Answer {
         this.answeredBy = answeredBy;
         this.createdAt = LocalDateTime.now();
         this.isRead = false;
+        this.isFlagged = false;
         this.upvotes = 0;
     }
     
@@ -44,10 +46,11 @@ public class Answer {
      * @param answeredBy String containing the username of the person posting the answer.
      * @param createdAt Time and date the answer was created.
      * @param isRead Boolean of whether the answer is read or not.
+     * @param isFlagged Boolean of whether the answer is flagged or not.
      * @param upvotes Number of upvotes the answer has received.
      */
     public Answer(int id, int questionId, String content, String answeredBy, 
-                  LocalDateTime createdAt, boolean isRead, int upvotes) {
+                  LocalDateTime createdAt, boolean isRead, boolean isFlagged, int upvotes) {
         this.id = id;
         this.questionId = questionId;
         this.content = content;
@@ -113,6 +116,13 @@ public class Answer {
      * @return isRead.
      */
     public boolean isRead() { return isRead; }
+    
+    
+    /**
+     * Gets the value of isFlagged.
+     * @return isFlagged
+     */
+    public boolean isFlagged() { return isFlagged; }
 
     /**
      * Gets the number of upvotes.
@@ -140,6 +150,13 @@ public class Answer {
      */
     public void markAsRead() {
         this.isRead = true;
+    }
+    
+    /**
+     * Sets the value of isFlagged to true.
+     */
+    public void markAsFlagged() {
+    	this.isFlagged = true;
     }
 
     /**
