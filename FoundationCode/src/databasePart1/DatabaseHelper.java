@@ -177,6 +177,7 @@ public class DatabaseHelper {
                 + "askedBy VARCHAR(20) NOT NULL, "
                 + "createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP, "
                 + "isResolved BOOLEAN DEFAULT FALSE, "
+                + "isFlagged BOOLEAN DEFAULT FALSE, "
                 + "resolvedAnswerId INT DEFAULT -1, "
                 + "FOREIGN KEY (askedBy) REFERENCES cse360users(userName))";
         statement.execute(questionsTable);
@@ -190,6 +191,7 @@ public class DatabaseHelper {
                 + "isRead BOOLEAN DEFAULT FALSE, "
                 + "hasReview BOOLEAN DEFAULT FALSE, "
                 + "upvotes INT DEFAULT 0, "
+                + "isFlagged BOOLEAN DEFAULT FALSE, "
                 + "FOREIGN KEY (questionId) REFERENCES questions(id) ON DELETE CASCADE, "
                 + "FOREIGN KEY (answeredBy) REFERENCES cse360users(userName))";
         statement.execute(answersTable);
@@ -204,6 +206,7 @@ public class DatabaseHelper {
                 + "content VARCHAR(500) NOT NULL, "
                 + "createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP, "
                 + "isRead BOOLEAN DEFAULT FALSE, "
+                + "isFlagged BOOLEAN DEFAULT FALSE, "
                 + "FOREIGN KEY (questionId) REFERENCES questions(id) ON DELETE CASCADE, "
                 + "FOREIGN KEY (from_user) REFERENCES cse360users(userName))";
         statement.execute(privateMessagesTable);
@@ -214,6 +217,7 @@ public class DatabaseHelper {
                 + "feedbackText VARCHAR(500) NOT NULL, "
                 + "givenBy VARCHAR(20) NOT NULL, "
                 + "createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP, "
+                + "isFlagged BOOLEAN DEFAULT FALSE, "
                 + "FOREIGN KEY (answerId) REFERENCES answers(id) ON DELETE CASCADE, "
                 + "FOREIGN KEY (givenBy) REFERENCES cse360users(userName))";
         statement.execute(answerFeedbackTable);
@@ -224,6 +228,7 @@ public class DatabaseHelper {
         		+ "    reviewText VARCHAR(1000) NOT NULL,"
         		+ "    writtenBy VARCHAR(20) NOT NULL,"
         		+ "    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
+        		+ "	   isFlagged BOOLEAN DEFAULT FALSE, "
         		+ "    FOREIGN KEY (answerId) REFERENCES answers(id) ON DELETE CASCADE,"
         		+ "    FOREIGN KEY (writtenBy) REFERENCES cse360users(userName)"
         		+ ");";
@@ -235,6 +240,7 @@ public class DatabaseHelper {
         		+ "    replyText VARCHAR(500) NOT NULL,"
         		+ "    repliedBy VARCHAR(20) NOT NULL,"
         		+ "    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
+        		+ "	   isFlagged BOOLEAN DEFAULT FALSE, "
         		+ "    FOREIGN KEY (reviewId) REFERENCES reviews(id) ON DELETE CASCADE,"
         		+ "    FOREIGN KEY (repliedBy) REFERENCES cse360users(userName)"
         		+ ");";
@@ -313,6 +319,7 @@ public class DatabaseHelper {
                         rs.getInt("answerId"),
                         rs.getString("reviewText"),
                         rs.getString("writtenBy"),
+                        rs.getBoolean("isFlagged"),
                         rs.getTimestamp("createdAt").toLocalDateTime()
                     );
                 }
@@ -360,6 +367,7 @@ public class DatabaseHelper {
                         rs.getInt("reviewId"),
                         rs.getString("replyText"),
                         rs.getString("repliedBy"),
+                        rs.getBoolean("isFlagged"),
                         rs.getTimestamp("createdAt").toLocalDateTime()
                     );
                     replies.add(reply);
@@ -378,7 +386,7 @@ public class DatabaseHelper {
      */
     public List<Review> getAllReviews(String username) throws SQLException {
         List<Review> reviews = new ArrayList<>();
-        String sql = "SELECT id, answerId, reviewText, writtenBy, createdAt FROM reviews";
+        String sql = "SELECT id, answerId, reviewText, writtenBy, isFlagged, createdAt FROM reviews";
         boolean filterByUser = username != null && !username.trim().isEmpty();
         if (filterByUser) {
             sql += " WHERE writtenBy = ?";
@@ -396,6 +404,7 @@ public class DatabaseHelper {
                         rs.getInt("answerId"),
                         rs.getString("reviewText"),
                         rs.getString("writtenBy"),
+                        rs.getBoolean("isFlagged"),
                         rs.getTimestamp("createdAt").toLocalDateTime()
                     );
                     reviews.add(review);
@@ -427,6 +436,7 @@ public class DatabaseHelper {
                         rs.getInt("answerId"),
                         rs.getString("reviewText"),
                         rs.getString("writtenBy"),
+                        rs.getBoolean("isFlagged"),
                         rs.getTimestamp("createdAt").toLocalDateTime()
                     );
                     reviews.add(review);
@@ -1266,6 +1276,7 @@ public class DatabaseHelper {
                         rs.getInt("answerId"),
                         rs.getString("feedbackText"),
                         rs.getString("givenBy"),
+                        rs.getBoolean("isFlagged"),
                         rs.getTimestamp("createdAt").toLocalDateTime()
                     ));
                 }
@@ -1324,6 +1335,7 @@ public class DatabaseHelper {
                         rs.getString("askedBy"),
                         rs.getTimestamp("createdAt").toLocalDateTime(),
                         rs.getBoolean("isResolved"),
+                        rs.getBoolean("isFlagged"),
                         rs.getInt("resolvedAnswerId")
                     );
                     q.setAnswers(getAnswersForQuestion(id));
@@ -1361,6 +1373,7 @@ public class DatabaseHelper {
                         rs.getString("askedBy"),
                         rs.getTimestamp("createdAt").toLocalDateTime(),
                         rs.getBoolean("isResolved"),
+                        rs.getBoolean("isFlagged"),
                         rs.getInt("resolvedAnswerId")
                     );
                     q.setAnswers(getAnswersForQuestion(q.getId()));
@@ -1442,6 +1455,7 @@ public class DatabaseHelper {
                         rs.getString("askedBy"),
                         rs.getTimestamp("createdAt").toLocalDateTime(),
                         rs.getBoolean("isResolved"),
+                        rs.getBoolean("isFlagged"),
                         rs.getInt("resolvedAnswerId")
                     );
                     q.setAnswers(getAnswersForQuestion(q.getId()));
@@ -1475,6 +1489,7 @@ public class DatabaseHelper {
                         rs.getString("askedBy"),
                         rs.getTimestamp("createdAt").toLocalDateTime(),
                         rs.getBoolean("isResolved"),
+                        rs.getBoolean("isFlagged"),
                         rs.getInt("resolvedAnswerId")
                     );
                     q.setAnswers(getAnswersForQuestion(q.getId()));
@@ -1541,7 +1556,97 @@ public class DatabaseHelper {
             return rowsAffected > 0;
         }
     }
+    
+    /**
+     * Marks a question as flagged.
+     * 
+     * @param questionId ID of the question to mark as flagged.
+     * @param username Username of the user who asked the question.
+     * @return True or False based on function success.
+     * @throws SQLException If a database error occurs.
+     */
+    public boolean markQuestionFlagged(int questionId, String username) throws SQLException {
+        String sql = "UPDATE questions SET isFlagged = TRUE WHERE id = ? AND askedBy = ?";
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setInt(1, questionId);
+            pstmt.setString(2, username);
+            int rowsAffected = pstmt.executeUpdate();
+            return rowsAffected > 0;
+        }
+    }
+    
+    /**
+     * Marks a answer as flagged.
+     * 
+     * @param id ID of the answer to mark as flagged.
+     * @param username Username of the user who posted the answer.
+     * @return True or False based on function success.
+     * @throws SQLException If a database error occurs.
+     */
+    public boolean markAnswerFlagged(int id, String username) throws SQLException {
+        String sql = "UPDATE answers SET isFlagged = TRUE WHERE id = ? AND answeredBy = ?";
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setInt(1, id);
+            pstmt.setString(2, username);
+            int rowsAffected = pstmt.executeUpdate();
+            return rowsAffected > 0;
+        }
+    }
+    
+    /**
+     * Marks a review as flagged.
+     * 
+     * @param id ID of the review to mark as flagged.
+     * @param username Username of the user who posted review.
+     * @return True or False based on function success.
+     * @throws SQLException If a database error occurs.
+     */
+    public boolean markReviewFlagged(int id, String username) throws SQLException {
+        String sql = "UPDATE reviews SET isFlagged = TRUE WHERE id = ? AND writtenBy = ?";
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setInt(1, id);
+            pstmt.setString(2, username);
+            int rowsAffected = pstmt.executeUpdate();
+            return rowsAffected > 0;
+        }
+    }
 
+    /**
+     * Marks a review reply as flagged.
+     * 
+     * @param id ID of the reply to mark as flagged.
+     * @param username Username of the user who posted reply.
+     * @return True or False based on function success.
+     * @throws SQLException If a database error occurs.
+     */
+    public boolean markReplyFlagged(int id, String username) throws SQLException {
+        String sql = "UPDATE review_replies SET isFlagged = TRUE WHERE id = ? AND repliedBy = ?";
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setInt(1, id);
+            pstmt.setString(2, username);
+            int rowsAffected = pstmt.executeUpdate();
+            return rowsAffected > 0;
+        }
+    }
+    
+    /**
+     * Marks a feedback as flagged.
+     * 
+     * @param id ID of the feedback to mark as flagged.
+     * @param username Username of the user who posted the feedback.
+     * @return True or False based on function success.
+     * @throws SQLException If a database error occurs.
+     */
+    public boolean markFeedbackAsFlagged(int id, String username) throws SQLException {
+        String sql = "UPDATE answer_feedback SET isFlagged = TRUE WHERE id = ? AND givenBy = ?";
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setInt(1, id);
+            pstmt.setString(2, username);
+            int rowsAffected = pstmt.executeUpdate();
+            return rowsAffected > 0;
+        }
+    }
+    
     /**
      * Creates a new answer in the database.
      * 
@@ -1613,6 +1718,7 @@ public class DatabaseHelper {
                         rs.getString("answeredBy"),
                         rs.getTimestamp("createdAt").toLocalDateTime(),
                         rs.getBoolean("isRead"),
+                        rs.getBoolean("isFlagged"),
                         rs.getInt("upvotes")
                     );
                     answers.add(a);
@@ -1643,6 +1749,7 @@ public class DatabaseHelper {
                         rs.getString("answeredBy"),
                         rs.getTimestamp("createdAt").toLocalDateTime(),
                         rs.getBoolean("isRead"),
+                        rs.getBoolean("isFlagged"),
                         rs.getInt("upvotes")
                     );
                     answers.add(a);
@@ -1673,6 +1780,7 @@ public class DatabaseHelper {
                         rs.getString("answeredBy"),
                         rs.getTimestamp("createdAt").toLocalDateTime(),
                         rs.getBoolean("isRead"),
+                        rs.getBoolean("isFlagged"),
                         rs.getInt("upvotes")
                     );
                     answers.add(a);
@@ -1796,6 +1904,7 @@ public class DatabaseHelper {
         private final String content;
         private final java.time.LocalDateTime createdAt;
         private final boolean isRead;
+        private final boolean isFlagged;
         /**
          * Constructor to create a new PrivateMessage
          * 
@@ -1806,12 +1915,13 @@ public class DatabaseHelper {
          * @param content Content of the message.
          * @param createdAt Time the message was created.
          * @param isRead If the message is read or not.
+         * @param isFlagged If the message is flagged or not.
          */
         public PrivateMessage(int id, int questionId, String to_user, String sender, String messageType, String content,
-                              java.time.LocalDateTime createdAt, boolean isRead) {
+                              java.time.LocalDateTime createdAt, boolean isRead, boolean isFlagged) {
             this.id = id; this.questionId = questionId; this.to_user = to_user; this.sender = sender;
             this.messageType = messageType; this.content = content;
-            this.createdAt = createdAt; this.isRead = isRead;
+            this.createdAt = createdAt; this.isRead = isRead; this.isFlagged = isFlagged;
         }
         /**
          * Gets the message id
@@ -1858,6 +1968,8 @@ public class DatabaseHelper {
          * @return isRead
          */
         public boolean isRead() { return isRead; }
+        
+        public boolean isFlagged() { return isFlagged; }
     }
     
     /**
@@ -1869,7 +1981,7 @@ public class DatabaseHelper {
     public List<Question> getQuestionsTopLevel() throws SQLException {
         QuestionFilter f = new QuestionFilter();
         List<Question> results = new ArrayList<>();
-        String sql = "SELECT id, title, content, askedBy, createdAt, isResolved, resolvedAnswerId "
+        String sql = "SELECT id, title, content, askedBy, createdAt, isResolved, isFlagged, resolvedAnswerId "
                    + "FROM questions WHERE parentQuestionId IS NULL ORDER BY createdAt DESC";
         try (PreparedStatement ps = connection.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
@@ -1881,6 +1993,7 @@ public class DatabaseHelper {
                     rs.getString("askedBy"),
                     rs.getTimestamp("createdAt").toLocalDateTime(),
                     rs.getBoolean("isResolved"),
+                    rs.getBoolean("isFlagged"),
                     rs.getInt("resolvedAnswerId")
                 );
                 q.setAnswers(getAnswersForQuestion(q.getId()));
@@ -1899,7 +2012,7 @@ public class DatabaseHelper {
      */
     public List<Question> getFollowupQuestions(int parentQuestionId) throws SQLException {
         List<Question> results = new ArrayList<>();
-        String sql = "SELECT id, title, content, askedBy, createdAt, isResolved, resolvedAnswerId "
+        String sql = "SELECT id, title, content, askedBy, createdAt, isResolved, isFlagged, resolvedAnswerId "
                    + "FROM questions WHERE parentQuestionId = ? ORDER BY createdAt ASC";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setInt(1, parentQuestionId);
@@ -1912,6 +2025,7 @@ public class DatabaseHelper {
                         rs.getString("askedBy"),
                         rs.getTimestamp("createdAt").toLocalDateTime(),
                         rs.getBoolean("isResolved"),
+                        rs.getBoolean("isFlagged"),
                         rs.getInt("resolvedAnswerId")
                     );
                     q.setAnswers(getAnswersForQuestion(q.getId()));
@@ -1985,7 +2099,7 @@ public class DatabaseHelper {
      */
     public List<PrivateMessage> getPrivateMessagesForQuestion(int questionId) throws SQLException {
         List<PrivateMessage> out = new ArrayList<>();
-        String sql = "SELECT id, questionId, to_user, from_user, messageType, content, createdAt, isRead "
+        String sql = "SELECT id, questionId, to_user, from_user, messageType, content, createdAt, isRead, isFlagged "
                 + "FROM private_messages WHERE questionId = ? ORDER BY createdAt ASC";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setInt(1, questionId);
@@ -1999,7 +2113,8 @@ public class DatabaseHelper {
                         rs.getString("messageType"),
                         rs.getString("content"),
                         rs.getTimestamp("createdAt").toLocalDateTime(),
-                        rs.getBoolean("isRead")
+                        rs.getBoolean("isRead"),
+                        rs.getBoolean("isFlagged")
                     ));
                 }
             }

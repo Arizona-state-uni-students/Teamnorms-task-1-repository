@@ -16,6 +16,7 @@ public class Question {
     private String askedBy;
     private LocalDateTime createdAt;
     private boolean isResolved;
+    private boolean isFlagged;
     private int resolvedAnswerId;
     private List<Answer> answers;
     
@@ -38,6 +39,7 @@ public class Question {
         this.askedBy = askedBy;
         this.createdAt = LocalDateTime.now();
         this.isResolved = false;
+        this.isFlagged = false;
         this.resolvedAnswerId = -1;
         this.answers = new ArrayList<>();
     }
@@ -51,16 +53,18 @@ public class Question {
      * @param askedBy String containing the username of the person asking the question.
      * @param createdAt Time and date the question was created.
      * @param isResolved Boolean of whether the question is resolved.
+     * @param isFlagged Boolean of whether the question is flagged or not.
      * @param resolvedAnswerId ID of the answer responsible for resolving the question.
      */
     public Question(int id, String title, String content, String askedBy, 
-                    LocalDateTime createdAt, boolean isResolved, int resolvedAnswerId) {
+                    LocalDateTime createdAt, boolean isResolved, boolean isFlagged, int resolvedAnswerId) {
         this.id = id;
         this.title = title;
         this.content = content;
         this.askedBy = askedBy;
         this.createdAt = createdAt;
         this.isResolved = isResolved;
+        this.isFlagged = isFlagged;
         this.resolvedAnswerId = resolvedAnswerId;
         this.answers = new ArrayList<>();
     }
@@ -143,6 +147,12 @@ public class Question {
     public boolean isResolved() { return isResolved; }
 
     /**
+     * Gets the value of isFlagged.
+     * @return isFlagged.
+     */
+    public boolean isFlagged() { return isFlagged; }
+    
+    /**
      * Gets resolvedAnswerId.
      * @return resolvedAnswerId.
      */
@@ -192,6 +202,13 @@ public class Question {
     public void markAsResolved(int answerId) {
         this.isResolved = true;
         this.resolvedAnswerId = answerId;
+    }
+    
+    /**
+     * Sets the value of isFlagged to true.
+     */
+    public void markAsFlagged() {
+    	this.isFlagged = true;
     }
 
     /**

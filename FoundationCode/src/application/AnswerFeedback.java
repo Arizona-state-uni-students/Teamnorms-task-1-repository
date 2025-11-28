@@ -11,6 +11,7 @@ public class AnswerFeedback {
     private int answerId;
     private String feedbackText;
     private String givenBy;
+    private boolean isFlagged;
     private LocalDateTime createdAt;
     
     /**
@@ -24,6 +25,7 @@ public class AnswerFeedback {
         this.answerId = answerId;
         this.feedbackText = feedbackText;
         this.givenBy = givenBy;
+        this.isFlagged = false;
         this.createdAt = LocalDateTime.now();
     }
     
@@ -34,13 +36,15 @@ public class AnswerFeedback {
      * @param answerId ID of the answer the feedback is for.
      * @param feedbackText Text content of the feedback.
      * @param givenBy Username of the user giving feedback.
+     * @param isFlagged whether the feedback is flagged or not.
      * @param createdAt Date and Time the feedback was created.
      */
-    public AnswerFeedback(int id, int answerId, String feedbackText, String givenBy, LocalDateTime createdAt) {
+    public AnswerFeedback(int id, int answerId, String feedbackText, String givenBy, boolean isFlagged, LocalDateTime createdAt) {
         this.id = id;
         this.answerId = answerId;
         this.feedbackText = feedbackText;
         this.givenBy = givenBy;
+        this.isFlagged = isFlagged;
         this.createdAt = createdAt;
     }
     
@@ -72,6 +76,19 @@ public class AnswerFeedback {
      * @return givenBy
      */
     public String getGivenBy() { return givenBy; }
+    
+    /**
+     * Gets the value of isFlagged.
+     * @return the value of isFlagged
+     */
+    public boolean isFlagged() { return this.isFlagged; }
+    
+    /**
+     * Sets the value of is flagged to true.
+     */
+    public void markAsFlagged() {
+    	this.isFlagged = true;
+    }
     
     /**
      * Gets createdAt

@@ -1,1 +1,0 @@
-packageSearchIndex = [{"l":"All Packages","u":"allpackages-index.html"},{"m":"HW4","l":"databasePart1"}];updateSearchResults();
