@@ -1562,14 +1562,16 @@ public class DatabaseHelper {
      * 
      * @param questionId ID of the question to mark as flagged.
      * @param username Username of the user who asked the question.
+     * @param tf Boolean to set isFlagged to.
      * @return True or False based on function success.
      * @throws SQLException If a database error occurs.
      */
-    public boolean markQuestionFlagged(int questionId, String username) throws SQLException {
-        String sql = "UPDATE questions SET isFlagged = TRUE WHERE id = ? AND askedBy = ?";
+    public boolean markQuestionFlagged(int questionId, String username, boolean tf) throws SQLException {
+        String sql = "UPDATE questions SET isFlagged = ? WHERE id = ? AND askedBy = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            pstmt.setInt(1, questionId);
-            pstmt.setString(2, username);
+        	pstmt.setBoolean(1, tf);
+        	pstmt.setInt(2, questionId);
+            pstmt.setString(3, username);
             int rowsAffected = pstmt.executeUpdate();
             return rowsAffected > 0;
         }
@@ -1580,14 +1582,16 @@ public class DatabaseHelper {
      * 
      * @param id ID of the answer to mark as flagged.
      * @param username Username of the user who posted the answer.
+     * @param tf Boolean to set isFlagged to.
      * @return True or False based on function success.
      * @throws SQLException If a database error occurs.
      */
-    public boolean markAnswerFlagged(int id, String username) throws SQLException {
-        String sql = "UPDATE answers SET isFlagged = TRUE WHERE id = ? AND answeredBy = ?";
+    public boolean markAnswerFlagged(int id, String username, boolean tf) throws SQLException {
+        String sql = "UPDATE answers SET isFlagged = ? WHERE id = ? AND answeredBy = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            pstmt.setInt(1, id);
-            pstmt.setString(2, username);
+        	pstmt.setBoolean(1, tf);
+        	pstmt.setInt(2, id);
+            pstmt.setString(3, username);
             int rowsAffected = pstmt.executeUpdate();
             return rowsAffected > 0;
         }
@@ -1598,14 +1602,16 @@ public class DatabaseHelper {
      * 
      * @param id ID of the review to mark as flagged.
      * @param username Username of the user who posted review.
+     * @param tf Boolean to set isFlagged to.
      * @return True or False based on function success.
      * @throws SQLException If a database error occurs.
      */
-    public boolean markReviewFlagged(int id, String username) throws SQLException {
-        String sql = "UPDATE reviews SET isFlagged = TRUE WHERE id = ? AND writtenBy = ?";
+    public boolean markReviewFlagged(int id, String username, boolean tf) throws SQLException {
+        String sql = "UPDATE reviews SET isFlagged = ? WHERE id = ? AND writtenBy = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            pstmt.setInt(1, id);
-            pstmt.setString(2, username);
+        	pstmt.setBoolean(1, tf);
+        	pstmt.setInt(2, id);
+            pstmt.setString(3, username);
             int rowsAffected = pstmt.executeUpdate();
             return rowsAffected > 0;
         }
@@ -1616,14 +1622,16 @@ public class DatabaseHelper {
      * 
      * @param id ID of the reply to mark as flagged.
      * @param username Username of the user who posted reply.
+     * @param tf Boolean to set isFlagged to.
      * @return True or False based on function success.
      * @throws SQLException If a database error occurs.
      */
-    public boolean markReplyFlagged(int id, String username) throws SQLException {
-        String sql = "UPDATE review_replies SET isFlagged = TRUE WHERE id = ? AND repliedBy = ?";
+    public boolean markReplyFlagged(int id, String username, boolean tf) throws SQLException {
+        String sql = "UPDATE review_replies SET isFlagged = ? WHERE id = ? AND repliedBy = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            pstmt.setInt(1, id);
-            pstmt.setString(2, username);
+        	pstmt.setBoolean(1, tf);
+        	pstmt.setInt(2, id);
+            pstmt.setString(3, username);
             int rowsAffected = pstmt.executeUpdate();
             return rowsAffected > 0;
         }
@@ -1634,18 +1642,139 @@ public class DatabaseHelper {
      * 
      * @param id ID of the feedback to mark as flagged.
      * @param username Username of the user who posted the feedback.
+     * @param tf Boolean to set isFlagged to.
      * @return True or False based on function success.
      * @throws SQLException If a database error occurs.
      */
-    public boolean markFeedbackAsFlagged(int id, String username) throws SQLException {
-        String sql = "UPDATE answer_feedback SET isFlagged = TRUE WHERE id = ? AND givenBy = ?";
+    public boolean markFeedbackAsFlagged(int id, String username, boolean tf) throws SQLException {
+        String sql = "UPDATE answer_feedback SET isFlagged = ? WHERE id = ? AND givenBy = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            pstmt.setInt(1, id);
-            pstmt.setString(2, username);
+            pstmt.setBoolean(1, tf);
+        	pstmt.setInt(2, id);
+            pstmt.setString(3, username);
             int rowsAffected = pstmt.executeUpdate();
             return rowsAffected > 0;
         }
     }
+    
+    /**
+     * Returns a list of all objects where isFlagged is true.
+     * @return List of flagged objects.
+     * @throws SQLException If a database error occurs.
+     */
+    public List<Object> getFlaggedObjects() throws SQLException {
+        List<Object> flagged = new ArrayList<>();
+        String sql = "SELECT * FROM answers WHERE isFlagged = TRUE";
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    Answer a = new Answer(
+                        rs.getInt("id"),
+                        rs.getInt("questionId"),
+                        rs.getString("content"),
+                        rs.getString("answeredBy"),
+                        rs.getTimestamp("createdAt").toLocalDateTime(),
+                        rs.getBoolean("isRead"),
+                        rs.getBoolean("isFlagged"),
+                        rs.getInt("upvotes")
+                    );
+                    flagged.add(a);
+                }
+            }
+        }
+        
+        sql = "SELECT * FROM question WHERE isFlagged = TRUE";
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                	Question q = new Question(
+                            rs.getInt("id"),
+                            rs.getString("title"),
+                            rs.getString("content"),
+                            rs.getString("askedBy"),
+                            rs.getTimestamp("createdAt").toLocalDateTime(),
+                            rs.getBoolean("isResolved"),
+                            rs.getBoolean("isFlagged"),
+                            rs.getInt("resolvedAnswerId")
+                    );
+                    flagged.add(q);
+                }
+            }
+        }
+        
+        sql = "SELECT * FROM reviews WHERE isFlagged = TRUE";
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                	Review r = new Review(
+                            rs.getInt("id"),
+                            rs.getInt("answerId"),
+                            rs.getString("reviewText"),
+                            rs.getString("writtenBy"),
+                            rs.getBoolean("isFlagged"),
+                            rs.getTimestamp("createdAt").toLocalDateTime()
+                        );
+                    flagged.add(r);
+                }
+            }
+        }
+        
+        sql = "SELECT * FROM review_replies WHERE isFlagged = TRUE";
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                	ReviewReply rp = new ReviewReply(
+                            rs.getInt("id"),
+                            rs.getInt("reviewId"),
+                            rs.getString("replyText"),
+                            rs.getString("repliedBy"),
+                            rs.getBoolean("isFlagged"),
+                            rs.getTimestamp("createdAt").toLocalDateTime()
+                    );
+                    flagged.add(rp);
+                }
+            }
+        }
+        
+        sql = "SELECT * FROM private_messages WHERE isFlagged = TRUE";
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                	PrivateMessage pm = new PrivateMessage(
+                            rs.getInt("id"),
+                            rs.getInt("questionId"),
+                            rs.getString("to_user"),
+                            rs.getString("from_user"),
+                            rs.getString("messageType"),
+                            rs.getString("content"),
+                            rs.getTimestamp("createdAt").toLocalDateTime(),
+                            rs.getBoolean("isRead"),
+                            rs.getBoolean("isFlagged")
+                    );
+                    flagged.add(pm);
+                }
+            }
+        }
+        
+        sql = "SELECT * FROM answer_feedback WHERE isFlagged = TRUE";
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                	AnswerFeedback af = new AnswerFeedback(
+                            rs.getInt("id"),
+                            rs.getInt("answerId"),
+                            rs.getString("feedbackText"),
+                            rs.getString("givenBy"),
+                            rs.getBoolean("isFlagged"),
+                            rs.getTimestamp("createdAt").toLocalDateTime()
+                    );
+                    flagged.add(af);
+                }
+            }
+        }
+        return flagged;
+    }
+    
     
     /**
      * Creates a new answer in the database.
@@ -1904,7 +2033,7 @@ public class DatabaseHelper {
         private final String content;
         private final java.time.LocalDateTime createdAt;
         private final boolean isRead;
-        private final boolean isFlagged;
+        private boolean isFlagged;
         /**
          * Constructor to create a new PrivateMessage
          * 
@@ -1969,7 +2098,16 @@ public class DatabaseHelper {
          */
         public boolean isRead() { return isRead; }
         
+        /**
+         * Gets the value of isFlagged.
+         * @return isFlagged.
+         */
         public boolean isFlagged() { return isFlagged; }
+        
+        /**
+         * Sets the value of isFlagged.
+         */
+        public void setIsFlagged(boolean tf) { this.isFlagged = tf; }
     }
     
     /**

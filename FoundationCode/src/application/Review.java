@@ -90,10 +90,10 @@ public class Review {
     public boolean isFlagged() { return this.isFlagged; }
     
     /**
-     * Sets the value of is flagged to true.
+     * Sets the value of isFlagged.
      */
-    public void markAsFlagged() {
-    	this.isFlagged = true;
+    public void setIsFlagged(boolean tf) {
+    	this.isFlagged = tf;
     }
 
     /**

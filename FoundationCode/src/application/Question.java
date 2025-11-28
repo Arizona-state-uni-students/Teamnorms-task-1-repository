@@ -205,10 +205,10 @@ public class Question {
     }
     
     /**
-     * Sets the value of isFlagged to true.
+     * Sets the value of isFlagged.
      */
-    public void markAsFlagged() {
-    	this.isFlagged = true;
+    public void setIsFlagged(boolean tf) {
+    	this.isFlagged = tf;
     }
 
     /**
