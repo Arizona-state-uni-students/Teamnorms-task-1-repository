@@ -125,7 +125,7 @@ public class User {
      * @return middleInitial
      */
     public String getMiddleInitial() {
-        return middleInitial;
+        return middleInitial.toUpperCase();
     }
 
     /**
@@ -195,9 +195,9 @@ public class User {
                 return 1;
             case "Reviewer":
                 return 2;
-            case "Instructor":
-                return 3;
             case "Staff":
+                return 3;
+            case "Instructor":
                 return 4;
             case "Admin":
                 return 99;
@@ -212,7 +212,9 @@ public class User {
      * @return firstName
      */
     public String getFirstName() {
-        return firstName;
+    	if(firstName.length()>1) {firstName = firstName.substring(0, 1).toUpperCase() + firstName.substring(1);
+    	}else {firstName = firstName.toUpperCase();}
+     return firstName;
     }
 
     /**
@@ -230,6 +232,8 @@ public class User {
      * @return lastName
      */
     public String getLastName() {
+    	if(lastName.length()>1) {lastName = lastName.substring(0, 1).toUpperCase() + lastName.substring(1);
+    	}else {lastName = lastName.toUpperCase();}
         return lastName;
     }
 
@@ -345,7 +349,51 @@ public class User {
             userFavorites = null; // Optional: clean up empty state
         }
     }
-    
-    
+    public String getFullName() {
+    	if(getPrivileges()==4) {return "Instructor "+getLastName();}
+    	else if(getPrivileges()==99) {return "Administrator "+getLastName();}
+    	else {
+        return getFirstName() +" "+ getMiddleInitial() +". "+ getLastName();
+    	}
+    }
+    /**
+     * Returns a string representation of the User object, 
+     * including key details and excluding the password.
+     * * @return A formatted string containing the user's details.
+     */
+    @Override
+    public String toString() {
+        // Construct the full name, handling middle initial gracefully
+        String fullName = firstName;
+        if (middleInitial != null && !middleInitial.isEmpty()) {
+            fullName += " " + middleInitial + ".";
+        }
+        if (lastName != null && !lastName.isEmpty()) {
+            fullName += " " + lastName;
+        }
+
+        // Display up to 3 favorites for a concise output
+        String[] favoritesArray = getFavorites();
+        String favoritesSummary;
+        if (favoritesArray.length == 0) {
+            favoritesSummary = "None";
+        } else if (favoritesArray.length <= 3) {
+            favoritesSummary = String.join(", ", favoritesArray);
+        } else {
+            // Display first three and indicate the count of the rest
+            favoritesSummary = String.join(", ", favoritesArray[0], favoritesArray[1], favoritesArray[2]) 
+                               + " (+ " + (favoritesArray.length - 3) + " more)";
+        }
+        
+        return "User [" +
+                "userName='" + userName + '\'' +
+                ", role='" + role + '\'' +
+                ", fullName='" + fullName.trim() + '\'' +
+                ", email='" + email + '\'' +
+                ", weight=" + weight + 
+                ", isReviewerApplicant=" + isReviewerApplicant +
+                ", favorites=" + favoritesSummary +
+                ']';
+    }
 
 }
