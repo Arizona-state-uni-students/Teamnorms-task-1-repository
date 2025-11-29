@@ -321,7 +321,7 @@ public class UserDatabaseUI {
      * @param currentRole String of the current role.
      */
     private void changeUserRole(String username, String currentRole) {
-        ChoiceDialog<String> dialog = new ChoiceDialog<>(currentRole, "User", "Student", "Reviewer", "Instructor", "Staff", "Admin");
+        ChoiceDialog<String> dialog = new ChoiceDialog<>(currentRole, "User", "Student", "Reviewer", "Staff", "Instructor", "Admin");
         dialog.setTitle("Change User Role");
         dialog.setHeaderText("Change role for: " + username);
         dialog.setContentText("Select new role:");

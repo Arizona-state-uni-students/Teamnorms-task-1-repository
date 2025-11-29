@@ -1,0 +1,29 @@
+.tab-pane {
+    -fx-background-color: transparent;
+}
+
+.tab-pane .tab-header-area .tab-header-background {
+    -fx-background-color: transparent;
+}
+
+.tab {
+    -fx-background-color: transparent;
+}
+
+.tab .tab-label {
+    -fx-text-fill: #fff; 
+}
+
+.tab-pane .tab-content-area {
+    -fx-background-color: transparent;
+}
+
+.review-update-notice {
+    -fx-font-style: italic;
+    -fx-text-fill: #888888; /* Gray text */
+    -fx-background-color: #f0f0f0; /* Light gray background */
+    -fx-padding: 5px;
+    -fx-border-color: #cccccc;
+    -fx-border-width: 1px;
+    -fx-border-radius: 3px;
+}
