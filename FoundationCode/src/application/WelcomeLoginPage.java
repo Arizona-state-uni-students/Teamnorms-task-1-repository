@@ -8,11 +8,11 @@ import javafx.scene.layout.BackgroundImage;
 import javafx.scene.layout.BackgroundPosition;
 import javafx.scene.layout.BackgroundRepeat;
 import javafx.scene.layout.BackgroundSize;
-import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-import javafx.application.Platform;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 
 import java.sql.SQLException;
 
@@ -36,31 +36,11 @@ public class WelcomeLoginPage {
      * @param user User currently using the system.
      */
     public void show(Stage primaryStage, User user) {
-    	   
-        // Establish GUI Grid
-        GridPane grid = new GridPane();
-        //grid.setGridLinesVisible(true); // for testing
-        grid.setPadding(new Insets(10));
-        grid.setHgap(10); // Horizontal gap between columns
-        grid.setVgap(10); // Vertical gap between rows
-        grid.setAlignment(javafx.geometry.Pos.TOP_CENTER);
-        
-        // set background image
-        Image backgroundImage = new Image(getClass().getResource("/blank.png").toExternalForm());
-        BackgroundImage backgroundImg = new BackgroundImage(
-                backgroundImage,
-                BackgroundRepeat.NO_REPEAT,
-                BackgroundRepeat.NO_REPEAT,
-                BackgroundPosition.CENTER,
-                new BackgroundSize(BackgroundSize.AUTO, BackgroundSize.AUTO, true, true, true, true)
-                );
-        grid.setBackground(new Background(backgroundImg));
-        
-        Label welcomeLabel = new Label("Hello, "+user.getRole()+"!");
+        Label welcomeLabel = new Label("Hello, "+user.getFullName()+"!");
         welcomeLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
         
-        Button userButton = new Button("Continue to User Page");
-        userButton.setStyle("-fx-font-size: 14px; -fx-padding: 5 20; -fx-background-color: #0099ff; -fx-text-fill: white;");
+        Button userButton = new Button("My User Page");
+        userButton.setStyle(colors.BASIC + colors.STUDENT_PRIMARY);
         userButton.setOnAction(a -> {
                 try {
 					new UserHomePage(databaseHelper).show(primaryStage, user);
@@ -70,57 +50,70 @@ public class WelcomeLoginPage {
 				}
         });
         
-        // ADD THIS Q&A BUTTON FOR ALL USERS
         Button qaButton = new Button("Student Q&A System");
-        qaButton.setStyle("-fx-font-size: 14px; -fx-padding: 5 20; -fx-background-color: #4CAF50; -fx-text-fill: white;");
+        qaButton.setStyle(colors.BASIC);
         qaButton.setOnAction(a -> {
             new StudentQAPage(databaseHelper, user).show(primaryStage);
         });
         
-        if (("user".equals(user.getRole().toLowerCase()))||"student".equals(user.getRole().toLowerCase())) {
-            Button reviewerButton = new Button("You are not a star reviewer... Yet!");
-            reviewerButton.setStyle("-fx-font-size: 14px; -fx-padding: 5 20; -fx-background-color: #ffdd00; -fx-text-fill: black;");
-            reviewerButton.setOnAction(a -> {
-                    
-            });
-            grid.add(reviewerButton, 0, 1); 
-        }
-        if (("reviewer".equals(user.getRole().toLowerCase()))) {
-            Button reviewerButton = new Button("You are a star reviewer!");
-            reviewerButton.setStyle("-fx-font-size: 14px; -fx-padding: 5 20; -fx-background-color: #ff7700; -fx-text-fill: white;");
-            reviewerButton.setOnAction(a -> {
-                    
-            });
-            grid.add(reviewerButton, 0, 1); 
-        }
-        if ("admin".equals(user.getRole().toLowerCase())) {
-            Button adminButton = new Button("Continue to Admin Page");
-            adminButton.setStyle("-fx-font-size: 14px; -fx-padding: 5 20; -fx-background-color: #ff9900; -fx-text-fill: black;");
-            adminButton.setOnAction(a -> {
-                    new AdminHomePage(databaseHelper).show(primaryStage, user);
-            });
-            grid.add(adminButton, 0, 1); 
-        }
         
         Button messagesButton = new Button("Direct Messages");
-        messagesButton.setStyle("-fx-font-size: 14px; -fx-padding: 5 20; -fx-background-color: #9C27B0; -fx-text-fill: white;");
+        messagesButton.setStyle(colors.BASIC);
         messagesButton.setOnAction(a -> {
             new DirectMessages(databaseHelper, user).show(primaryStage);
         });
         
         Button logout = new Button("logout");
-        logout.setStyle("-fx-font-size: 14px; -fx-padding: 5 20; -fx-background-color: #666; -fx-text-fill: white;");
+        logout.setStyle(colors.BASIC);
         logout.setOnAction(a -> {
                 new UserLoginPage(databaseHelper).show(primaryStage);
         });
         
-        grid.add(welcomeLabel, 0, 0);
-        grid.add(userButton, 0, 2);
-        grid.add(qaButton, 0, 3);     // Q&A button
-        grid.add(messagesButton, 0, 4);     // Private messaging
-        grid.add(logout, 0, 5);
+        Button reviewerButton = new Button("Reviewer Page");
+        reviewerButton.setStyle(colors.BASIC + colors.REVIEWER_PRIMARY);
+        reviewerButton.setOnAction(a -> {
+//        		new AdminHomePage(databaseHelper).show(primaryStage, user);
+        });
+        reviewerButton.setVisible(user.getPrivileges()>=2);
+        Button adminButton = new Button("Admin Page");
+        adminButton.setStyle(colors.BASIC + colors.ADMIN_PRIMARY);
+        adminButton.setOnAction(a -> {
+                new AdminHomePage(databaseHelper).show(primaryStage, user);
+        });
+        adminButton.setVisible(user.getPrivileges()>=99);
+        Button staffButton = new Button("Staff/Instructor Page");
+        staffButton.setStyle(colors.BASIC + colors.STAFF_PRIMARY);
+        staffButton.setOnAction(a -> {
+                //new AdminHomePage(databaseHelper).show(primaryStage, user);
+        });
         
-        Scene welcomeScene = new Scene(grid, 800, 400);
+        
+        
+        adminButton.setManaged(user.getPrivileges()>=5);
+        staffButton.setManaged(user.getPrivileges()>=3);
+        reviewerButton.setManaged(user.getPrivileges()>=2);
+        Image backgroundImage = new Image(getClass().getResource("/blankuser.png").toExternalForm());
+        if(user.getPrivileges()==1) {backgroundImage = new Image(getClass().getResource("/blankstudent.png").toExternalForm());}
+        if(user.getPrivileges()==2) {backgroundImage = new Image(getClass().getResource("/blankreviewer.png").toExternalForm());}
+        if(user.getPrivileges()==3) {backgroundImage = new Image(getClass().getResource("/blankstaff.png").toExternalForm());}
+        if(user.getPrivileges()==4) {backgroundImage = new Image(getClass().getResource("/blankinstructor.png").toExternalForm());}
+        if(user.getPrivileges()==99) {backgroundImage = new Image(getClass().getResource("/blankadmin.png").toExternalForm());}
+        BackgroundImage backgroundImg = new BackgroundImage(
+                backgroundImage,
+                BackgroundRepeat.NO_REPEAT,
+                BackgroundRepeat.NO_REPEAT,
+                BackgroundPosition.CENTER,
+                new BackgroundSize(BackgroundSize.AUTO, BackgroundSize.AUTO, true, true, true, true)
+                );
+        VBox vbox = new VBox(6);
+        vbox.setBackground(new Background(backgroundImg));
+        HBox hbox = new HBox(10, userButton, reviewerButton, staffButton, adminButton);
+        hbox.setAlignment(Pos.TOP_CENTER);
+        welcomeLabel.setStyle("-fx-padding: 60 0;");
+        vbox.getChildren().addAll(hbox, welcomeLabel, qaButton, messagesButton, logout);
+        vbox.setAlignment(Pos.TOP_CENTER);
+        vbox.setPadding(new Insets(20));
+        Scene welcomeScene = new Scene(vbox, 800, 400);
 
         // Set the scene to primary stage
         primaryStage.setScene(welcomeScene);

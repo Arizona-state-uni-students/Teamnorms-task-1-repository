@@ -93,12 +93,25 @@ public class AdminHomePage {
 	    switchRoleButton.setOnAction(a -> {
 	    	new WelcomeLoginPage(databaseHelper).show(primaryStage,user);
 	    });
-
+	    Button generate = new Button("Generate");
+	    generate.setOnAction(e->{
+	    	for(int i=2; i<10; i++) {
+	    	try {
+		    	User newuser = new User("admin"+i, "urn@burn.learn", "Password1!", "Student", "billy", "bob", "n", 0);
+				databaseHelper.register(newuser);
+			} catch (SQLException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+	    	}
+	    });
+	    
 	    grid.add(adminLabel, 0, 0);    // Column 1, Row 0
         grid.add(userDatabase, 0, 1);     // Column 1, Row 1
 	    grid.add(inviteButton, 0, 2); // Column 0, Row 2
         grid.add(switchRoleButton, 0, 3); // Column 0, Row 3
         grid.add(logoutButton, 0, 4);
+        grid.add(generate, 0, 6);
 	    
 	    
 	    Scene adminScene = new Scene(grid, 800, 400);
