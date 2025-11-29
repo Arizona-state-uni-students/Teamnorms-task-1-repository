@@ -585,7 +585,7 @@ public class DatabaseHelper {
      * @param user User to add into database.
      * @throws SQLException If a database error occurs.
      */
-    public void register(User user) throws SQLException {
+    public boolean register(User user) throws SQLException {
         String insertUser = "INSERT INTO cse360users (userName, email, firstName, middleInitial, lastName, password, role) VALUES (?, ?, ?, ?, ?, ?, ?)";
         try (PreparedStatement pstmt = connection.prepareStatement(insertUser)) {
             pstmt.setString(1, user.getUserName());
@@ -596,6 +596,8 @@ public class DatabaseHelper {
             pstmt.setString(6, user.getPassword());
             pstmt.setString(7, user.getRole());
             pstmt.executeUpdate();
+
+            return true;
         }
     }
 
@@ -3018,3 +3020,4 @@ public class DatabaseHelper {
     }
 
 }
+
