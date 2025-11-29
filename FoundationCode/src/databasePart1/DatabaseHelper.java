@@ -307,7 +307,7 @@ public class DatabaseHelper {
      * @throws SQLException if a database access error occurs.
      */
     public Review getReviewById(int answerId) throws SQLException {
-        String sql = "SELECT id, answerId, reviewText, writtenBy, createdAt FROM reviews WHERE answerId = ?";
+        String sql = "SELECT id, answerId, reviewText, writtenBy, isFlagged, createdAt FROM reviews WHERE answerId = ?";
         
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setInt(1, answerId);
@@ -355,7 +355,7 @@ public class DatabaseHelper {
     public List<ReviewReply> getRepliesForReview(int reviewId) throws SQLException {
         List<ReviewReply> replies = new ArrayList<>();
         
-        String sql = "SELECT id, reviewId, replyText, repliedBy, createdAt FROM review_replies WHERE reviewId = ? ORDER BY createdAt ASC";
+        String sql = "SELECT id, reviewId, replyText, repliedBy, isFlagged, createdAt FROM review_replies WHERE reviewId = ? ORDER BY createdAt ASC";
         
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setInt(1, reviewId);
@@ -586,21 +586,15 @@ public class DatabaseHelper {
      * @throws SQLException If a database error occurs.
      */
     public void register(User user) throws SQLException {
-        String insertUser = "INSERT INTO cse360users (userName, email, middleInitial, password, role) VALUES (?, ?, ?, ?, ?)";
+        String insertUser = "INSERT INTO cse360users (userName, email, firstName, middleInitial, lastName, password, role) VALUES (?, ?, ?, ?, ?, ?, ?)";
         try (PreparedStatement pstmt = connection.prepareStatement(insertUser)) {
             pstmt.setString(1, user.getUserName());
-            if (user.getEmail() == null || user.getEmail().trim().isEmpty()) {
-                pstmt.setNull(2, java.sql.Types.VARCHAR);
-            } else {
-                pstmt.setString(2, user.getEmail());
-            }
-            if (user.getMiddleInitial() == null || user.getMiddleInitial().trim().isEmpty()) {
-                pstmt.setNull(3, java.sql.Types.VARCHAR);
-            } else {
-                pstmt.setString(3, user.getMiddleInitial().toUpperCase());
-            }
-            pstmt.setString(4, user.getPassword());
-            pstmt.setString(5, user.getRole());
+            pstmt.setString(2, user.getEmail());
+            pstmt.setString(3, user.getFirstName());
+            pstmt.setString(4, user.getMiddleInitial().toUpperCase());
+            pstmt.setString(5, user.getLastName());
+            pstmt.setString(6, user.getPassword());
+            pstmt.setString(7, user.getRole());
             pstmt.executeUpdate();
         }
     }
@@ -626,7 +620,118 @@ public class DatabaseHelper {
             return rowsAffected > 0;
         }
     }
-
+    /**
+     * Updates a user's name in the database.
+     * 
+     * @param username Username of the user to change the email for.
+     * @param firstname String to set the firstName to.
+     * @param mi String to set the middleInitial to.
+     * @param ln String to set the lastName to.
+     * @return True or False based on function success.
+     * @throws SQLException If a database error occurs.
+     */
+    public boolean updateUsersName(String username, String firstname, String mi, String ln) throws SQLException {
+        String sql = "UPDATE cse360users SET firstName = ?, middleInitial = ?, lastName = ? WHERE userName = ?";
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setString(1, firstname);
+            pstmt.setString(2, mi);
+            pstmt.setString(3, ln);
+            pstmt.setString(4, username);
+            int rowsAffected = pstmt.executeUpdate();
+            return rowsAffected > 0;
+        }
+    }
+    /**
+     * Gets the total number of questions created by username
+     * 
+     * @param username of the user to get question count
+     * @return int number of questions asked
+     * @throws SQLException
+     */
+    public int questionsCount(String username) throws SQLException {
+        String sql = "SELECT COUNT(id) FROM questions WHERE askedBy = ?";
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setString(1, username);
+            try (java.sql.ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+                return 0; 
+            }
+            
+        }
+    }
+    /**
+     * Gets the total number of answers created by username
+     * 
+     * @param username
+     * @return int number of answers
+     * @throws SQLException
+     */
+    public int answersCount(String username) throws SQLException {
+        String sql = "SELECT COUNT(id) FROM answers WHERE answeredBy = ?";
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setString(1, username);
+            try (java.sql.ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+                return 0; 
+            }
+            
+        }
+    }
+    /**
+     * Gets the total number of answers marked as correct solutions by username
+     * 
+     * @param username
+     * @return int number of answers marked as correct
+     * @throws SQLException
+     */
+    public int correctAnswersCount(String username) throws SQLException{
+    	String sql = "SELECT COUNT(A.id) " +
+                "FROM answers A " +
+                "INNER JOIN questions Q ON A.id = Q.resolvedAnswerId " +
+                "WHERE A.answeredBy = ?";
+            try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+                pstmt.setString(1, username);
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    if (rs.next()) {
+                        return rs.getInt(1); 
+                    }
+                    return 0;
+                }
+            }
+    }
+    /**
+     * Gets the total number of reviews by username
+     * @param username
+     * @return int number of reviews and review replies
+     * @throws SQLException
+     */
+    public int reviewsCount(String username) throws SQLException {
+    	int total = 0;
+        String sql = "SELECT COUNT(id) FROM reviews WHERE writtenBy = ?";
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setString(1, username);
+            try (java.sql.ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    total += rs.getInt(1);
+                }
+            }
+        }
+        String sql2 = "SELECT COUNT(id) FROM review_replies WHERE repliedBy = ?";
+        try (PreparedStatement pstmt = connection.prepareStatement(sql2)) {
+            pstmt.setString(1, username);
+            try (java.sql.ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    total += rs.getInt(1);
+                }
+            }
+        }
+        return total;
+    }
+    
     /**
      * Log user into the system.
      * 
@@ -643,8 +748,11 @@ public class DatabaseHelper {
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
                     try {
+                    	user.setFirstName(rs.getString("firstName"));
+                        user.setLastName(rs.getString("lastName"));
                         user.setEmail(rs.getString("email"));
                         user.setMiddleInitial(rs.getString("middleInitial"));
+                        user.setWeight(rs.getInt("weight"));
                     } catch (SQLException e) {
                         // Columns might not exist
                     }
@@ -1600,7 +1708,7 @@ public class DatabaseHelper {
     /**
      * Marks a review as flagged.
      * 
-     * @param id ID of the review to mark as flagged.
+ 	 * @param id ID of the review to mark as flagged.
      * @param username Username of the user who posted review.
      * @param tf Boolean to set isFlagged to.
      * @return True or False based on function success.
@@ -1656,7 +1764,6 @@ public class DatabaseHelper {
             return rowsAffected > 0;
         }
     }
-    
     /**
      * Returns a list of all objects where isFlagged is true.
      * @return List of flagged objects.
@@ -1774,7 +1881,6 @@ public class DatabaseHelper {
         }
         return flagged;
     }
-    
     
     /**
      * Creates a new answer in the database.
@@ -2103,7 +2209,6 @@ public class DatabaseHelper {
          * @return isFlagged.
          */
         public boolean isFlagged() { return isFlagged; }
-        
         /**
          * Sets the value of isFlagged.
          */
