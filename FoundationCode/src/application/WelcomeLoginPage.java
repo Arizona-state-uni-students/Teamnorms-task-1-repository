@@ -51,14 +51,14 @@ public class WelcomeLoginPage {
         });
         
         Button qaButton = new Button("Student Q&A System");
-        qaButton.setStyle(colors.BASIC);
+        qaButton.setStyle(colors.BASIC + colors.STUDENT_PRIMARY);
         qaButton.setOnAction(a -> {
-            new StudentQAPage(databaseHelper, user).show(primaryStage);
+            new StudentQAPage(databaseHelper, user).show(primaryStage, 0, null);
         });
         
         
         Button messagesButton = new Button("Direct Messages");
-        messagesButton.setStyle(colors.BASIC);
+        messagesButton.setStyle(colors.BASIC + colors.INSTRUCTOR_ACCENT_DARK);
         messagesButton.setOnAction(a -> {
             new DirectMessages(databaseHelper, user).show(primaryStage);
         });
@@ -84,7 +84,12 @@ public class WelcomeLoginPage {
         Button staffButton = new Button("Staff/Instructor Page");
         staffButton.setStyle(colors.BASIC + colors.STAFF_PRIMARY);
         staffButton.setOnAction(a -> {
-                //new AdminHomePage(databaseHelper).show(primaryStage, user);
+                try {
+					new staffpage(databaseHelper).show(primaryStage, user);
+				} catch (SQLException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
         });
         
         
