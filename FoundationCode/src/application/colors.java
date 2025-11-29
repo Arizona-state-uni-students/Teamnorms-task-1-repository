@@ -28,8 +28,8 @@ public class colors {
     public static final String ADMIN_ACCENT_LIGHT = "#FFCDD2"; // Very Light Red (Backgrounds)
 
     // Instructor Accents
-    public static final String INSTRUCTOR_ACCENT_DARK = "#4A148C"; // Darkest Purple (Text)
-    public static final String INSTRUCTOR_ACCENT_LIGHT = "#E1BEE7"; // Very Light Purple (Backgrounds)
+    public static final String INSTRUCTOR_ACCENT_DARK = "-fx-background-color: #4A148C"; // Darkest Purple (Text)
+    public static final String INSTRUCTOR_ACCENT_LIGHT = "-fx-background-color: #E1BEE7"; // Very Light Purple (Backgrounds)
 
     // Staff Accents
     public static final String STAFF_ACCENT_DARK = "#F57F17"; // Dark Mustard (Text/Borders)
@@ -40,8 +40,8 @@ public class colors {
     public static final String REVIEWER_ACCENT_LIGHT = "#C8E6C9"; // Pale Green (Backgrounds)
 
     // Student Accents
-    public static final String STUDENT_ACCENT_DARK = "#0D47A1"; // Navy Blue (Text/Borders)
-    public static final String STUDENT_ACCENT_LIGHT = "#BBDEFB"; // Light Sky Blue (Backgrounds)
+    public static final String STUDENT_ACCENT_DARK = "-fx-background-color: #0D47A1"; // Navy Blue (Text/Borders)
+    public static final String STUDENT_ACCENT_LIGHT = "-fx-background-color: #BBDEFB"; // Light Sky Blue (Backgrounds)
 
     // User Accents
     public static final String USER_ACCENT_DARK = "#616161"; // Dark Gray (Text/Borders)
@@ -53,4 +53,6 @@ public class colors {
     
     public static final String BASIC = "-fx-font-size: 14px; -fx-padding: 5 20; -fx-background-color: #666; -fx-text-fill: white;";
     public static final String GO = "-fx-font-size: 14px; -fx-padding: 5 20; -fx-background-color: #4CAF50; -fx-text-fill: white;";
+    
+    public static final String LABEL = "-fx-font-size: 14px; -fx-font-weight: bold;";
 }
