@@ -31,7 +31,15 @@ Tanner Urness
   ### [Meeting Notes](https://docs.google.com/document/d/1EeQvJ1wMEicjmoGZwJS6zS78svVnevnQOhFroFBvf1U/edit?usp=sharing)
 ## Screencasts
   Required Passcodes included below links
-  ### [Stand Up Meeting 1]()
+  ### [Stand Up Meeting 1](https://us06web.zoom.us/rec/share/u6rGkwsoLIbAByXdqiWJKvFsw0CMh86Ww2n9XaTbHGC0BTr1ZBTP0RUaoFtOGA.E0lC1akScVVjC2tb?startTime=1764033036000)
+    0u?H*0vc
+  ### [Stand Up Meeting 2](https://us06web.zoom.us/rec/share/u6rGkwsoLIbAByXdqiWJKvFsw0CMh86Ww2n9XaTbHGC0BTr1ZBTP0RUaoFtOGA.E0lC1akScVVjC2tb?startTime=1764034906000)
+    0u?H*0vc
+  ### [Stand Up Meeting 3](https://us06web.zoom.us/rec/share/o7OAGDYiR10qbgOjydezn05MPWmWsGM1f39yitEPADdCYw02vTYl2VeqaAz_a1EJ.HaKa4Rm9eGZ3m9Lr?startTime=1764378768000)
+    i4Wm8$UF
+  ### [Stand Up Meeting 4]()
+  ### [Stand Up Meeting 5]()
+  ### [Stand Up Meeting 6]()
 <br/>
 
 # Phase 3
