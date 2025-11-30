@@ -648,7 +648,7 @@ public class DatabaseHelper {
     public List<ReviewReply> getRepliesForReview(int reviewId) throws SQLException {
         List<ReviewReply> replies = new ArrayList<>();
         
-        String sql = "SELECT id, reviewId, replyText, repliedBy, isFlagged, createdAt FROM review_replies WHERE reviewId = ? ORDER BY createdAt ASC";
+        String sql = "SELECT id, reviewId, replyText, repliedBy, isFlagged, createdAt FROM review_replies WHERE reviewId = ? AND isFlagged = FALSE ORDER BY createdAt ASC";
         
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setInt(1, reviewId);
@@ -1760,8 +1760,8 @@ public class DatabaseHelper {
     public List<Question> getAllQuestions(String username) throws SQLException {
         List<Question> questions = new ArrayList<>();
         String sql = username == null ? 
-            "SELECT * FROM questions ORDER BY createdAt DESC" :
-            "SELECT * FROM questions WHERE askedBy = ? ORDER BY createdAt DESC";
+            "SELECT * FROM questions WHERE isFlagged = FALSE ORDER BY createdAt DESC" :
+            "SELECT * FROM questions WHERE askedBy = ? AND isFlagged = FALSE ORDER BY createdAt DESC";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             if (username != null) {
                 pstmt.setString(1, username);
@@ -2040,7 +2040,41 @@ public class DatabaseHelper {
      * @throws SQLException If a database error occurs.
      */
     public boolean markFeedbackAsFlagged(int id, boolean tf) throws SQLException {
-        String sql = "UPDATE answer_feedback SET isFlagged = ? WHERE id = ?";
+        String sql = "UPDATE private_messages SET isFlagged = ? WHERE id = ?";
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setBoolean(1, tf);
+        	pstmt.setInt(2, id);
+            int rowsAffected = pstmt.executeUpdate();
+            return rowsAffected > 0;
+        }
+    }
+    /**
+     * Marks review as flagged.
+     * 
+     * @param id ID of the review to mark as flagged.
+     * @param tf Boolean to set isFlagged to.
+     * @return True or False based on function success.
+     * @throws SQLException If a database error occurs.
+     */
+    public boolean markReviewAsFlagged(int id, boolean tf) throws SQLException {
+        String sql = "UPDATE reviews SET isFlagged = ? WHERE id = ?";
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setBoolean(1, tf);
+        	pstmt.setInt(2, id);
+            int rowsAffected = pstmt.executeUpdate();
+            return rowsAffected > 0;
+        }
+    }
+    /**
+     * Marks review as flagged.
+     * 
+     * @param id ID of the review to mark as flagged.
+     * @param tf Boolean to set isFlagged to.
+     * @return True or False based on function success.
+     * @throws SQLException If a database error occurs.
+     */
+    public boolean markReviewReplyAsFlagged(int id, boolean tf) throws SQLException {
+        String sql = "UPDATE review_replies SET isFlagged = ? WHERE id = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setBoolean(1, tf);
         	pstmt.setInt(2, id);
@@ -2509,7 +2543,7 @@ public class DatabaseHelper {
         QuestionFilter f = new QuestionFilter();
         List<Question> results = new ArrayList<>();
         String sql = "SELECT id, title, content, askedBy, createdAt, isResolved, isFlagged, resolvedAnswerId "
-                   + "FROM questions WHERE parentQuestionId IS NULL ORDER BY createdAt DESC";
+                   + "FROM questions WHERE parentQuestionId IS NULL AND isFlagged = FALSE ORDER BY createdAt DESC";
         try (PreparedStatement ps = connection.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
@@ -2627,7 +2661,7 @@ public class DatabaseHelper {
     public List<PrivateMessage> getPrivateMessagesForQuestion(int questionId) throws SQLException {
         List<PrivateMessage> out = new ArrayList<>();
         String sql = "SELECT id, questionId, to_user, from_user, messageType, content, createdAt, isRead, isFlagged "
-                + "FROM private_messages WHERE questionId = ? ORDER BY createdAt ASC";
+                + "FROM private_messages WHERE questionId = ? AND isFlagged = FALSE ORDER BY createdAt ASC";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setInt(1, questionId);
             try (ResultSet rs = ps.executeQuery()) {

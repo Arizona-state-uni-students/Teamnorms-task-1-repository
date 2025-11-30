@@ -58,7 +58,7 @@ public class WelcomeLoginPage {
         
         
         Button messagesButton = new Button("Direct Messages");
-        messagesButton.setStyle(colors.BASIC + colors.INSTRUCTOR_ACCENT_DARK);
+        messagesButton.setStyle(colors.BASIC);
         messagesButton.setOnAction(a -> {
             new DirectMessages(databaseHelper, user).show(primaryStage);
         });
