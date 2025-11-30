@@ -245,6 +245,98 @@ public class DatabaseHelper {
         		+ "    FOREIGN KEY (repliedBy) REFERENCES cse360users(userName)"
         		+ ");";
         statement.execute(reviewRepliesTable);
+        
+        String ScoreTable = "CREATE TABLE IF NOT EXISTS ReviewerCalculations ("
+        		+ "    CurrentThresh DOUBLE DEFAULT 50,"
+        		+ "    Thresh01 DOUBLE DEFAULT 3,"
+        		+ "    Thresh02 DOUBLE DEFAULT 0.2,"
+        		+ "    Thresh03 DOUBLE DEFAULT 0.3"
+        		+ ");";
+        statement.execute(ScoreTable);
+        intializeScoreTable();
+    }
+    /**
+     * Checks to make sure ReviewerCalculations table has data
+     * If the table is empty, it inserts the initial default values.
+     * @throws SQLException
+     */
+    private void intializeScoreTable() throws SQLException {
+        String checkSql = "SELECT COUNT(*) FROM ReviewerCalculations";
+        try (PreparedStatement checkStmt = connection.prepareStatement(checkSql);
+             ResultSet rs = checkStmt.executeQuery()) {
+            if (rs.next()) {
+                int rowCount = rs.getInt(1);
+                if (rowCount > 0) {
+                    //System.out.println("ReviewerCalculations already contains data (" + rowCount + " rows). Initial insert skipped.");
+                    return;
+                }
+            }
+        }
+        //insert default data
+        String insertSql = "INSERT INTO ReviewerCalculations (CurrentThresh, Thresh01, Thresh02, Thresh03) "
+                         + "VALUES (?, ?, ?, ?)";
+        double initialCurrentThresh = 50.0;
+        double initialThresh01 = 3.0;
+        double initialThresh02 = 0.2;
+        double initialThresh03 = 0.3;
+        try (PreparedStatement insertStmt = connection.prepareStatement(insertSql)) {
+            insertStmt.setDouble(1, initialCurrentThresh); 
+            insertStmt.setDouble(2, initialThresh01); 
+            insertStmt.setDouble(3, initialThresh02); 
+            insertStmt.setDouble(4, initialThresh03); 
+            insertStmt.executeUpdate();
+            System.out.println("Initial configuration row inserted into ReviewerCalculations.");
+        }
+    }
+    
+    /**
+     * Updates the scorecard calculation values
+     * @param thresh01 double
+     * @param thresh02 double
+     * @param thresh03 double
+     * @throws SQLException
+     */
+    public void updateScoreCards(double thresh01, double thresh02, double thresh03) throws SQLException{			
+    	String sql = "UPDATE ReviewerCalculations SET Thresh01 = ?, Thresh02 = ?, Thresh03 = ?"; 
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+        	statement.setDouble(1, thresh01); 
+        	statement.setDouble(2, thresh02); 
+        	statement.setDouble(3, thresh03); 
+            statement.executeUpdate();
+        }
+    }
+    /**
+     * Updates the threshold value for trusted reviewers
+     * @param thresh
+     * @throws SQLException
+     */
+    public void updateThresh(double thresh) throws SQLException{			
+    	String sql = "UPDATE ReviewerCalculations SET CurrentThresh = ?"; 
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+        	statement.setDouble(1, thresh); 
+            statement.executeUpdate();
+        }
+    }
+    /**
+     * Gets the scorecard and threshold values
+     * @return double[] threshold and score values
+     * @throws SQLException
+     */
+    public double[] getThresh() throws SQLException {
+        double[] data = new double[4];
+        String sql = "SELECT CurrentThresh, Thresh01, Thresh02, Thresh03 FROM ReviewerCalculations";
+        try (PreparedStatement statement = connection.prepareStatement(sql);
+             ResultSet rs = statement.executeQuery()) {
+            if (rs.next()) {
+                data[0] = rs.getDouble(1); // CurrentThresh
+                data[1] = rs.getDouble(2); // Thresh01
+                data[2] = rs.getDouble(3); // Thresh02
+                data[3] = rs.getDouble(4); // Thresh03
+            } else {
+                throw new IllegalStateException("ReviewerCalculations table is empty. Expected one row of data.");
+            }
+        }
+        return data;
     }
     
     /**
@@ -596,7 +688,6 @@ public class DatabaseHelper {
             pstmt.setString(6, user.getPassword());
             pstmt.setString(7, user.getRole());
             pstmt.executeUpdate();
-
             return true;
         }
     }
@@ -1792,7 +1883,7 @@ public class DatabaseHelper {
             }
         }
         
-        sql = "SELECT * FROM question WHERE isFlagged = TRUE";
+        sql = "SELECT * FROM questions WHERE isFlagged = TRUE";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
@@ -3020,4 +3111,3 @@ public class DatabaseHelper {
     }
 
 }
-
