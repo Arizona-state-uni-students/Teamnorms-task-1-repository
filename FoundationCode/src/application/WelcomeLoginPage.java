@@ -75,12 +75,14 @@ public class WelcomeLoginPage {
 //        		new AdminHomePage(databaseHelper).show(primaryStage, user);
         });
         reviewerButton.setVisible(user.getPrivileges()>=2);
+        
         Button adminButton = new Button("Admin Page");
         adminButton.setStyle(colors.BASIC + colors.ADMIN_PRIMARY);
         adminButton.setOnAction(a -> {
                 new AdminHomePage(databaseHelper).show(primaryStage, user);
         });
         adminButton.setVisible(user.getPrivileges()>=99);
+        
         Button staffButton = new Button("Staff/Instructor Page");
         staffButton.setStyle(colors.BASIC + colors.STAFF_PRIMARY);
         staffButton.setOnAction(a -> {
@@ -92,30 +94,51 @@ public class WelcomeLoginPage {
 				}
         });
         
-        
+        // Tickets button for Staff, Instructor, and Admin
+        Button ticketsButton = new Button("Tickets");
+        ticketsButton.setStyle("-fx-font-size: 14px; -fx-padding: 5 20; -fx-background-color: #FF5722; -fx-text-fill: white;");
+        ticketsButton.setOnAction(a -> {
+            new TicketsPage(databaseHelper, user).show(primaryStage, user);
+        });
         
         adminButton.setManaged(user.getPrivileges()>=5);
         staffButton.setManaged(user.getPrivileges()>=3);
         reviewerButton.setManaged(user.getPrivileges()>=2);
+        
+        // Set background image based on user privileges
         Image backgroundImage = new Image(getClass().getResource("/blankuser.png").toExternalForm());
         if(user.getPrivileges()==1) {backgroundImage = new Image(getClass().getResource("/blankstudent.png").toExternalForm());}
         if(user.getPrivileges()==2) {backgroundImage = new Image(getClass().getResource("/blankreviewer.png").toExternalForm());}
         if(user.getPrivileges()==3) {backgroundImage = new Image(getClass().getResource("/blankstaff.png").toExternalForm());}
         if(user.getPrivileges()==4) {backgroundImage = new Image(getClass().getResource("/blankinstructor.png").toExternalForm());}
         if(user.getPrivileges()==99) {backgroundImage = new Image(getClass().getResource("/blankadmin.png").toExternalForm());}
+        
         BackgroundImage backgroundImg = new BackgroundImage(
                 backgroundImage,
                 BackgroundRepeat.NO_REPEAT,
                 BackgroundRepeat.NO_REPEAT,
                 BackgroundPosition.CENTER,
                 new BackgroundSize(BackgroundSize.AUTO, BackgroundSize.AUTO, true, true, true, true)
-                );
+        );
+        
         VBox vbox = new VBox(6);
         vbox.setBackground(new Background(backgroundImg));
+        
         HBox hbox = new HBox(10, userButton, reviewerButton, staffButton, adminButton);
         hbox.setAlignment(Pos.TOP_CENTER);
         welcomeLabel.setStyle("-fx-padding: 60 0;");
-        vbox.getChildren().addAll(hbox, welcomeLabel, qaButton, messagesButton, logout);
+        
+        // Add base elements to VBox
+        vbox.getChildren().addAll(hbox, welcomeLabel, qaButton, messagesButton);
+        
+        // Add Tickets button for Staff (3), Instructor (4), and Admin (99)
+        if(user.getPrivileges() == 3 || user.getPrivileges() == 4 || user.getPrivileges() == 99) {
+            vbox.getChildren().add(ticketsButton);
+        }
+        
+        // Add logout button at the end
+        vbox.getChildren().add(logout);
+        
         vbox.setAlignment(Pos.TOP_CENTER);
         vbox.setPadding(new Insets(20));
         Scene welcomeScene = new Scene(vbox, 800, 400);
