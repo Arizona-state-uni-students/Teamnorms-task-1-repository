@@ -18,11 +18,11 @@ Tanner Urness
 # Code Files
   ### [Database](FoundationCode/src/databasePart1/DatabaseHelper.java)
   ### [Application](FoundationCode/src/application)
-  ### [Review](FoundationCode/src/application/Review.java)
-  ### [ReviewReply](FoundationCode/src/application/ReviewReply.java)
+  ### [Direct Messages](FoundationCode/src/application/DirectMessages.java)
+  ### [Staff Page](FoundationCode/src/application/staffpage.java)
   ### [QA Page (Includes reviews)](FoundationCode/src/application/StudentQAPage.java)
-  ### [User Home Page (Review requests)](FoundationCode/src/application/UserHomePage.java)
   ### [Automated Testing](FoundationCode/src/application/QASystemTest.java)
+  ### [Direct Message Testing](FoundationCode/src/application/DirectMessageSystemTest.java)
   <br/>
 
 
@@ -31,8 +31,19 @@ Tanner Urness
   ### [Meeting Notes](https://docs.google.com/document/d/1EeQvJ1wMEicjmoGZwJS6zS78svVnevnQOhFroFBvf1U/edit?usp=sharing)
 ## Screencasts
   Required Passcodes included below links
-  ### [Stand Up Meeting 1]()
+  ### [Stand Up Meeting 1](https://us06web.zoom.us/rec/share/u6rGkwsoLIbAByXdqiWJKvFsw0CMh86Ww2n9XaTbHGC0BTr1ZBTP0RUaoFtOGA.E0lC1akScVVjC2tb?startTime=1764033036000)
+    0u?H*0vc
+  ### [Stand Up Meeting 2](https://us06web.zoom.us/rec/share/u6rGkwsoLIbAByXdqiWJKvFsw0CMh86Ww2n9XaTbHGC0BTr1ZBTP0RUaoFtOGA.E0lC1akScVVjC2tb?startTime=1764034906000)
+    0u?H*0vc
+  ### [Stand Up Meeting 3](https://us06web.zoom.us/rec/share/o7OAGDYiR10qbgOjydezn05MPWmWsGM1f39yitEPADdCYw02vTYl2VeqaAz_a1EJ.HaKa4Rm9eGZ3m9Lr?startTime=1764378768000)
+    i4Wm8$UF
+  ### [Stand Up Meeting 4](https://us06web.zoom.us/rec/share/wSeoAwtYZ5Wb1_dGK4-3tfNrJRV55Z4BsJ1PAWsLk5uoikiGqOk5XUzzznevDD-A.MyyV8LWc9MbH5A5p?startTime=1764464774000)
+    $XLIiq8s
+  ### [Stand Up Meeting 5](https://us06web.zoom.us/rec/share/wSeoAwtYZ5Wb1_dGK4-3tfNrJRV55Z4BsJ1PAWsLk5uoikiGqOk5XUzzznevDD-A.MyyV8LWc9MbH5A5p?startTime=1764465632000)
+    $XLIiq8s
+  ### [Stand Up Meeting 6]()
 <br/>
+
 
 # Phase 3
 ## Stand Up Notes
