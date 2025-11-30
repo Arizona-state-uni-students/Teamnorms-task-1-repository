@@ -773,11 +773,11 @@ public class QASystemTest {
 	        int aId = db.createAnswer(a);
 	        
 	        assertFalse(a.isFlagged(), "Answer should initially be un-flagged");
-	        boolean markedA = db.markAnswerFlagged(aId, testUser2.getUserName(), true);
+	        boolean markedA = db.markAnswerFlagged(aId, true);
 	        assertTrue(markedA, "Mark as flagged should succeed");
 	        
 		    assertFalse(q.isFlagged(), "Question should initially be un-flagged");
-		    boolean marked = db.markQuestionFlagged(qId, testUser1.getUserName(), true);
+		    boolean marked = db.markQuestionFlagged(qId, true);
 		    assertTrue(marked, "Mark as flagged should succeed");
 		}
 
@@ -804,11 +804,11 @@ public class QASystemTest {
 		        int aId = db.createAnswer(a);
 		        
 		        assertFalse(a.isFlagged(), "Answer should initially be un-flagged");
-		        boolean markedA = db.markAnswerFlagged(aId, testUser2.getUserName(), true);
+		        boolean markedA = db.markAnswerFlagged(aId, true);
 		        assertTrue(markedA, "Mark as flagged should succeed");
 
 			    assertFalse(q.isFlagged(), "Question should initially be un-flagged");
-			    boolean marked = db.markQuestionFlagged(qId, testUser1.getUserName(), true);
+			    boolean marked = db.markQuestionFlagged(qId, true);
 			    assertTrue(marked, "Mark as flagged should succeed");
 	        
 	        List<Object> flagged = db.getFlaggedObjects();

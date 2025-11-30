@@ -1762,37 +1762,33 @@ public class DatabaseHelper {
      * Marks a question as flagged.
      * 
      * @param questionId ID of the question to mark as flagged.
-     * @param username Username of the user who asked the question.
      * @param tf Boolean to set isFlagged to.
      * @return True or False based on function success.
      * @throws SQLException If a database error occurs.
      */
-    public boolean markQuestionFlagged(int questionId, String username, boolean tf) throws SQLException {
-        String sql = "UPDATE questions SET isFlagged = ? WHERE id = ? AND askedBy = ?";
+    public boolean markQuestionFlagged(int questionId, boolean tf) throws SQLException {
+        String sql = "UPDATE questions SET isFlagged = ? WHERE id = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
         	pstmt.setBoolean(1, tf);
         	pstmt.setInt(2, questionId);
-            pstmt.setString(3, username);
             int rowsAffected = pstmt.executeUpdate();
             return rowsAffected > 0;
         }
     }
     
     /**
-     * Marks a answer as flagged.
+     * Marks an answer as flagged.
      * 
      * @param id ID of the answer to mark as flagged.
-     * @param username Username of the user who posted the answer.
      * @param tf Boolean to set isFlagged to.
      * @return True or False based on function success.
      * @throws SQLException If a database error occurs.
      */
-    public boolean markAnswerFlagged(int id, String username, boolean tf) throws SQLException {
-        String sql = "UPDATE answers SET isFlagged = ? WHERE id = ? AND answeredBy = ?";
+    public boolean markAnswerFlagged(int id, boolean tf) throws SQLException {
+        String sql = "UPDATE answers SET isFlagged = ? WHERE id = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
         	pstmt.setBoolean(1, tf);
         	pstmt.setInt(2, id);
-            pstmt.setString(3, username);
             int rowsAffected = pstmt.executeUpdate();
             return rowsAffected > 0;
         }
@@ -1802,17 +1798,15 @@ public class DatabaseHelper {
      * Marks a review as flagged.
      * 
  	 * @param id ID of the review to mark as flagged.
-     * @param username Username of the user who posted review.
      * @param tf Boolean to set isFlagged to.
      * @return True or False based on function success.
      * @throws SQLException If a database error occurs.
      */
-    public boolean markReviewFlagged(int id, String username, boolean tf) throws SQLException {
-        String sql = "UPDATE reviews SET isFlagged = ? WHERE id = ? AND writtenBy = ?";
+    public boolean markReviewFlagged(int id, boolean tf) throws SQLException {
+        String sql = "UPDATE reviews SET isFlagged = ? WHERE id = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
         	pstmt.setBoolean(1, tf);
         	pstmt.setInt(2, id);
-            pstmt.setString(3, username);
             int rowsAffected = pstmt.executeUpdate();
             return rowsAffected > 0;
         }
@@ -1822,37 +1816,33 @@ public class DatabaseHelper {
      * Marks a review reply as flagged.
      * 
      * @param id ID of the reply to mark as flagged.
-     * @param username Username of the user who posted reply.
      * @param tf Boolean to set isFlagged to.
      * @return True or False based on function success.
      * @throws SQLException If a database error occurs.
      */
-    public boolean markReplyFlagged(int id, String username, boolean tf) throws SQLException {
-        String sql = "UPDATE review_replies SET isFlagged = ? WHERE id = ? AND repliedBy = ?";
+    public boolean markReplyFlagged(int id, boolean tf) throws SQLException {
+        String sql = "UPDATE review_replies SET isFlagged = ? WHERE id = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
         	pstmt.setBoolean(1, tf);
         	pstmt.setInt(2, id);
-            pstmt.setString(3, username);
             int rowsAffected = pstmt.executeUpdate();
             return rowsAffected > 0;
         }
     }
     
     /**
-     * Marks a feedback as flagged.
+     * Marks feedback as flagged.
      * 
      * @param id ID of the feedback to mark as flagged.
-     * @param username Username of the user who posted the feedback.
      * @param tf Boolean to set isFlagged to.
      * @return True or False based on function success.
      * @throws SQLException If a database error occurs.
      */
-    public boolean markFeedbackAsFlagged(int id, String username, boolean tf) throws SQLException {
-        String sql = "UPDATE answer_feedback SET isFlagged = ? WHERE id = ? AND givenBy = ?";
+    public boolean markFeedbackAsFlagged(int id, boolean tf) throws SQLException {
+        String sql = "UPDATE answer_feedback SET isFlagged = ? WHERE id = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setBoolean(1, tf);
         	pstmt.setInt(2, id);
-            pstmt.setString(3, username);
             int rowsAffected = pstmt.executeUpdate();
             return rowsAffected > 0;
         }
