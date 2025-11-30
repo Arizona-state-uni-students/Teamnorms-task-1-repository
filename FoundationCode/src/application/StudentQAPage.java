@@ -1534,6 +1534,9 @@ public class StudentQAPage {
                 return;
             }
             for (Question q : questions) {
+                if (q.isFlagged()) {
+                	continue;
+                }
                 displayQuestions.getChildren().add(questionRow(q));
             }
             // Select the first question by default
@@ -1706,8 +1709,22 @@ public class StudentQAPage {
         Label body = new Label(q.getContent());
         body.setWrapText(true);
         body.setStyle("-fx-padding:8; -fx-background-color:#fff; -fx-border-color:#ddd; -fx-text-fill: black;");
+        Button reportQuestion = new Button("Report a Question");
 
-        VBox header = new VBox(6, headerActions, title, meta, body);
+        reportQuestion.setStyle("-fx-background-color: #ff0000; -fx-text-fill: white; -fx-font-size: 11px;");
+        reportQuestion.setOnAction(e -> {
+      	try {
+			databaseHelper.markQuestionFlagged(q.getId(), true);
+			reportQuestion.setText("Reported");
+			reportQuestion.setDisable(true);
+//			a.setIsFlagged(true);
+//			System.out.println(a.isFlagged());
+		} catch (SQLException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+      });
+        VBox header = new VBox(6, headerActions, title, reportQuestion, meta, body);
         header.setPadding(new Insets(6,0,12,0));
         displayQuestionThread.getChildren().add(header);
 
@@ -1749,6 +1766,7 @@ public class StudentQAPage {
             Label ansTitle = new Label("Answers (" + answers.size() + ")");
             ansTitle.setStyle("-fx-font-weight:bold; -fx-text-fill: black;");
             
+            
             Button viewAllBtn = new Button("View All Answers Dialog");
             viewAllBtn.setStyle("-fx-background-color: #0099ff; -fx-text-fill: white; -fx-font-size: 11px;");
             viewAllBtn.setOnAction(e -> {
@@ -1761,6 +1779,8 @@ public class StudentQAPage {
                     showError("Load failed", ex.getMessage());
                 }
             });
+            
+            
             
             ansHeader.getChildren().addAll(ansTitle, viewAllBtn);
             VBox answersBox = new VBox(8, ansHeader);
@@ -1775,7 +1795,9 @@ public class StudentQAPage {
             } else {
                 for (Answer a : answers) {
                     VBox card = new VBox(5);
-                    
+                    if (a.isFlagged()) {
+                    	continue;
+                    }
                     // Answer metadata and content
                     Label status = new Label("STATUS");
                     String role = databaseHelper.getUserRole(a.getAnsweredBy());
@@ -1870,6 +1892,23 @@ public class StudentQAPage {
 
                         actionBox.getChildren().addAll(editBtn, deleteBtn);
                     }
+                    
+                    Button reportAnswer = new Button("Report");
+
+                    reportAnswer.setStyle("-fx-background-color: #ff0000; -fx-text-fill: white; -fx-font-size: 11px;");
+                    reportAnswer.setOnAction(e -> {
+                  	try {
+						databaseHelper.markAnswerFlagged(a.getId(), true);
+						reportAnswer.setText("Reported");
+						reportAnswer.setDisable(true);
+//						a.setIsFlagged(true);
+//						System.out.println(a.isFlagged());
+					} catch (SQLException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
+                  });
+                    
                     Button addReview = new Button("Add Review");
                     addReview.setVisible(false);
                     if(currentUser.getPrivileges()>1) { //can initiate review
@@ -1889,7 +1928,7 @@ public class StudentQAPage {
 							e1.printStackTrace();
 						}
                     	});
-                    actionBox.getChildren().add(addReview);
+                    actionBox.getChildren().addAll(addReview, reportAnswer);
                     HBox box = new HBox(6, status, aMeta);
                     card.getChildren().addAll(box, aText, actionBox);
                     
