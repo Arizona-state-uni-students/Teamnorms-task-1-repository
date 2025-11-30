@@ -60,14 +60,14 @@ public class StudentQAPage {
     /**
      * Displays the student QA page in the primary stage. 
      * @param primaryStage The primary stage where the scene will be displayed.
+     * @param type int to determine the action on load
+     * @param search String to determine what is searched, if type is correct
      */
-    public void show(Stage primaryStage) {
+    public void show(Stage primaryStage, int type, String search) {
         this.primaryStage = primaryStage;
         mainLayout = new VBox(-2);
         mainLayout.setPadding(new Insets(21));
         mainLayout.setPrefSize(1100, 600);
-
-        // Page background image
         Image backgroundImage = new Image(getClass().getResource("/QAbg.png").toExternalForm());
         BackgroundImage backgroundImg = new BackgroundImage(
                 backgroundImage,
@@ -77,8 +77,6 @@ public class StudentQAPage {
                 new BackgroundSize(900, 600, false, false, true, false)
             );
         mainLayout.setBackground(new Background(backgroundImg));
-
-        // Header label
         Label titleLabel = new Label("Student Q&A System");
         titleLabel.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #000");
         Label welcomeLabel = new Label("\tWelcome, " + currentUser.getUserName() + "!");
@@ -95,7 +93,14 @@ public class StudentQAPage {
         reviewersTab = createReviewersTab();
         tabPane.getTabs().addAll(askQuestionTab, myQuestionsTab, allQuestionsTab, reviewersTab);
         tabPane.setStyle("-fx-background-color: transparent; -fx-background: transparent; -fx-tab-header-background-color: transparent;");
-
+    	if(type==1) {
+    		tabPane.getSelectionModel().select(reviewersTab);
+    		loadAllReviews(search);
+    	}
+    	if(type==2) {
+    		tabPane.getSelectionModel().select(reviewersTab);
+    		loadAllAnswersBy(search);
+    	}
         // ======= Bottom Buttons =======
         // Back button
         Button backButton = new Button("Back to Home");
@@ -173,21 +178,11 @@ public class StudentQAPage {
         
         
         if (currentUser.getPrivileges() > 1) {
-     		//currently a reviewer
-     		//drop role? congratulations?
-     		infoLabel.setText("you are already a reviewer. your current weight is:"+weight);
+     		infoLabel.setText("");
      	}else{
-     		//not a reviewer, not an instructor
-     		//create application
-     		//requirements: certain weights? total contributions? nice application? 
-     		infoLabel.setText("you can apply to be a reviewer in your user settings page. your current weight is: "+weight);
+     		infoLabel.setText("you can apply to be a reviewer in your user settings page.");
      	}
      	if(currentUser.getPrivileges() > 2) {
-     		//has instructor+ privileges
-     		//check requests to be a reviewer
-     		//approve or deny
-//     		infoLabel.setText("you are an instructor");
-//     		getPendingReviews();
      		loadApplicants.setVisible(true);
      	}
 

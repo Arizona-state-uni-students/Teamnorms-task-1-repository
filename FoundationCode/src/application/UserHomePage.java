@@ -9,6 +9,8 @@ import javafx.stage.Stage;
 import javafx.scene.control.Alert.AlertType;
 
 import java.sql.SQLException;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 import databasePart1.*;
 
@@ -17,7 +19,8 @@ public class UserHomePage {
     private final DatabaseHelper databaseHelper;
     Label titleLabel;
     Label statusLabel = new Label();
-    
+    VBox displayReviewers = new VBox(6);
+    private static final DateTimeFormatter TS = DateTimeFormatter.ofPattern("MMM dd, yyyy HH:mm");
     public UserHomePage(DatabaseHelper databaseHelper) {
         this.databaseHelper = databaseHelper;
     }
@@ -37,11 +40,12 @@ public class UserHomePage {
         titleLabel.setAlignment(Pos.TOP_RIGHT);
         Label roleLabel = new Label(currentUser.getRole());
         roleLabel.setStyle(colors.BASIC + colors.USER_PRIMARY);
-        if(currentUser.getPrivileges()==2) {roleLabel.setStyle(colors.BASIC + colors.STUDENT_PRIMARY);}
+        if(currentUser.getPrivileges()==1) {roleLabel.setStyle(colors.BASIC + colors.STUDENT_PRIMARY);}
         if(currentUser.getPrivileges()==2) {roleLabel.setStyle(colors.BASIC + colors.REVIEWER_PRIMARY);}
         if(currentUser.getPrivileges()==3) {roleLabel.setStyle(colors.BASIC + colors.STAFF_PRIMARY);}
         if(currentUser.getPrivileges()==4) {roleLabel.setStyle(colors.BASIC + colors.INSTRUCTOR_PRIMARY);}
         if(currentUser.getPrivileges()==99) {roleLabel.setStyle(colors.BASIC + colors.ADMIN_PRIMARY);}
+        //if(currentUser.getPrivileges()>=2) {loadAllReviews(currentUser.getUserName());}
 
         
         Label usernameLabel = new Label("User");
@@ -254,9 +258,21 @@ public class UserHomePage {
         logoutButton.setOnAction(a -> {
             new UserLoginPage(databaseHelper).show(primaryStage);
         });
-        
+        Button loadReviews = new Button("Load Reviews");
+        loadReviews.setStyle(colors.BASIC + colors.REVIEWER_PRIMARY);
+        loadReviews.setOnAction(e->{
+        	StudentQAPage qaPage = new StudentQAPage(databaseHelper, currentUser);
+            qaPage.show(primaryStage, 1, currentUser.getUserName());
+        });
+        Button loadAnswers = new Button("Load Answers");
+        loadAnswers.setStyle(colors.BASIC + colors.STUDENT_PRIMARY);
+        loadAnswers.setOnAction(e->{
+      	  StudentQAPage qaPage = new StudentQAPage(databaseHelper, currentUser);
+          qaPage.show(primaryStage, 2, currentUser.getUserName());
+        });
+        HBox reviewButtons = new HBox(6, loadReviews, loadAnswers);
         HBox bottombar = new HBox(6, goBackButton, logoutButton);
-        vbox.getChildren().addAll(passwordBox, reviewerLabel, reviewThings, statsLabel, stats, bottombar);
+        vbox.getChildren().addAll(passwordBox, reviewerLabel, reviewThings, statsLabel, stats, reviewButtons, bottombar);
 
         ScrollPane scrollPane = new ScrollPane();
         scrollPane.setContent(vbox);
@@ -281,5 +297,6 @@ public class UserHomePage {
         alert.setContentText(content);
         alert.showAndWait();
     }
+    
 }
 
