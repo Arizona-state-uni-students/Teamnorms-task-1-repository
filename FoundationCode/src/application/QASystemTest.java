@@ -749,20 +749,43 @@ public class QASystemTest {
 	
 
         // ========== Flagging Tests ==========
+        
+        /**
+		 * <p> Test: Mark question and answer as flagged </p>
+		 * <p> 
+		 * This test verifies that a question and an answer can be flagged. This is verified by checking that the database method 
+		 * returns true and that after updating isFlagged its value equals true.
+		 * </p>
+		 * 
+		 * @throws SQLException If a database error occurs
+		 */
+		@Test
+		@DisplayName("Test 31: Mark question and answer as flagged")
+		void testMarkAsFlagged() throws SQLException {
+		    Question q = new Question(
+		        "Question for Flag Test",
+		        "Testing mark as flagged",
+		        testUser1.getUserName()
+		    );
+		    int qId = db.createQuestion(q);
+		    
+		    Answer a = new Answer(qId, "flagged answer", testUser2.getUserName());
+	        int aId = db.createAnswer(a);
+	        
+	        assertFalse(a.isFlagged(), "Answer should initially be un-flagged");
+	        boolean markedA = db.markAnswerFlagged(aId, testUser2.getUserName(), true);
+	        assertTrue(markedA, "Mark as flagged should succeed");
+	        
+		    assertFalse(q.isFlagged(), "Question should initially be un-flagged");
+		    boolean marked = db.markQuestionFlagged(qId, testUser1.getUserName(), true);
+		    assertTrue(marked, "Mark as flagged should succeed");
+		}
 
-		
-        
-        
-        
-        
-        
-        
-        
         /**
 		 * <p> Test: Get list of flagged objects </p>
 		 * <p> 
 		 * This test verifies that a list of flagged objects can be returned. This is verified by checking that the database method 
-		 * returns a list of the correct size and that.
+		 * returns a list of the correct size and that the objects in the list are flagged (isFlagged is true).
 		 * </p>
 		 * 
 		 * @throws SQLException If a database error occurs
@@ -801,53 +824,8 @@ public class QASystemTest {
 	            if(f instanceof Question) {
 	            	Question qf = (Question) f;
 	            	assertTrue(qf.isFlagged());
-	            	
 	            }
 	        }
 		}
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-		/**
-		 * <p> Test: Mark question and answer as flagged </p>
-		 * <p> 
-		 * This test verifies that a question and an answer can be flagged. This is verified by checking that the database method 
-		 * returns true and that after updating isFlagged its value equals true.
-		 * </p>
-		 * 
-		 * @throws SQLException If a database error occurs
-		 */
-		@Test
-		@DisplayName("Test 31: Mark question and answer as flagged")
-		void testMarkAsFlagged() throws SQLException {
-		    Question q = new Question(
-		        "Question for Flag Test",
-		        "Testing mark as flagged",
-		        testUser1.getUserName()
-		    );
-		    int qId = db.createQuestion(q);
-		    
-		    Answer a = new Answer(qId, "flagged answer", testUser2.getUserName());
-	        int aId = db.createAnswer(a);
-	        
-	        assertFalse(a.isFlagged(), "Answer should initially be un-flagged");
-	        boolean markedA = db.markAnswerFlagged(aId, testUser2.getUserName(), true);
-	        a.setIsFlagged(true);
-	        assertTrue(markedA, "Mark as flagged should succeed");
-	        
-		    assertFalse(q.isFlagged(), "Question should initially be un-flagged");
-		    boolean marked = db.markQuestionFlagged(qId, testUser1.getUserName(), true);
-		    assertTrue(marked, "Mark as flagged should succeed");
-		}
-		
-		
 	}
    
