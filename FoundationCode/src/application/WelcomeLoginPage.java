@@ -39,8 +39,6 @@ public class WelcomeLoginPage {
         Label welcomeLabel = new Label("Hello, "+user.getFullName()+"!");
         welcomeLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
         
-        VBox vbox = new VBox(6);
-        
         Button userButton = new Button("My User Page");
         userButton.setStyle(colors.BASIC + colors.STUDENT_PRIMARY);
         userButton.setOnAction(a -> {
@@ -53,14 +51,14 @@ public class WelcomeLoginPage {
         });
         
         Button qaButton = new Button("Student Q&A System");
-        qaButton.setStyle(colors.BASIC);
+        qaButton.setStyle(colors.BASIC + colors.STUDENT_PRIMARY);
         qaButton.setOnAction(a -> {
-            new StudentQAPage(databaseHelper, user).show(primaryStage);
+            new StudentQAPage(databaseHelper, user).show(primaryStage, 0, null);
         });
         
         
         Button messagesButton = new Button("Direct Messages");
-        messagesButton.setStyle(colors.BASIC);
+        messagesButton.setStyle(colors.BASIC + colors.INSTRUCTOR_ACCENT_DARK);
         messagesButton.setOnAction(a -> {
             new DirectMessages(databaseHelper, user).show(primaryStage);
         });
@@ -77,19 +75,31 @@ public class WelcomeLoginPage {
 //        		new AdminHomePage(databaseHelper).show(primaryStage, user);
         });
         reviewerButton.setVisible(user.getPrivileges()>=2);
+        
         Button adminButton = new Button("Admin Page");
         adminButton.setStyle(colors.BASIC + colors.ADMIN_PRIMARY);
         adminButton.setOnAction(a -> {
                 new AdminHomePage(databaseHelper).show(primaryStage, user);
         });
         adminButton.setVisible(user.getPrivileges()>=99);
+        
         Button staffButton = new Button("Staff/Instructor Page");
         staffButton.setStyle(colors.BASIC + colors.STAFF_PRIMARY);
         staffButton.setOnAction(a -> {
-                //new AdminHomePage(databaseHelper).show(primaryStage, user);
+                try {
+					new staffpage(databaseHelper).show(primaryStage, user);
+				} catch (SQLException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
         });
         
-        
+        // Tickets button for Staff, Instructor, and Admin
+        Button ticketsButton = new Button("Tickets");
+        ticketsButton.setStyle("-fx-font-size: 14px; -fx-padding: 5 20; -fx-background-color: #FF5722; -fx-text-fill: white;");
+        ticketsButton.setOnAction(a -> {
+            new TicketsPage(databaseHelper, user).show(primaryStage, user);
+        });
         
         adminButton.setManaged(user.getPrivileges()>=5);
         staffButton.setManaged(user.getPrivileges()>=3);
@@ -111,23 +121,18 @@ public class WelcomeLoginPage {
                 new BackgroundSize(BackgroundSize.AUTO, BackgroundSize.AUTO, true, true, true, true)
         );
         
+        VBox vbox = new VBox(6);
         vbox.setBackground(new Background(backgroundImg));
         
-        // Build VBox layout
         HBox hbox = new HBox(10, userButton, reviewerButton, staffButton, adminButton);
         hbox.setAlignment(Pos.TOP_CENTER);
         welcomeLabel.setStyle("-fx-padding: 60 0;");
         
-        // Add base elements to VBox in order
+        // Add base elements to VBox
         vbox.getChildren().addAll(hbox, welcomeLabel, qaButton, messagesButton);
         
         // Add Tickets button for Staff (3), Instructor (4), and Admin (99)
         if(user.getPrivileges() == 3 || user.getPrivileges() == 4 || user.getPrivileges() == 99) {
-            Button ticketsButton = new Button("Tickets");
-            ticketsButton.setStyle("-fx-font-size: 14px; -fx-padding: 5 20; -fx-background-color: #FF5722; -fx-text-fill: white;");
-            ticketsButton.setOnAction(a -> {
-                new TicketsPage(databaseHelper, user).show(primaryStage, user);
-            });
             vbox.getChildren().add(ticketsButton);
         }
         
