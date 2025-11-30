@@ -4,7 +4,7 @@ public class colors {
     // --- Role Colors (Primary/Default Button Color) ---
 
     // Admin (Red)
-    public static final String ADMIN_PRIMARY = "-fx-background-color: #D32F2F;";
+    public static final String ADMIN_PRIMARY = "-fx-background-color: #D32F2F; ";
 
     // Instructor (Purple)
     public static final String INSTRUCTOR_PRIMARY = "-fx-background-color: #7B1FA2;";
@@ -28,6 +28,6 @@ public class colors {
     public static final String BASIC = "-fx-font-size: 14px; -fx-padding: 5 20; -fx-background-color: #666; -fx-text-fill: white;";
     public static final String GO = "-fx-font-size: 14px; -fx-padding: 5 20; -fx-background-color: #4CAF50; -fx-text-fill: white;";
     
-    public static final String LABEL = "-fx-font-size: 14px; -fx-font-weight: bold;";
+    public static final String LABEL = "-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #2c2c2c;";
     public static final String report = "-fx-background-color: #ff4f00; -fx-text-fill: white; -fx-padding: 2 2; -fx-font-size: 10px;";
 }

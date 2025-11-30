@@ -52,14 +52,14 @@ public class UserHomePage {
         usernameLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
         TextField usernameField = new TextField(currentUser.getUserName());
         usernameField.setEditable(false);
-        usernameField.setMaxWidth(250);
+        usernameField.setMaxWidth(120);
         usernameField.setStyle("-fx-background-color: #e0e0e0;");
 
         Label nameLabel = new Label("Name");
         nameLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
         
         TextField firstField = new TextField(currentUser.getFirstName());
-        firstField.setMaxWidth(250);
+        firstField.setMaxWidth(150);
         TextField middleField = new TextField();
         middleField.setText(currentUser.getMiddleInitial());
         middleField.setMaxWidth(25);
@@ -69,7 +69,7 @@ public class UserHomePage {
             }
         });
         TextField lastField = new TextField(currentUser.getLastName());
-        lastField.setMaxWidth(250);
+        lastField.setMaxWidth(150);
         
         Button updateName = new Button("✓");
         updateName.setStyle(colors.GO);
@@ -122,7 +122,7 @@ public class UserHomePage {
             if(newEmail.isEmpty()) {
                 emailField.setPromptText("email address");
                 emailField.setStyle("-fx-border-color: orange; -fx-border-width: 1px;");
-                emailField.setMaxWidth(250);
+                emailField.setMaxWidth(200);
                 Label emailWarning = new Label("⚠ Email is required for all users");
                 emailWarning.setStyle("-fx-text-fill: orange; -fx-font-size: 10px;");
                 return;
@@ -159,7 +159,7 @@ public class UserHomePage {
         passwordLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
         PasswordField passwordField = new PasswordField();
         passwordField.setPromptText("Enter new password");
-        passwordField.setMaxWidth(250);
+        passwordField.setMaxWidth(200);
         Button revertPasswordButton = new Button("x");
         revertPasswordButton.setStyle(colors.BASIC);
         revertPasswordButton.setOnAction(e -> {
@@ -247,7 +247,13 @@ public class UserHomePage {
         int correctAnswers = databaseHelper.correctAnswersCount(currentUser.getUserName());
         int totalReviews = databaseHelper.reviewsCount(currentUser.getUserName());
         Label stats = new Label("Questions Asked: "+questionsAsked+" | Questions Answered: "+totalAnswers+" | Answers Marked Correct: "+correctAnswers+" | Weight: "+currentUser.getWeight()+" | Total Reviews: "+totalReviews);
-        
+        double score = databaseHelper.getReviewerScore(currentUser.getUserName());
+        double[] thresh = databaseHelper.getThresh();
+        Label scorecard = new Label("Reviewer score: "+String.format("%.2f", score)+ " || Trust Threshold: "+String.format("%.2f", thresh[0]));
+        Label scorestatus = new Label("Status: ✓ Trusted Reviewer");
+        scorecard.setManaged(currentUser.getPrivileges()>=2);
+        scorestatus.setManaged(currentUser.getPrivileges()>=2);
+        if(score<thresh[0]) {scorestatus.setText("Status: Currently not trusted entirely as a reviewer.");}
         Button goBackButton = new Button("Main Page");
         goBackButton.setStyle("-fx-font-size: 14px; -fx-padding: 5 20; -fx-background-color: #666; -fx-text-fill: white;");
         goBackButton.setOnAction(e -> {
@@ -264,6 +270,7 @@ public class UserHomePage {
         	StudentQAPage qaPage = new StudentQAPage(databaseHelper, currentUser);
             qaPage.show(primaryStage, 1, currentUser.getUserName());
         });
+        loadReviews.setManaged(currentUser.getPrivileges()>=2);
         Button loadAnswers = new Button("Load Answers");
         loadAnswers.setStyle(colors.BASIC + colors.STUDENT_PRIMARY);
         loadAnswers.setOnAction(e->{
@@ -272,7 +279,7 @@ public class UserHomePage {
         });
         HBox reviewButtons = new HBox(6, loadReviews, loadAnswers);
         HBox bottombar = new HBox(6, goBackButton, logoutButton);
-        vbox.getChildren().addAll(passwordBox, reviewerLabel, reviewThings, statsLabel, stats, reviewButtons, bottombar);
+        vbox.getChildren().addAll(passwordBox, reviewerLabel, reviewThings, statsLabel, stats, scorecard, scorestatus, reviewButtons, bottombar);
 
         ScrollPane scrollPane = new ScrollPane();
         scrollPane.setContent(vbox);

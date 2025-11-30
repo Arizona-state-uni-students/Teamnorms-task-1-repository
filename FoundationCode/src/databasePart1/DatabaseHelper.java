@@ -345,7 +345,22 @@ public class DatabaseHelper {
         }
         return data;
     }
-    
+    /**
+     * Gets the reviewer score from the scorecard for a user
+     * @param username the user to get a score for
+     * @return double score
+     * @throws SQLException
+     */
+    public double getReviewerScore(String username) throws SQLException {
+    	double score = 0.0;
+        double totalAnswers = answersCount(username);
+        double correctAnswers = correctAnswersCount(username);
+        double totalReviews = reviewsCount(username);
+        double weight = getUserWeight(username);
+        double[] thresh = getThresh();
+    	score = ((double)correctAnswers/totalAnswers)*thresh[1]+(thresh[2]*weight)+(totalReviews*thresh[3]);
+    	return score;
+    }
 	// ============= Tickets Logic ==============
 	
 	/**

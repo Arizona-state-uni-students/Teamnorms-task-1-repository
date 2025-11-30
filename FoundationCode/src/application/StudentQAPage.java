@@ -39,6 +39,7 @@ public class StudentQAPage {
     private VBox displayReviewers;
     private VBox displayQuestionThread;
     private VBox instructorPanel;
+    private VBox trustedReviewers;
     private ComboBox<String> viewFilter; // Public / Private / All
     private ComboBox<String> resolutionFilter;   // Resolved / Unresolved / All
     private ComboBox<String> reviewerFilter;	// All / Favorite / Pending
@@ -101,6 +102,10 @@ public class StudentQAPage {
     		tabPane.getSelectionModel().select(reviewersTab);
     		loadAllAnswersBy(search);
     	}
+    	if(type==3) {
+    		tabPane.getSelectionModel().select(reviewersTab);
+    		loadReviewers();
+    	}
         // ======= Bottom Buttons =======
         // Back button
         Button backButton = new Button("Back to Home");
@@ -148,29 +153,33 @@ public class StudentQAPage {
          content.setStyle("-fx-background-color: white;");
          
          displayReviewers = new VBox(8);
+         displayReviewers.setStyle("-fx-background-color:#eee; -fx-padding: 10 10;");
          instructorPanel = new VBox(8);
+         trustedReviewers = new VBox(8);
+         trustedReviewers.setStyle("-fx-background-color:#eee; -fx-padding: 10 10;");
          
      	String thisrole = currentUser.getRole();
      	int weight = databaseHelper.getUserWeight(currentUser.getUserName());
      	
-     	Button loadAllReviews = new Button("Load all reviews");
+     	Button loadAllReviews = new Button("All Reviews");
+     	loadAllReviews.setStyle(colors.BASIC + colors.REVIEWER_PRIMARY);
         loadAllReviews.setOnAction(e -> {
-        	loadAllReviews(null);
+        	loadAllReviews(null);getFavoriteReviewers();
         });
-     	Button loadAllReviewerAnswers = new Button("Load all reviewer answers");
+     	Button loadAllReviewerAnswers = new Button("All Reviewer Answers");
+     	loadAllReviewerAnswers.setStyle(colors.BASIC + colors.STUDENT_PRIMARY);
         loadAllReviewerAnswers.setOnAction(e -> {
-        	loadAllAnswersByReviewers();
+        	loadAllAnswersByReviewers();getFavoriteReviewers();
         });
-        Button loadReviewers = new Button("Load Reviewers");
-        loadReviewers.setOnAction(e -> loadReviewers());
+        Button loadReviewers = new Button("Reviewers");
+        loadReviewers.setStyle(colors.BASIC + colors.REVIEWER_PRIMARY);
+        loadReviewers.setOnAction(e -> {loadReviewers();getFavoriteReviewers();});
         
-        Button loadApplicants = new Button("Show Reviewer Applicants");
-        loadApplicants.setOnAction(e -> getPendingReviews() );
+        Button loadApplicants = new Button("Show Applicants");
+        loadApplicants.setStyle(colors.BASIC + colors.INSTRUCTOR_PRIMARY);
+        loadApplicants.setOnAction(e -> {trustedReviewers.getChildren().clear();displayReviewers.getChildren().clear(); getPendingReviews();} );
         loadApplicants.setVisible(false);
-        
-        Button loadFavoriteReviewers = new Button("Load Favorite Reviewers");
-        loadFavoriteReviewers.setOnAction(e -> getFavoriteReviewers());
-        
+        getFavoriteReviewers();
         
      	Label infoLabel = new Label("info label");
         infoLabel.setStyle("-fx-font-weight:bold; -fx-text-fill:#000;");
@@ -191,8 +200,9 @@ public class StudentQAPage {
 	   	HBox topcontent = new HBox(10);
         topcontent.setPadding(new Insets(20));
         topcontent.setStyle("-fx-background-color: white;");
-        topcontent.getChildren().addAll(loadReviewers, loadAllReviews, loadAllReviewerAnswers, loadApplicants, loadFavoriteReviewers);
-	   	content.getChildren().addAll(infoLabel, topcontent, instructorPanel, displayReviewers);
+        topcontent.getChildren().addAll(loadReviewers, loadAllReviews, loadAllReviewerAnswers, loadApplicants);
+        topcontent.setAlignment(Pos.BASELINE_CENTER);
+	   	content.getChildren().addAll(infoLabel, topcontent, instructorPanel, trustedReviewers, displayReviewers);
         ScrollPane scrollPane = new ScrollPane(content);
         scrollPane.setFitToWidth(true);
         tab.setContent(scrollPane);
@@ -203,15 +213,28 @@ public class StudentQAPage {
      * Method to load and display reviewers.
      */
     private void loadReviewers() {
+        Label rvb1 = new Label("Trusted Reviewers: ");
+        rvb1.setStyle(colors.LABEL);
+        Label rvb2 = new Label("Reviewers: ");
+        rvb2.setStyle(colors.LABEL);
     	displayReviewers.getChildren().clear();
+    	trustedReviewers.getChildren().clear();
+    	trustedReviewers.getChildren().add(rvb1);
+    	displayReviewers.getChildren().add(rvb2);
     	try {
     		//admin, instructor will not show up on this list if they create reviews, because they are not "Reviewers"
 			List<User> reviewers = databaseHelper.getUsers_Role("Reviewer");
 			for(User r : reviewers) {
+				boolean trusted=false;
 	              Label head = new Label();
 	              head.setStyle("-fx-font-weight:bold; -fx-text-fill:#000;");
-	              head.setText(r.getUserName());
-	              
+	              head.setText(r.getUserName()+" Score: "+String.format("%.2f", databaseHelper.getReviewerScore(r.getUserName())));
+	              double[] thresh = databaseHelper.getThresh();
+	              if(databaseHelper.getReviewerScore(r.getUserName())>=thresh[0]) {
+	            	  head.setText(head.getText()+" ✓ Trusted Reviewer");
+	            	  trusted = true;
+	              }
+	              System.out.println(trusted);
 	              Button demoteReviewer = new Button("Demote");
                   demoteReviewer.setStyle("-fx-text-fill:#fff; -fx-background-color:#f00");
 		          demoteReviewer.setOnAction(e -> {
@@ -219,8 +242,10 @@ public class StudentQAPage {
 		          });
 		       	  demoteReviewer.setVisible(currentUser.getPrivileges() > 2); //hide button if not instructor+
 	              Button loadReviews = new Button("Load Reviews");
+	              loadReviews.setStyle(colors.BASIC + colors.REVIEWER_PRIMARY);
 	              loadReviews.setOnAction(e -> loadAllReviews(r.getUserName()));
 	              Button loadAnswers = new Button("Load Answers");
+	              loadAnswers.setStyle(colors.BASIC + colors.STUDENT_PRIMARY);
 	              loadAnswers.setOnAction(e -> loadAllAnswersBy(r.getUserName()));
 	              Button favoriteReviewer = new Button("Add to Favorites");
                   favoriteReviewer.setStyle("-fx-text-fill: white; -fx-font-size: 11px; " +"-fx-background-color: #ff7700; -fx-padding: 2px 5px 2px 5px;");
@@ -228,6 +253,7 @@ public class StudentQAPage {
 					try {
 						databaseHelper.addFavorite(currentUser.getUserName(), r.getUserName());
 						favoriteReviewer.setVisible(false);
+						getFavoriteReviewers();
 					} catch (SQLException e1) {
 						// TODO Auto-generated catch block
 						e1.printStackTrace();
@@ -236,7 +262,6 @@ public class StudentQAPage {
 	              //hide add favorite button if already favorited
 	              String[] current = databaseHelper.getFavorites(currentUser.getUserName());
 	              for (String s : current) {
-	            	  System.out.println(s);
 	                  if (s.equalsIgnoreCase(r.getUserName())) {
 	                      favoriteReviewer.setVisible(false);
 	                  }
@@ -248,8 +273,11 @@ public class StudentQAPage {
 	              HBox wrap = new HBox(6);
 	              wrap.setPadding(new Insets(8,0,0,0));
 	              wrap.getChildren().addAll(head, loadReviews, loadAnswers, demoteReviewer, favoriteReviewer);
+	              if(trusted){
+	            	  trustedReviewers.getChildren().add(wrap);}
+	              else{
 	              displayReviewers.getChildren().add(wrap);
-				//System.out.println(r.getUserName());
+	              }
 			}
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
@@ -368,8 +396,6 @@ public class StudentQAPage {
         displayReviewers.getChildren().add(headerGrid);
         for (Review review : reviews) {
         	try {
-        	System.out.println(review.getAnswerId());
-            
             Label contentLabel = new Label(truncateText(review.getReviewText(), 100));
             contentLabel.setWrapText(true);
             contentLabel.setStyle("-fx-text-fill:#333;");
@@ -421,9 +447,6 @@ public class StudentQAPage {
 			    allAnswers.addAll(reviewerAnswers);
 			}
 			loadReviewerAnswersGUI(allAnswers);
-			 Button loadReviewers = new Button("Load Reviewers");
-	            loadReviewers.setOnAction(e -> loadReviewers());
-	            displayReviewers.getChildren().add(loadReviewers);
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -526,13 +549,11 @@ public class StudentQAPage {
     	    submitButton.setOnAction(submitEvent -> {
     	        String reviewText = reviewInput.getText().trim();
     	        if (reviewText.isEmpty()) {
-    	            System.out.println("Review cannot be empty!"); 
     	            return; 
     	        }
 
     	        try {
     	            databaseHelper.addReview(a.getId(), currentUser.getUserName(), reviewText);
-    	            System.out.println("Review submitted for Question ID: " + a.getId());
     	            popupStage.close();
     	        } catch (Exception dbException) {
     	            System.err.println("Database error submitting review: " + dbException.getMessage());
@@ -683,13 +704,11 @@ public class StudentQAPage {
                 String replyText = replyInput.getText().trim();
                 
                 if (replyText.isEmpty()) {
-                    System.out.println("Reply text cannot be empty."); 
                     return;
                 }
 
                 try {
                     databaseHelper.addReviewReply(review.getId(), currentUser.getUserName(), replyText);
-                    System.out.println("Reply submitted successfully.");
                     popupStage.close(); 
                     
                 } catch (SQLException dbException) {
@@ -776,7 +795,7 @@ public class StudentQAPage {
      * Method to show the favorite reviewers for the person logged in.
      */
     private void getFavoriteReviewers() {
-        displayReviewers.getChildren().clear();
+        //displayReviewers.getChildren().clear();
         List<User> users;
         instructorPanel.getChildren().clear();
 
@@ -810,9 +829,11 @@ public class StudentQAPage {
                 for (User u : users) {
                     Label username = new Label(u.getUserName());
                     username.setStyle("-fx-font-weight:bold; -fx-text-fill:#000;");
-                    Button showReviews = new Button("Show All Reviews");
+                    Button showReviews = new Button("Reviews");
+                    showReviews.setStyle(colors.BASIC + colors.REVIEWER_PRIMARY);
                     showReviews.setOnAction(e->{loadAllReviews(u.getUserName());});
-                    Button showAnswers = new Button("Show All Answers");
+                    Button showAnswers = new Button("Answers");
+                    showAnswers.setStyle(colors.BASIC + colors.STUDENT_PRIMARY);
                     showAnswers.setOnAction(e->{loadAllAnswersBy(u.getUserName());});
                     Button removeReview = new Button("Remove");
                     removeReview.setStyle("-fx-text-fill:#fff; -fx-background-color:#f00");
@@ -1736,14 +1757,9 @@ public class StudentQAPage {
         reportQuestion.setStyle(colors.report);
         reportQuestion.setOnAction(e -> {
       	try {
-      		System.out.println(String.valueOf(q.getId()));
-			System.out.println(q.isFlagged());
 			databaseHelper.markQuestionFlagged(q.getId(), true);
 			reportQuestion.setText("Reported");
 			reportQuestion.setDisable(true);
-			System.out.println(q.isFlagged());
-			//a.setIsFlagged(true);
-//			System.out.println(a.isFlagged());
 		} catch (SQLException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
@@ -1925,8 +1941,6 @@ public class StudentQAPage {
 						databaseHelper.markAnswerFlagged(a.getId(), true);
 						reportAnswer.setText("Reported");
 						reportAnswer.setDisable(true);
-//						a.setIsFlagged(true);
-//						System.out.println(a.isFlagged());
 					} catch (SQLException e1) {
 						// TODO Auto-generated catch block
 						e1.printStackTrace();
