@@ -28,12 +28,14 @@ public class staffpage {
     int correctAnswers;
     int totalReviews;
     int weight;
+    double currentThresh = 25;
     Label stats = new Label();
     Label myScore = new Label();
     Label Thresh01 = new Label();
     Label Thresh02 = new Label();
     Label Thresh03 = new Label();
     Label ThreshCalcLabel = new Label();
+    TextField reviewerThreshold = new TextField();
     private static final DateTimeFormatter TS = DateTimeFormatter.ofPattern("MMM dd, yyyy HH:mm");
     public staffpage(DatabaseHelper databaseHelper) {
         this.databaseHelper = databaseHelper;
@@ -79,6 +81,11 @@ public class staffpage {
         	StudentQAPage qaPage = new StudentQAPage(databaseHelper, currentUser);
             qaPage.show(primaryStage, 1, currentUser.getUserName());
         });
+        double[] threshs = databaseHelper.getThresh();
+        currentThresh = threshs[0];
+        thresh01 = threshs[1];
+        thresh02 = threshs[2];
+        thresh03 = threshs[3];
         Thresh01 = new Label();
         Thresh02 = new Label();
         Thresh03 = new Label();
@@ -90,16 +97,18 @@ public class staffpage {
         totalReviews = databaseHelper.reviewsCount(currentUser.getUserName());
         weight = currentUser.getWeight();
         updateScore();
-        int currentThresh = 77;
         Label reviewerThresh = new Label("Trusted Reviewer Threshold:");
         reviewerThresh.setStyle(colors.LABEL);
-        TextField reviewerThreshold = new TextField();
-        reviewerThreshold.setText(String.valueOf(currentThresh));
         reviewerThreshold.setMaxWidth(250);
         Button updateThreshold = new Button("✓");
         updateThreshold.setStyle(colors.GO);
         updateThreshold.setOnAction(e -> {
-        	
+        	try {
+				databaseHelper.updateThresh(currentThresh);
+			} catch (SQLException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
         });
         Slider Threshslider = new Slider();
         Threshslider.setMin(0);
@@ -111,7 +120,7 @@ public class staffpage {
         Threshslider.setShowTickLabels(true);
         Threshslider.valueProperty().addListener((observable, oldValue, newValue) -> {
             // Display the value rounded to 2 decimal places
-            reviewerThreshold.setText(String.format("%.2f", newValue.doubleValue()));
+        	currentThresh = newValue.doubleValue();
             updateScore();
         });
         Label threshCalculator = new Label("");
@@ -119,7 +128,7 @@ public class staffpage {
         ThreshsliderO1.setMin(0);
         ThreshsliderO1.setMax(10);
         ThreshsliderO1.setValue(thresh01);
-        ThreshsliderO1.setMajorTickUnit(3);
+        ThreshsliderO1.setMajorTickUnit(2.5);
         ThreshsliderO1.setMinorTickCount(4);
         ThreshsliderO1.setShowTickMarks(true);
         ThreshsliderO1.setShowTickLabels(true);
@@ -156,6 +165,14 @@ public class staffpage {
         });
         Button saveCalculations = new Button("✓");
         saveCalculations.setStyle(colors.GO);
+        saveCalculations.setOnAction(e->{
+        	try {
+				databaseHelper.updateScoreCards(thresh01, thresh02, thresh03);
+			} catch (SQLException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+        });
         HBox ThreshCalculator = new HBox(Thresh01, ThreshsliderO1, Thresh02, ThreshsliderO2, Thresh03, ThreshsliderO3, saveCalculations);
         HBox ThreshSettings = new HBox(6, reviewerThresh, reviewerThreshold, updateThreshold, Threshslider);
         HBox bottombar = new HBox(6, goBackButton, logoutButton);
@@ -193,11 +210,12 @@ public class staffpage {
     	Thresh01.setText(String.format("%.2f",thresh01));
     	Thresh02.setText(String.format("%.2f",thresh02));
     	Thresh03.setText(String.format("%.2f",thresh03));
-        stats.setText("Questions Asked: "+questionsAsked+" | Total Answers: "+totalAnswers+" | Answers Marked Correct: "+correctAnswers+" | Weight: "+weight+" | Total Reviews: "+totalReviews);
+    	reviewerThreshold.setText(String.format("%.2f",currentThresh));
+        stats.setText("Questions Asked: "+questionsAsked+" | Total Answers: "+totalAnswers+" | Answers Marked Correct: "+correctAnswers+" | Upvotes: "+weight+" | Total Reviews: "+totalReviews);
         double myReviewerScore = ((double)correctAnswers/totalAnswers)*thresh01+(thresh02*weight)+(totalReviews*thresh03);
         myScore.setText("My Reviewer Score: "+String.format("%.2f", (double) myReviewerScore));
         myScore.setStyle(colors.LABEL);
-        ThreshCalcLabel.setText("((CorrectAnswers/TotalAnswers) * "+String.format("%.2f",thresh01)+") + ("+String.format("%.2f",thresh02)+" * Weight) + (TotalReviews * "+String.format("%.2f",thresh03)+")");
+        ThreshCalcLabel.setText("((CorrectAnswers/TotalAnswers) * "+String.format("%.2f",thresh01)+") + ("+String.format("%.2f",thresh02)+" * Upvotes) + (TotalReviews * "+String.format("%.2f",thresh03)+")");
     }
     
     /**
