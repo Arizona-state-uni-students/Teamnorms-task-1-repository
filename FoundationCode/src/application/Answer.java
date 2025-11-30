@@ -57,6 +57,7 @@ public class Answer {
         this.answeredBy = answeredBy;
         this.createdAt = createdAt;
         this.isRead = isRead;
+        this.isFlagged = isFlagged;
         this.upvotes = upvotes;
     }
     
