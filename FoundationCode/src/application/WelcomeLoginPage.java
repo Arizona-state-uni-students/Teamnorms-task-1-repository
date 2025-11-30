@@ -69,19 +69,18 @@ public class WelcomeLoginPage {
                 new UserLoginPage(databaseHelper).show(primaryStage);
         });
         
-        Button reviewerButton = new Button("Reviewer Page");
+        Button reviewerButton = new Button("Reviewers");
         reviewerButton.setStyle(colors.BASIC + colors.REVIEWER_PRIMARY);
         reviewerButton.setOnAction(a -> {
-//        		new AdminHomePage(databaseHelper).show(primaryStage, user);
+        	StudentQAPage qaPage = new StudentQAPage(databaseHelper, user);
+            qaPage.show(primaryStage, 3, null);
         });
-        reviewerButton.setVisible(user.getPrivileges()>=2);
         
         Button adminButton = new Button("Admin Page");
         adminButton.setStyle(colors.BASIC + colors.ADMIN_PRIMARY);
         adminButton.setOnAction(a -> {
                 new AdminHomePage(databaseHelper).show(primaryStage, user);
         });
-        adminButton.setVisible(user.getPrivileges()>=99);
         
         Button staffButton = new Button("Staff/Instructor Page");
         staffButton.setStyle(colors.BASIC + colors.STAFF_PRIMARY);
@@ -103,7 +102,8 @@ public class WelcomeLoginPage {
         
         adminButton.setManaged(user.getPrivileges()>=5);
         staffButton.setManaged(user.getPrivileges()>=3);
-        reviewerButton.setManaged(user.getPrivileges()>=2);
+        ticketsButton.setManaged(user.getPrivileges()>=3);
+        //reviewerButton.setManaged(user.getPrivileges()>=2);
         
         // Set background image based on user privileges
         Image backgroundImage = new Image(getClass().getResource("/blankuser.png").toExternalForm());
@@ -126,19 +126,11 @@ public class WelcomeLoginPage {
         
         HBox hbox = new HBox(10, userButton, reviewerButton, staffButton, adminButton);
         hbox.setAlignment(Pos.TOP_CENTER);
-        welcomeLabel.setStyle("-fx-padding: 60 0;");
+        welcomeLabel.setStyle("-fx-padding: 30 0;");
         
-        // Add base elements to VBox
-        vbox.getChildren().addAll(hbox, welcomeLabel, qaButton, messagesButton);
-        
-        // Add Tickets button for Staff (3), Instructor (4), and Admin (99)
-        if(user.getPrivileges() == 3 || user.getPrivileges() == 4 || user.getPrivileges() == 99) {
-            vbox.getChildren().add(ticketsButton);
-        }
-        
-        // Add logout button at the end
-        vbox.getChildren().add(logout);
-        
+        Separator sep1 = new Separator();
+        sep1.setStyle("-fx-padding: 10 0;");
+        vbox.getChildren().addAll(hbox, sep1, messagesButton, qaButton, welcomeLabel, ticketsButton, logout);
         vbox.setAlignment(Pos.TOP_CENTER);
         vbox.setPadding(new Insets(20));
         Scene welcomeScene = new Scene(vbox, 800, 400);

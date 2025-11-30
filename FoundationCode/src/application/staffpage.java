@@ -216,6 +216,7 @@ public class staffpage {
         myScore.setText("My Reviewer Score: "+String.format("%.2f", (double) myReviewerScore));
         myScore.setStyle(colors.LABEL);
         ThreshCalcLabel.setText("((CorrectAnswers/TotalAnswers) * "+String.format("%.2f",thresh01)+") + ("+String.format("%.2f",thresh02)+" * Upvotes) + (TotalReviews * "+String.format("%.2f",thresh03)+")");
+        
     }
     
     /**
@@ -263,7 +264,6 @@ public class staffpage {
 	              //hide add favorite button if already favorited
 	              String[] current = databaseHelper.getFavorites(currentUser.getUserName());
 	              for (String s : current) {
-	            	  System.out.println(s);
 	                  if (s.equalsIgnoreCase(r.getUserName())) {
 	                      favoriteReviewer.setVisible(false);
 	                  }
@@ -274,9 +274,9 @@ public class staffpage {
 	              head.setStyle("-fx-font-weight:bold; -fx-text-fill:#000;");
 	              HBox wrap = new HBox(6);
 	              wrap.setPadding(new Insets(8,0,0,0));
-	              wrap.getChildren().addAll(head, loadReviews, loadAnswers, demoteReviewer, favoriteReviewer);
+	              Label rScore = new Label("Score: "+String.format("%.2f", databaseHelper.getReviewerScore(r.getUserName())));
+	              wrap.getChildren().addAll(head, loadReviews, loadAnswers, demoteReviewer, favoriteReviewer, rScore);
 	              displayReviewers.getChildren().add(wrap);
-				//System.out.println(r.getUserName());
 			}
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
