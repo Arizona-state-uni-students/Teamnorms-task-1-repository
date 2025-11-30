@@ -18,7 +18,7 @@ import javafx.stage.Stage;
 /**
  * TicketsPage provides ticket management interface for instructors, staff, and admins.
  * Instructors can create and reopen tickets. Admins can close tickets with resolution comments.
- * All roles can view open and closed tickets.
+ * Staff, Instructor, and Admin can view open and closed tickets.
  */
 public class TicketsPage {
     private final DatabaseHelper databaseHelper;
