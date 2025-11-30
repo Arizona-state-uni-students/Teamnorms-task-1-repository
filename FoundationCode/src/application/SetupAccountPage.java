@@ -180,7 +180,8 @@ public class SetupAccountPage {
             String password = passwordField.getText();
             String middleInitial = middleNameField.getText();
             String code = inviteCodeField.getText();
-            
+            String firstname = firstNameField.getText();
+            String lastname = lastNameField.getText();            
             if(usernameSet && passwordSet && emailSet && nameSet) {
 	            try {
 	                // Check if user already exists
@@ -201,6 +202,8 @@ public class SetupAccountPage {
 	                    	 User user = new User(userName, password, "Student");
 	                         user.setEmail(email);
 	                         user.setMiddleInitial(middleInitial);
+	                         user.setFirstName(firstname);
+	                         user.setLastName(lastname);
 	                         databaseHelper.register(user);
 	                        new WelcomeLoginPage(databaseHelper).show(primaryStage, user);
 	                        
