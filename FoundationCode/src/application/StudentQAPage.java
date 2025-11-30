@@ -39,6 +39,7 @@ public class StudentQAPage {
     private VBox displayReviewers;
     private VBox displayQuestionThread;
     private VBox instructorPanel;
+    private VBox trustedReviewers;
     private ComboBox<String> viewFilter; // Public / Private / All
     private ComboBox<String> resolutionFilter;   // Resolved / Unresolved / All
     private ComboBox<String> reviewerFilter;	// All / Favorite / Pending
@@ -101,6 +102,10 @@ public class StudentQAPage {
     		tabPane.getSelectionModel().select(reviewersTab);
     		loadAllAnswersBy(search);
     	}
+    	if(type==3) {
+    		tabPane.getSelectionModel().select(reviewersTab);
+    		loadReviewers();
+    	}
         // ======= Bottom Buttons =======
         // Back button
         Button backButton = new Button("Back to Home");
@@ -148,29 +153,33 @@ public class StudentQAPage {
          content.setStyle("-fx-background-color: white;");
          
          displayReviewers = new VBox(8);
+         displayReviewers.setStyle("-fx-background-color:#eee; -fx-padding: 10 10;");
          instructorPanel = new VBox(8);
+         trustedReviewers = new VBox(8);
+         trustedReviewers.setStyle("-fx-background-color:#eee; -fx-padding: 10 10;");
          
      	String thisrole = currentUser.getRole();
      	int weight = databaseHelper.getUserWeight(currentUser.getUserName());
      	
-     	Button loadAllReviews = new Button("Load all reviews");
+     	Button loadAllReviews = new Button("All Reviews");
+     	loadAllReviews.setStyle(colors.BASIC + colors.REVIEWER_PRIMARY);
         loadAllReviews.setOnAction(e -> {
-        	loadAllReviews(null);
+        	loadAllReviews(null);getFavoriteReviewers();
         });
-     	Button loadAllReviewerAnswers = new Button("Load all reviewer answers");
+     	Button loadAllReviewerAnswers = new Button("All Reviewer Answers");
+     	loadAllReviewerAnswers.setStyle(colors.BASIC + colors.STUDENT_PRIMARY);
         loadAllReviewerAnswers.setOnAction(e -> {
-        	loadAllAnswersByReviewers();
+        	loadAllAnswersByReviewers();getFavoriteReviewers();
         });
-        Button loadReviewers = new Button("Load Reviewers");
-        loadReviewers.setOnAction(e -> loadReviewers());
+        Button loadReviewers = new Button("Reviewers");
+        loadReviewers.setStyle(colors.BASIC + colors.REVIEWER_PRIMARY);
+        loadReviewers.setOnAction(e -> {loadReviewers();getFavoriteReviewers();});
         
-        Button loadApplicants = new Button("Show Reviewer Applicants");
-        loadApplicants.setOnAction(e -> getPendingReviews() );
+        Button loadApplicants = new Button("Show Applicants");
+        loadApplicants.setStyle(colors.BASIC + colors.INSTRUCTOR_PRIMARY);
+        loadApplicants.setOnAction(e -> {trustedReviewers.getChildren().clear();displayReviewers.getChildren().clear(); getPendingReviews();} );
         loadApplicants.setVisible(false);
-        
-        Button loadFavoriteReviewers = new Button("Load Favorite Reviewers");
-        loadFavoriteReviewers.setOnAction(e -> getFavoriteReviewers());
-        
+        getFavoriteReviewers();
         
      	Label infoLabel = new Label("info label");
         infoLabel.setStyle("-fx-font-weight:bold; -fx-text-fill:#000;");
@@ -191,8 +200,9 @@ public class StudentQAPage {
 	   	HBox topcontent = new HBox(10);
         topcontent.setPadding(new Insets(20));
         topcontent.setStyle("-fx-background-color: white;");
-        topcontent.getChildren().addAll(loadReviewers, loadAllReviews, loadAllReviewerAnswers, loadApplicants, loadFavoriteReviewers);
-	   	content.getChildren().addAll(infoLabel, topcontent, instructorPanel, displayReviewers);
+        topcontent.getChildren().addAll(loadReviewers, loadAllReviews, loadAllReviewerAnswers, loadApplicants);
+        topcontent.setAlignment(Pos.BASELINE_CENTER);
+	   	content.getChildren().addAll(infoLabel, topcontent, instructorPanel, trustedReviewers, displayReviewers);
         ScrollPane scrollPane = new ScrollPane(content);
         scrollPane.setFitToWidth(true);
         tab.setContent(scrollPane);
@@ -203,15 +213,28 @@ public class StudentQAPage {
      * Method to load and display reviewers.
      */
     private void loadReviewers() {
+        Label rvb1 = new Label("Trusted Reviewers: ");
+        rvb1.setStyle(colors.LABEL);
+        Label rvb2 = new Label("Reviewers: ");
+        rvb2.setStyle(colors.LABEL);
     	displayReviewers.getChildren().clear();
+    	trustedReviewers.getChildren().clear();
+    	trustedReviewers.getChildren().add(rvb1);
+    	displayReviewers.getChildren().add(rvb2);
     	try {
     		//admin, instructor will not show up on this list if they create reviews, because they are not "Reviewers"
 			List<User> reviewers = databaseHelper.getUsers_Role("Reviewer");
 			for(User r : reviewers) {
+				boolean trusted=false;
 	              Label head = new Label();
 	              head.setStyle("-fx-font-weight:bold; -fx-text-fill:#000;");
-	              head.setText(r.getUserName());
-	              
+	              head.setText(r.getUserName()+" Score: "+String.format("%.2f", databaseHelper.getReviewerScore(r.getUserName())));
+	              double[] thresh = databaseHelper.getThresh();
+	              if(databaseHelper.getReviewerScore(r.getUserName())>=thresh[0]) {
+	            	  head.setText(head.getText()+" ✓ Trusted Reviewer");
+	            	  trusted = true;
+	              }
+	              System.out.println(trusted);
 	              Button demoteReviewer = new Button("Demote");
                   demoteReviewer.setStyle("-fx-text-fill:#fff; -fx-background-color:#f00");
 		          demoteReviewer.setOnAction(e -> {
@@ -219,8 +242,10 @@ public class StudentQAPage {
 		          });
 		       	  demoteReviewer.setVisible(currentUser.getPrivileges() > 2); //hide button if not instructor+
 	              Button loadReviews = new Button("Load Reviews");
+	              loadReviews.setStyle(colors.BASIC + colors.REVIEWER_PRIMARY);
 	              loadReviews.setOnAction(e -> loadAllReviews(r.getUserName()));
 	              Button loadAnswers = new Button("Load Answers");
+	              loadAnswers.setStyle(colors.BASIC + colors.STUDENT_PRIMARY);
 	              loadAnswers.setOnAction(e -> loadAllAnswersBy(r.getUserName()));
 	              Button favoriteReviewer = new Button("Add to Favorites");
                   favoriteReviewer.setStyle("-fx-text-fill: white; -fx-font-size: 11px; " +"-fx-background-color: #ff7700; -fx-padding: 2px 5px 2px 5px;");
@@ -228,6 +253,7 @@ public class StudentQAPage {
 					try {
 						databaseHelper.addFavorite(currentUser.getUserName(), r.getUserName());
 						favoriteReviewer.setVisible(false);
+						getFavoriteReviewers();
 					} catch (SQLException e1) {
 						// TODO Auto-generated catch block
 						e1.printStackTrace();
@@ -236,7 +262,6 @@ public class StudentQAPage {
 	              //hide add favorite button if already favorited
 	              String[] current = databaseHelper.getFavorites(currentUser.getUserName());
 	              for (String s : current) {
-	            	  System.out.println(s);
 	                  if (s.equalsIgnoreCase(r.getUserName())) {
 	                      favoriteReviewer.setVisible(false);
 	                  }
@@ -248,8 +273,11 @@ public class StudentQAPage {
 	              HBox wrap = new HBox(6);
 	              wrap.setPadding(new Insets(8,0,0,0));
 	              wrap.getChildren().addAll(head, loadReviews, loadAnswers, demoteReviewer, favoriteReviewer);
+	              if(trusted){
+	            	  trustedReviewers.getChildren().add(wrap);}
+	              else{
 	              displayReviewers.getChildren().add(wrap);
-				//System.out.println(r.getUserName());
+	              }
 			}
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
@@ -368,8 +396,6 @@ public class StudentQAPage {
         displayReviewers.getChildren().add(headerGrid);
         for (Review review : reviews) {
         	try {
-        	System.out.println(review.getAnswerId());
-            
             Label contentLabel = new Label(truncateText(review.getReviewText(), 100));
             contentLabel.setWrapText(true);
             contentLabel.setStyle("-fx-text-fill:#333;");
@@ -421,9 +447,6 @@ public class StudentQAPage {
 			    allAnswers.addAll(reviewerAnswers);
 			}
 			loadReviewerAnswersGUI(allAnswers);
-			 Button loadReviewers = new Button("Load Reviewers");
-	            loadReviewers.setOnAction(e -> loadReviewers());
-	            displayReviewers.getChildren().add(loadReviewers);
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -526,13 +549,11 @@ public class StudentQAPage {
     	    submitButton.setOnAction(submitEvent -> {
     	        String reviewText = reviewInput.getText().trim();
     	        if (reviewText.isEmpty()) {
-    	            System.out.println("Review cannot be empty!"); 
     	            return; 
     	        }
 
     	        try {
     	            databaseHelper.addReview(a.getId(), currentUser.getUserName(), reviewText);
-    	            System.out.println("Review submitted for Question ID: " + a.getId());
     	            popupStage.close();
     	        } catch (Exception dbException) {
     	            System.err.println("Database error submitting review: " + dbException.getMessage());
@@ -562,12 +583,25 @@ public class StudentQAPage {
 
         VBox contentVBox = new VBox(15);
         contentVBox.setPadding(new Insets(20));
-
+        
         Label reviewContent = new Label(review.getReviewText());
+        if(review.isFlagged()) {
+        	reviewContent.setText("This review has been reported and is under review. It will return if everything's okay.");
+        }
         try {
             Label reviewHeader = new Label("Review by: " + review.getWrittenBy());
             reviewHeader.setFont(Font.font("Arial", FontWeight.BOLD, 14));
             Button editReview = new Button("Edit Review");
+            Button reportReview = new Button("Report");
+            reportReview.setStyle(colors.report);
+            reportReview.setOnAction(e->{
+            	try {
+					databaseHelper.markReviewAsFlagged(review.getId(), true);
+				} catch (SQLException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+            });
             editReview.setStyle("-fx-border-color: orange; -fx-border-width: 0 0 1 0;");
             editReview.setOnAction(e -> {
             	//opens a new window to edit review
@@ -620,20 +654,21 @@ public class StudentQAPage {
             }
             reviewContent.setWrapText(true);
             reviewContent.setFont(Font.font("Arial", 12));
-            HBox hbox = new HBox(8, reviewHeader, editReview);
+            HBox hbox = new HBox(8, reviewHeader, editReview, reportReview);
             contentVBox.getChildren().addAll(hbox, reviewContent);
 
             List<ReviewReply> replies = databaseHelper.getRepliesForReview(review.getId());
             Label repliesHeader = new Label("\n--- Replies (" + replies.size() + ") ---");
             repliesHeader.setFont(Font.font("Arial", FontWeight.BOLD, 14));
             contentVBox.getChildren().add(repliesHeader);
-
             if (replies.isEmpty()) {
                 contentVBox.getChildren().add(new Label("No replies yet."));
             } else {
                 VBox repliesContainer = new VBox(5);
                 for (ReviewReply reply : replies) {
                     Label replyLabel = new Label();
+                    Button reportReviewReply = new Button("Report");
+                    reportReviewReply.setStyle(colors.report);
                     if (reply.getReplyText().startsWith("REVIEW UPDATED")) {
                     	replyLabel.setStyle("-fx-text-fill:#eee; -fx-font-size:11px; -fx-background-color:orange;");
                     	replyLabel.setText("---"+reply.getReplyText());
@@ -641,9 +676,18 @@ public class StudentQAPage {
                     }else {
                     	replyLabel.setStyle("-fx-text-fill:#666; -fx-font-size:11px;");
                     	replyLabel.setText(reply.getCreatedAt().toLocalTime().toString().substring(0, 5) + " " +reply.getRepliedBy() + ": " + reply.getReplyText());
+                        reportReviewReply.setOnAction(e->{
+                        	try {
+								databaseHelper.markReviewReplyAsFlagged(reply.getId(), true);
+							} catch (SQLException e1) {
+								// TODO Auto-generated catch block
+								e1.printStackTrace();
+							}
+                        });
                     }
                     replyLabel.setWrapText(true);
-                    repliesContainer.getChildren().add(replyLabel);
+                    HBox anotha1 = new HBox(6, reportReviewReply, replyLabel);
+                    repliesContainer.getChildren().add(anotha1);
                 }
                 contentVBox.getChildren().add(repliesContainer);
             }
@@ -660,13 +704,11 @@ public class StudentQAPage {
                 String replyText = replyInput.getText().trim();
                 
                 if (replyText.isEmpty()) {
-                    System.out.println("Reply text cannot be empty."); 
                     return;
                 }
 
                 try {
                     databaseHelper.addReviewReply(review.getId(), currentUser.getUserName(), replyText);
-                    System.out.println("Reply submitted successfully.");
                     popupStage.close(); 
                     
                 } catch (SQLException dbException) {
@@ -753,7 +795,7 @@ public class StudentQAPage {
      * Method to show the favorite reviewers for the person logged in.
      */
     private void getFavoriteReviewers() {
-        displayReviewers.getChildren().clear();
+        //displayReviewers.getChildren().clear();
         List<User> users;
         instructorPanel.getChildren().clear();
 
@@ -787,9 +829,11 @@ public class StudentQAPage {
                 for (User u : users) {
                     Label username = new Label(u.getUserName());
                     username.setStyle("-fx-font-weight:bold; -fx-text-fill:#000;");
-                    Button showReviews = new Button("Show All Reviews");
+                    Button showReviews = new Button("Reviews");
+                    showReviews.setStyle(colors.BASIC + colors.REVIEWER_PRIMARY);
                     showReviews.setOnAction(e->{loadAllReviews(u.getUserName());});
-                    Button showAnswers = new Button("Show All Answers");
+                    Button showAnswers = new Button("Answers");
+                    showAnswers.setStyle(colors.BASIC + colors.STUDENT_PRIMARY);
                     showAnswers.setOnAction(e->{loadAllAnswersBy(u.getUserName());});
                     Button removeReview = new Button("Remove");
                     removeReview.setStyle("-fx-text-fill:#fff; -fx-background-color:#f00");
@@ -1534,7 +1578,10 @@ public class StudentQAPage {
                 return;
             }
             for (Question q : questions) {
-                displayQuestions.getChildren().add(questionRow(q));
+                if (q.isFlagged()) {
+                	continue;
+                }
+                //displayQuestions.getChildren().add(questionRow(q));
             }
             // Select the first question by default
             loadThread(questions.get(0));
@@ -1706,8 +1753,20 @@ public class StudentQAPage {
         Label body = new Label(q.getContent());
         body.setWrapText(true);
         body.setStyle("-fx-padding:8; -fx-background-color:#fff; -fx-border-color:#ddd; -fx-text-fill: black;");
-
-        VBox header = new VBox(6, headerActions, title, meta, body);
+        Button reportQuestion = new Button("Report");
+        reportQuestion.setStyle(colors.report);
+        reportQuestion.setOnAction(e -> {
+      	try {
+			databaseHelper.markQuestionFlagged(q.getId(), true);
+			reportQuestion.setText("Reported");
+			reportQuestion.setDisable(true);
+		} catch (SQLException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+      });
+        HBox hb1 = new HBox(6, meta, reportQuestion);
+        VBox header = new VBox(6, headerActions, title, hb1, body);
         header.setPadding(new Insets(6,0,12,0));
         displayQuestionThread.getChildren().add(header);
 
@@ -1749,6 +1808,7 @@ public class StudentQAPage {
             Label ansTitle = new Label("Answers (" + answers.size() + ")");
             ansTitle.setStyle("-fx-font-weight:bold; -fx-text-fill: black;");
             
+            
             Button viewAllBtn = new Button("View All Answers Dialog");
             viewAllBtn.setStyle("-fx-background-color: #0099ff; -fx-text-fill: white; -fx-font-size: 11px;");
             viewAllBtn.setOnAction(e -> {
@@ -1761,6 +1821,8 @@ public class StudentQAPage {
                     showError("Load failed", ex.getMessage());
                 }
             });
+            
+            
             
             ansHeader.getChildren().addAll(ansTitle, viewAllBtn);
             VBox answersBox = new VBox(8, ansHeader);
@@ -1775,30 +1837,30 @@ public class StudentQAPage {
             } else {
                 for (Answer a : answers) {
                     VBox card = new VBox(5);
-                    
+                    if (a.isFlagged()) {
+                    	continue;
+                    }
                     // Answer metadata and content
                     Label status = new Label("STATUS");
                     String role = databaseHelper.getUserRole(a.getAnsweredBy());
                     status.setText(role);
                     if("Admin".equals(role)) {
-                        status.setStyle("-fx-text-fill: white; -fx-font-size: 11px; " +
-                                       "-fx-background-color: #C00000; -fx-padding: 2px 5px 2px 5px;");
+                        status.setStyle(colors.ADMIN_PRIMARY + "-fx-padding: 2 5;");
                     }
                     if("Reviewer".equals(role)) {
-                        status.setStyle("-fx-text-fill: white; -fx-font-size: 11px; " +
-                                       "-fx-background-color: #ff7700; -fx-padding: 2px 5px 2px 5px;");
+                        status.setStyle(colors.REVIEWER_PRIMARY + "-fx-padding: 2 5;");
                     }
                     if("Staff".equals(role)) {
-                        status.setStyle("-fx-text-fill: white; -fx-font-size: 11px; " +
-                                       "-fx-background-color: #900FE0; -fx-padding: 2px 5px 2px 5px;");
+                        status.setStyle(colors.STAFF_PRIMARY + "-fx-padding: 2 5;");
                     }
                     if("User".equals(role)) {
-                        status.setStyle("-fx-text-fill: white; -fx-font-size: 11px; " +
-                                       "-fx-background-color: #0099ff; -fx-padding: 2px 5px 2px 5px;");
+                        status.setStyle(colors.USER_PRIMARY + "-fx-padding: 2 5;");
                     }
                     if("Student".equals(role)) {
-                        status.setStyle("-fx-text-fill: white; -fx-font-size: 11px; " +
-                                       "-fx-background-color: #0099ff; -fx-padding: 2px 5px 2px 5px;");
+                        status.setStyle(colors.STUDENT_PRIMARY + "-fx-padding: 2 5;");
+                    }
+                    if("Instructor".equals(role)) {
+                        status.setStyle(colors.INSTRUCTOR_PRIMARY + "-fx-padding: 2 5;");
                     }
                     
                     Label aMeta = new Label(a.getAnsweredBy() + " • " + a.getCreatedAt().format(TS) + 
@@ -1870,7 +1932,23 @@ public class StudentQAPage {
 
                         actionBox.getChildren().addAll(editBtn, deleteBtn);
                     }
+                    
+                    Button reportAnswer = new Button("Report");
+
+                    reportAnswer.setStyle(colors.report + "-fx-font-size: 10px;");
+                    reportAnswer.setOnAction(e -> {
+                  	try {
+						databaseHelper.markAnswerFlagged(a.getId(), true);
+						reportAnswer.setText("Reported");
+						reportAnswer.setDisable(true);
+					} catch (SQLException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
+                  });
+                    
                     Button addReview = new Button("Add Review");
+                    addReview.setStyle(colors.REVIEWER_PRIMARY + "-fx-text-fill: white;");
                     addReview.setVisible(false);
                     if(currentUser.getPrivileges()>1) { //can initiate review
                     	addReview.setVisible(true);
@@ -1889,7 +1967,7 @@ public class StudentQAPage {
 							e1.printStackTrace();
 						}
                     	});
-                    actionBox.getChildren().add(addReview);
+                    actionBox.getChildren().addAll(addReview, reportAnswer);
                     HBox box = new HBox(6, status, aMeta);
                     card.getChildren().addAll(box, aText, actionBox);
                     
@@ -2983,6 +3061,7 @@ public class StudentQAPage {
             boolean any = false;
             for (PrivateMessage pm : allPM) {
                 if (!canSeePrivate(q, pm)) continue;
+                String pmrole=databaseHelper.getUserRole(pm.getSender());
                 any = true;
                 VBox card = new VBox(3);
                 Label meta = new Label(pm.getSender() + " • " + pm.getCreatedAt().format(TS) + " • " + pm.getMessageType() + " --> " + pm.getTo());
@@ -2990,8 +3069,43 @@ public class StudentQAPage {
                 Label text = new Label(pm.getContent());
                 text.setWrapText(true);
                 text.setStyle("-fx-text-fill: black;");
-                card.getChildren().addAll(meta, text);
+                Button reportFeedback = new Button("Report");
+                reportFeedback.setStyle(colors.report + "-fx-font-size: 11px;");
+                reportFeedback.setOnAction(e->{
+                	try {
+						databaseHelper.markFeedbackAsFlagged(pm.getId(), true);
+					} catch (SQLException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
+                });
+                HBox anotha2 = new HBox(6, reportFeedback, meta);
+                card.getChildren().addAll(anotha2, text);
                 card.setStyle("-fx-background-color:#999; -fx-border-color:#ccc; -fx-padding:8;");
+                if(pmrole.equals("Admin")) {
+                    card.setStyle("-fx-background-color:#999; -fx-border-color:#ff0000; -fx-padding:8;");
+                    meta.setStyle("-fx-text-fill: #ff0000; -fx-font-size:11px;");
+                }
+                if(pmrole.equals("Instructor")) {
+                    card.setStyle("-fx-background-color:#999; -fx-border-color:#A034CB; -fx-padding:8;");
+                    meta.setStyle("-fx-text-fill: #A034CB; -fx-font-size:11px;");
+                }
+                if(pmrole.equals("Staff")) {
+                    card.setStyle("-fx-background-color:#999; -fx-border-color:#FFEE00; -fx-padding:8;");
+                    meta.setStyle("-fx-text-fill: #FFEE00; -fx-font-size:11px;");
+                }
+                if(pmrole.equals("Reviewer")) {
+                    card.setStyle("-fx-background-color:#999; -fx-border-color:#3BEB14; -fx-padding:8;");
+                    meta.setStyle("-fx-text-fill: #3BEB14; -fx-font-size:11px;");
+                }
+                if(pmrole.equals("Student")) {
+                    card.setStyle("-fx-background-color:#999; -fx-border-color:#00BBFF; -fx-padding:8;");
+                    meta.setStyle("-fx-text-fill: #00BBFF; -fx-font-size:11px;");
+                }
+                if(pmrole.equals("User")) {
+                    card.setStyle("-fx-background-color:#999; -fx-border-color:#fff; -fx-padding:8;");
+                    meta.setStyle("-fx-text-fill: white; -fx-font-size:11px;");
+                }
                 box.getChildren().add(card);
             }
             

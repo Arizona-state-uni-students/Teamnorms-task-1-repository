@@ -58,7 +58,7 @@ public class WelcomeLoginPage {
         
         
         Button messagesButton = new Button("Direct Messages");
-        messagesButton.setStyle(colors.BASIC + colors.INSTRUCTOR_ACCENT_DARK);
+        messagesButton.setStyle(colors.BASIC);
         messagesButton.setOnAction(a -> {
             new DirectMessages(databaseHelper, user).show(primaryStage);
         });
@@ -69,18 +69,19 @@ public class WelcomeLoginPage {
                 new UserLoginPage(databaseHelper).show(primaryStage);
         });
         
-        Button reviewerButton = new Button("Reviewer Page");
+        Button reviewerButton = new Button("Reviewers");
         reviewerButton.setStyle(colors.BASIC + colors.REVIEWER_PRIMARY);
         reviewerButton.setOnAction(a -> {
-//        		new AdminHomePage(databaseHelper).show(primaryStage, user);
+        	StudentQAPage qaPage = new StudentQAPage(databaseHelper, user);
+            qaPage.show(primaryStage, 3, null);
         });
-        reviewerButton.setVisible(user.getPrivileges()>=2);
+        
         Button adminButton = new Button("Admin Page");
         adminButton.setStyle(colors.BASIC + colors.ADMIN_PRIMARY);
         adminButton.setOnAction(a -> {
                 new AdminHomePage(databaseHelper).show(primaryStage, user);
         });
-        adminButton.setVisible(user.getPrivileges()>=99);
+        
         Button staffButton = new Button("Staff/Instructor Page");
         staffButton.setStyle(colors.BASIC + colors.STAFF_PRIMARY);
         staffButton.setOnAction(a -> {
@@ -92,30 +93,44 @@ public class WelcomeLoginPage {
 				}
         });
         
-        
+        // Tickets button for Staff, Instructor, and Admin
+        Button ticketsButton = new Button("Tickets");
+        ticketsButton.setStyle("-fx-font-size: 14px; -fx-padding: 5 20; -fx-background-color: #FF5722; -fx-text-fill: white;");
+        ticketsButton.setOnAction(a -> {
+            new TicketsPage(databaseHelper, user).show(primaryStage, user);
+        });
         
         adminButton.setManaged(user.getPrivileges()>=5);
         staffButton.setManaged(user.getPrivileges()>=3);
-        reviewerButton.setManaged(user.getPrivileges()>=2);
+        ticketsButton.setManaged(user.getPrivileges()>=3);
+        //reviewerButton.setManaged(user.getPrivileges()>=2);
+        
+        // Set background image based on user privileges
         Image backgroundImage = new Image(getClass().getResource("/blankuser.png").toExternalForm());
         if(user.getPrivileges()==1) {backgroundImage = new Image(getClass().getResource("/blankstudent.png").toExternalForm());}
         if(user.getPrivileges()==2) {backgroundImage = new Image(getClass().getResource("/blankreviewer.png").toExternalForm());}
         if(user.getPrivileges()==3) {backgroundImage = new Image(getClass().getResource("/blankstaff.png").toExternalForm());}
         if(user.getPrivileges()==4) {backgroundImage = new Image(getClass().getResource("/blankinstructor.png").toExternalForm());}
         if(user.getPrivileges()==99) {backgroundImage = new Image(getClass().getResource("/blankadmin.png").toExternalForm());}
+        
         BackgroundImage backgroundImg = new BackgroundImage(
                 backgroundImage,
                 BackgroundRepeat.NO_REPEAT,
                 BackgroundRepeat.NO_REPEAT,
                 BackgroundPosition.CENTER,
                 new BackgroundSize(BackgroundSize.AUTO, BackgroundSize.AUTO, true, true, true, true)
-                );
+        );
+        
         VBox vbox = new VBox(6);
         vbox.setBackground(new Background(backgroundImg));
+        
         HBox hbox = new HBox(10, userButton, reviewerButton, staffButton, adminButton);
         hbox.setAlignment(Pos.TOP_CENTER);
-        welcomeLabel.setStyle("-fx-padding: 60 0;");
-        vbox.getChildren().addAll(hbox, welcomeLabel, qaButton, messagesButton, logout);
+        welcomeLabel.setStyle("-fx-padding: 30 0;");
+        
+        Separator sep1 = new Separator();
+        sep1.setStyle("-fx-padding: 10 0;");
+        vbox.getChildren().addAll(hbox, sep1, messagesButton, qaButton, welcomeLabel, ticketsButton, logout);
         vbox.setAlignment(Pos.TOP_CENTER);
         vbox.setPadding(new Insets(20));
         Scene welcomeScene = new Scene(vbox, 800, 400);
