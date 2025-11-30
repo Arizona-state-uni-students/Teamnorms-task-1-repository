@@ -7,7 +7,13 @@ import application.AnswerFeedback;
 import application.User;
 import application.Review;
 import application.ReviewReply;
+import application.Ticket;
+
 import java.time.LocalDateTime;
+import java.sql.Statement;
+import java.util.List;
+import java.util.ArrayList;
+
 
 /**
  * The DatabaseHelper class is responsible for managing the connection to the database,
@@ -77,6 +83,7 @@ public class DatabaseHelper {
         statement.execute(userTable);
         createQATables();
         createDirectMessageTables();
+        createTicketsTables();
         String invitationCodesTable = "CREATE TABLE IF NOT EXISTS InvitationCodes ("
                 + "code VARCHAR(10) PRIMARY KEY, "
                 + "isUsed BOOLEAN DEFAULT FALSE, "
@@ -338,6 +345,200 @@ public class DatabaseHelper {
         }
         return data;
     }
+    
+	// ============= Tickets Logic ==============
+	
+	/**
+	 * Creates tables for Tickets
+	 *
+	 * @throws SQLException If a database error occurs.
+	 */
+	private void createTicketsTables() throws SQLException {
+	    String ticketsTable = "CREATE TABLE IF NOT EXISTS tickets ("
+	            + "id INT AUTO_INCREMENT PRIMARY KEY, "
+	            + "title VARCHAR(100) NOT NULL, "
+	            + "content VARCHAR(500) NOT NULL, "
+	            + "askedBy VARCHAR(20) NOT NULL, "
+	            + "createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP, "
+	            + "isResolved BOOLEAN DEFAULT FALSE, "
+	            + "resolvedAt TIMESTAMP DEFAULT NULL, "
+	            + "resolvedBy VARCHAR(20) DEFAULT NULL, "
+	            + "resolutionComments VARCHAR(500) DEFAULT NULL, "
+	            + "parentTicketId INT DEFAULT NULL, "
+	            + "FOREIGN KEY (askedBy) REFERENCES cse360users(userName), "
+	            + "FOREIGN KEY (resolvedBy) REFERENCES cse360users(userName), "
+	            + "FOREIGN KEY (parentTicketId) REFERENCES tickets(id))";
+	    statement.execute(ticketsTable);
+	}
+	
+	/**
+	 * Creates a new ticket request.
+	 *
+	 * @param title Title of the ticket
+	 * @param content Description of the request
+	 * @param askedBy userName of the requester (instructor)
+	 * @return The ID of the created ticket, or -1 if failed
+	 * @throws SQLException If a database error occurs
+	 */
+	public int createTicket(String title, String content, String askedBy) throws SQLException {
+	    String query = "INSERT INTO tickets (title, content, askedBy) VALUES (?, ?, ?)";
+	    try (PreparedStatement pstmt = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
+	        pstmt.setString(1, title);
+	        pstmt.setString(2, content);
+	        pstmt.setString(3, askedBy);
+	         
+	        int affectedRows = pstmt.executeUpdate();
+	        if (affectedRows > 0) {
+	            ResultSet rs = pstmt.getGeneratedKeys();
+	            if (rs.next()) {
+	                return rs.getInt(1);
+	            }
+	        }
+	    }
+	    return -1;
+	}
+	
+	/**
+	 * Closes a ticket with resolution comments.
+	 *
+	 * @param ticketId ID of the ticket to close
+	 * @param resolvedBy userName of the admin closing the ticket
+	 * @param resolutionComments Actions taken to resolve the ticket
+	 * @throws SQLException If a database error occurs
+	 */
+	public void closeTicket(int ticketId, String resolvedBy, String resolutionComments) throws SQLException {
+	    String query = "UPDATE tickets SET isResolved = TRUE, resolvedAt = CURRENT_TIMESTAMP, "
+	                 + "resolvedBy = ?, resolutionComments = ? WHERE id = ?";
+	    try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+	        pstmt.setString(1, resolvedBy);
+	        pstmt.setString(2, resolutionComments);
+	        pstmt.setInt(3, ticketId);
+	        pstmt.executeUpdate();
+	    }
+	}
+	
+	/**
+	 * Reopens a closed ticket by creating a new ticket that references the original.
+	 *
+	 * @param originalTicketId ID of the closed ticket to reopen
+	 * @param updatedContent Updated description for the reopened ticket
+	 * @param reopenedBy userName of the instructor reopening the ticket
+	 * @return The ID of the new (reopened) ticket, or -1 if failed
+	 * @throws SQLException If a database error occurs
+	 */
+	public int reopenTicket(int originalTicketId, String updatedContent, String reopenedBy) throws SQLException {
+	    // Get original ticket details
+	    String getOriginal = "SELECT title FROM tickets WHERE id = ?";
+	    String originalTitle;
+	     
+	    try (PreparedStatement pstmt = connection.prepareStatement(getOriginal)) {
+	        pstmt.setInt(1, originalTicketId);
+	        ResultSet rs = pstmt.executeQuery();
+	        if (rs.next()) {
+	            originalTitle = rs.getString("title");
+	        } else {
+	            return -1; // Original ticket not found
+	        }
+	    }
+	     
+	    // Create new ticket with reference to original
+	    String query = "INSERT INTO tickets (title, content, askedBy, parentTicketId) VALUES (?, ?, ?, ?)";
+	    try (PreparedStatement pstmt = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
+	        pstmt.setString(1, "[REOPENED] " + originalTitle);
+	        pstmt.setString(2, updatedContent);
+	        pstmt.setString(3, reopenedBy);
+	        pstmt.setInt(4, originalTicketId);
+	         
+	        int affectedRows = pstmt.executeUpdate();
+	        if (affectedRows > 0) {
+	            ResultSet rs = pstmt.getGeneratedKeys();
+	            if (rs.next()) {
+	                return rs.getInt(1);
+	            }
+	        }
+	    }
+	    return -1;
+	}
+	
+	/**
+	 * Gets all open (unresolved) tickets.
+	 *
+	 * @return List of Ticket objects
+	 * @throws SQLException If a database error occurs
+	 */
+	public List<Ticket> getOpenTickets() throws SQLException {
+	    List<Ticket> tickets = new ArrayList<>();
+	    String query = "SELECT * FROM tickets WHERE isResolved = FALSE ORDER BY createdAt DESC";
+	     
+	    try (PreparedStatement pstmt = connection.prepareStatement(query);
+	         ResultSet rs = pstmt.executeQuery()) {
+	        while (rs.next()) {
+	            tickets.add(createTicketFromResultSet(rs));
+	        }
+	    }
+	    return tickets;
+	}
+	
+	/**
+	 * Gets all closed (resolved) tickets.
+	 *
+	 * @return List of Ticket objects
+	 * @throws SQLException If a database error occurs
+	 */
+	public List<Ticket> getClosedTickets() throws SQLException {
+	    List<Ticket> tickets = new ArrayList<>();
+	    String query = "SELECT * FROM tickets WHERE isResolved = TRUE ORDER BY resolvedAt DESC";
+	     
+	    try (PreparedStatement pstmt = connection.prepareStatement(query);
+	         ResultSet rs = pstmt.executeQuery()) {
+	        while (rs.next()) {
+	            tickets.add(createTicketFromResultSet(rs));
+	        }
+	    }
+	    return tickets;
+	}
+	
+	/**
+	 * Gets a specific ticket by ID.
+	 *
+	 * @param ticketId ID of the ticket to retrieve
+	 * @return Ticket object, or null if not found
+	 * @throws SQLException If a database error occurs
+	 */
+	public Ticket getTicketById(int ticketId) throws SQLException {
+	    String query = "SELECT * FROM tickets WHERE id = ?";
+	     
+	    try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+	        pstmt.setInt(1, ticketId);
+	        ResultSet rs = pstmt.executeQuery();
+	        if (rs.next()) {
+	            return createTicketFromResultSet(rs);
+	        }
+	    }
+	    return null;
+	}
+	
+	/**
+	 * Helper method to create a Ticket object from ResultSet.
+	 *
+	 * @param rs ResultSet positioned at a ticket row
+	 * @return Ticket object
+	 * @throws SQLException If a database error occurs
+	 */
+	private Ticket createTicketFromResultSet(ResultSet rs) throws SQLException {
+	    Ticket ticket = new Ticket();
+	    ticket.setId(rs.getInt("id"));
+	    ticket.setTitle(rs.getString("title"));
+	    ticket.setContent(rs.getString("content"));
+	    ticket.setAskedBy(rs.getString("askedBy"));
+	    ticket.setCreatedAt(rs.getTimestamp("createdAt"));
+	    ticket.setResolved(rs.getBoolean("isResolved"));
+	    ticket.setResolvedAt(rs.getTimestamp("resolvedAt"));
+	    ticket.setResolvedBy(rs.getString("resolvedBy"));
+	    ticket.setResolutionComments(rs.getString("resolutionComments"));
+	    ticket.setParentTicketId(rs.getInt("parentTicketId"));
+	    return ticket;
+	}    
     
     /**
      * Creates tables for direct messaging system.
