@@ -15,8 +15,10 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 
 import java.sql.SQLException;
+import java.util.List;
 
 import databasePart1.*;
+import databasePart1.DatabaseHelper.ConversationSummary;
 
 /**
  * The WelcomeLoginPage class displays a welcome screen for authenticated users.
@@ -55,12 +57,22 @@ public class WelcomeLoginPage {
         qaButton.setOnAction(a -> {
             new StudentQAPage(databaseHelper, user).show(primaryStage, 0, null);
         });
-        
-        
-        Button messagesButton = new Button("Direct Messages");
+    	int unreadMessages = 0;
+        try {
+			List<ConversationSummary> conversations = databaseHelper.getConversationList(user.getUserName());
+			for (ConversationSummary conv : conversations) {
+				unreadMessages += conv.getUnreadCount();
+			}
+			//conv.getUnreadCount() > 9 ? "9+" : String.valueOf(conv.getUnreadCount())
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+        Button messagesButton = new Button("("+unreadMessages+") Direct Messages");
+        if(unreadMessages==0) {messagesButton.setText("Direct Messages");}
         messagesButton.setStyle(colors.BASIC);
         messagesButton.setOnAction(a -> {
-            new DirectMessages(databaseHelper, user).show(primaryStage);
+            new DirectMessages(databaseHelper, user).show(primaryStage, null);
         });
         
         Button logout = new Button("logout");
@@ -81,7 +93,7 @@ public class WelcomeLoginPage {
         adminButton.setOnAction(a -> {
                 new AdminHomePage(databaseHelper).show(primaryStage, user);
         });
-        
+
         Button staffButton = new Button("Staff/Instructor Page");
         staffButton.setStyle(colors.BASIC + colors.STAFF_PRIMARY);
         staffButton.setOnAction(a -> {
@@ -92,8 +104,15 @@ public class WelcomeLoginPage {
 					e.printStackTrace();
 				}
         });
-        
-        Button Reported = new Button("Reported Items");
+        int total = 0;
+        try {
+			total = databaseHelper.getFlaggedObjects().size();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+        Button Reported = new Button("("+total+") Reported Items");
+        if(total==0) {Reported.setText("Reported Items");}
         Reported.setStyle("-fx-font-size: 14px; -fx-padding: 5 20; -fx-background-color: #FF5722; -fx-text-fill: white;");
         Reported.setOnAction(a -> {
             try {
@@ -103,18 +122,27 @@ public class WelcomeLoginPage {
 				e.printStackTrace();
 			}
         });
-                
-        
+        int totaltickets = 0;
+        try {
+			List<Ticket> tickets = databaseHelper.getOpenTickets();
+	        totaltickets = tickets.size();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
         // Tickets button for Staff, Instructor, and Admin
-        Button ticketsButton = new Button("Tickets");
+        Button ticketsButton = new Button("("+totaltickets+") Tickets");
+        if(totaltickets==0) {ticketsButton.setText("Tickets");}
         ticketsButton.setStyle("-fx-font-size: 14px; -fx-padding: 5 20; -fx-background-color: #FF5722; -fx-text-fill: white;");
         ticketsButton.setOnAction(a -> {
             new TicketsPage(databaseHelper, user).show(primaryStage, user);
+            
         });
         
         adminButton.setManaged(user.getPrivileges()>=5);
         staffButton.setManaged(user.getPrivileges()>=3);
         ticketsButton.setManaged(user.getPrivileges()>=3);
+        Reported.setManaged(user.getPrivileges()>=3);
         //reviewerButton.setManaged(user.getPrivileges()>=2);
         
         // Set background image based on user privileges

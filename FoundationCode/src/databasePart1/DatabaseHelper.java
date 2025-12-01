@@ -826,36 +826,6 @@ public class DatabaseHelper {
     }
     
     /**
-     * Deletes a private answer record from the database by its primary key ID.
-     * Due to FOREIGN KEY ON DELETE CASCADE, all associated review_replies are also deleted.
-     * @param reviewId The ID of the review to delete.
-     * @throws SQLException if a database access error occurs.
-     */
-    public void deletePrivateAnswerById(int answer_feedbackId) throws SQLException {
-        String sql = "DELETE FROM private_messages WHERE id = ?"; 
-        
-        try (PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setInt(1, answer_feedbackId);
-            statement.executeUpdate();
-        }
-    }
-    
-    /**
-     * Deletes a review reply record from the database by its primary key ID.
-     * Due to FOREIGN KEY ON DELETE CASCADE, all associated review_replies are also deleted.
-     * @param reviewId The ID of the review to delete.
-     * @throws SQLException if a database access error occurs.
-     */
-    public void deleteReviewReplyById(int reviewReplyId) throws SQLException {
-        String sql = "DELETE FROM review_replies WHERE id = ?"; 
-        
-        try (PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setInt(1, reviewReplyId);
-            statement.executeUpdate();
-        }
-    }    
-    
-    /**
      * Gets the answerId the review points to
      * @param reviewId The ID of the review to check.
      * @return the answer ID.
@@ -2128,6 +2098,34 @@ public class DatabaseHelper {
         }
     }
     /**
+     * Deletes a review reply record from the database by its primary key ID.
+     * Due to FOREIGN KEY ON DELETE CASCADE, all associated review_replies are also deleted.
+     * @param reviewId The ID of the review to delete.
+     * @throws SQLException if a database access error occurs.
+     */
+    public void deleteReviewReplyById(int reviewReplyId) throws SQLException {
+        String sql = "DELETE FROM review_replies WHERE id = ?"; 
+        
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, reviewReplyId);
+            statement.executeUpdate();
+        }
+    }   
+    /**
+     * Deletes a private answer record from the database by its primary key ID.
+     * Due to FOREIGN KEY ON DELETE CASCADE, all associated review_replies are also deleted.
+     * @param reviewId The ID of the review to delete.
+     * @throws SQLException if a database access error occurs.
+     */
+    public void deletePrivateAnswerById(int answer_feedbackId) throws SQLException {
+        String sql = "DELETE FROM private_messages WHERE id = ?"; 
+        
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, answer_feedbackId);
+            statement.executeUpdate();
+        }
+    }
+    /**
      * Returns a list of all objects where isFlagged is true.
      * @return List of flagged objects.
      * @throws SQLException If a database error occurs.
@@ -2764,8 +2762,6 @@ public class DatabaseHelper {
             return ps.executeUpdate();
         }
     }
-    
-    
     
     /**
      * Sets favorites
