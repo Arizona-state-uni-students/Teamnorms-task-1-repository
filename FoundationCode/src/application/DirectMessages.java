@@ -11,6 +11,7 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.scene.control.Alert.AlertType;
 
@@ -58,9 +59,8 @@ public class DirectMessages {
      * 
      * @param primaryStage Stage to display on
      */
-    public void show(Stage primaryStage) {
+    public void show(Stage primaryStage, String username) {
         this.primaryStage = primaryStage;
-        
         BorderPane root = new BorderPane();
         root.setStyle("-fx-background-color: #f5f5f5;");
         
@@ -83,6 +83,10 @@ public class DirectMessages {
         primaryStage.setScene(scene);
         primaryStage.setTitle("sQaaS™ - Direct Messages");
         primaryStage.show();
+        if(username!=null) {
+        	selectConversation(username);
+        	//createMessageInput(id);
+        }
     }
     
     /**
@@ -215,7 +219,7 @@ public class DirectMessages {
         messageInput.setPrefRowCount(2);
         messageInput.setMaxHeight(60);
         HBox.setHgrow(messageInput, Priority.ALWAYS);
-        
+
         Label charCounter = new Label("0/500");
         charCounter.setStyle("-fx-font-size: 10px; -fx-text-fill: #666;");
         
@@ -482,7 +486,6 @@ public class DirectMessages {
             
             Label senderLabel = new Label(msg.getFromUser());
             senderLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 11px; -fx-text-fill: #666;");
-            
             Label contentLabel = new Label(msg.getContent());
             contentLabel.setWrapText(true);
             contentLabel.setStyle("-fx-text-fill: black;");
@@ -526,4 +529,12 @@ public class DirectMessages {
         alert.setContentText(content);
         alert.showAndWait();
     }
+    
+    /**
+     * Method to view a review.
+     * 
+     * @param review Review to display.
+     * @throws SQLException 
+     */
+
 }
