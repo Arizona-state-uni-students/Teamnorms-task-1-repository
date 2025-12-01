@@ -14,13 +14,17 @@ Tanner Urness
 ### [Phase 3 Submission Document](https://docs.google.com/document/d/1dM2R8Zpxl-NGnDiY7QbAFURE1YkJaYTFgAx1bi3a8Wo/edit?usp=sharing)
 ### [Phase 4 Submission Document](https://docs.google.com/document/d/1euv3C8h-uNecZu8bJKgmYCHbDsVUNUWECGd96OkSgXg/edit?usp=sharing)
 ### [UML Diagrams](DesignDocuments/UML)
+### [Javadoc HTML](DesignDocuments/Javadoc)
+### [Javadoc Screenshots](DesignDocuments/Javadoc%20Screenshots)
 
 # Code Files
   ### [Database](FoundationCode/src/databasePart1/DatabaseHelper.java)
   ### [Application](FoundationCode/src/application)
   ### [Direct Messages](FoundationCode/src/application/DirectMessages.java)
   ### [Staff Page](FoundationCode/src/application/staffpage.java)
-  ### [QA Page (Includes reviews)](FoundationCode/src/application/StudentQAPage.java)
+  ### [Reported Items Page](FoundationCode/src/application/ReportedItems.java)
+  ### [User Home Page](FoundationCode/src/application/UserHomePage.java)
+  ### [QA Page](FoundationCode/src/application/StudentQAPage.java)
   ### [Automated Testing](FoundationCode/src/application/QASystemTest.java)
   ### [Direct Message Testing](FoundationCode/src/application/DirectMessageSystemTest.java)
   <br/>
@@ -41,9 +45,11 @@ Tanner Urness
     $XLIiq8s
   ### [Stand Up Meeting 5](https://us06web.zoom.us/rec/share/wSeoAwtYZ5Wb1_dGK4-3tfNrJRV55Z4BsJ1PAWsLk5uoikiGqOk5XUzzznevDD-A.MyyV8LWc9MbH5A5p?startTime=1764465632000)
     $XLIiq8s
-  ### [Stand Up Meeting 6]()
+  ### [Stand Up Meeting 6](https://us06web.zoom.us/rec/share/Ws1t9NzNeQMuZj_7_htHCZ5bf70iNmUUGXOZcxxq_rWB9tEuRd8dLK-UFIJu1NX_.cBGPlmPt-L38Zxt3?startTime=1764551372000)
+    #j#289ze
+  ### [Technical Screencast](https://youtu.be/gAcgt3klmkQ)
+  ### [UI / Testing Screencast](https://youtu.be/a3a0AR_08TQ)
 <br/>
-
 
 # Phase 3
 ## Stand Up Notes
