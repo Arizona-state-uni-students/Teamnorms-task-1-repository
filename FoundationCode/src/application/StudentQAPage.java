@@ -106,6 +106,16 @@ public class StudentQAPage {
     		tabPane.getSelectionModel().select(reviewersTab);
     		loadReviewers();
     	}
+    	if(type==4) {
+    		tabPane.getSelectionModel().select(allQuestionsTab);
+    		int qid=Integer.parseInt(search);
+    		try {
+				loadThread(databaseHelper.getQuestionById(qid));
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+    	}
         // ======= Bottom Buttons =======
         // Back button
         Button backButton = new Button("Back to Home");
@@ -409,8 +419,14 @@ public class StudentQAPage {
                     	viewReview(review);
             });
 
-            Label reviewerLabel = new Label(review.getWrittenBy());
+            Hyperlink reviewerLabel = new Hyperlink(review.getWrittenBy());
             reviewerLabel.setStyle("-fx-font-weight: bold; -fx-text-fill:#0099ff;");
+	        reviewerLabel.setOnAction(e -> {
+	        	new DirectMessages(databaseHelper, currentUser).show(primaryStage, review.getWrittenBy());
+	        });
+	        if(currentUser.getUserName().equals(review.getWrittenBy())) {
+	        	reviewerLabel.setDisable(true);
+	        }
             String timestamp = review.getCreatedAt().format(TS);
             Label tsLabel = new Label(timestamp);
             tsLabel.setStyle("-fx-text-fill:#666; -fx-font-size:11px;");
@@ -597,6 +613,8 @@ public class StudentQAPage {
             reportReview.setOnAction(e->{
             	try {
 					databaseHelper.markReviewAsFlagged(review.getId(), true);
+					reportReview.setText("Reported");
+					reportReview.setDisable(true);
 				} catch (SQLException e1) {
 					// TODO Auto-generated catch block
 					e1.printStackTrace();
@@ -679,6 +697,8 @@ public class StudentQAPage {
                         reportReviewReply.setOnAction(e->{
                         	try {
 								databaseHelper.markReviewReplyAsFlagged(reply.getId(), true);
+								reportReviewReply.setText("Reported");
+								reportReviewReply.setDisable(true);
 							} catch (SQLException e1) {
 								// TODO Auto-generated catch block
 								e1.printStackTrace();
@@ -3074,6 +3094,8 @@ public class StudentQAPage {
                 reportFeedback.setOnAction(e->{
                 	try {
 						databaseHelper.markFeedbackAsFlagged(pm.getId(), true);
+						reportFeedback.setText("Reported");
+						reportFeedback.setDisable(true);
 					} catch (SQLException e1) {
 						// TODO Auto-generated catch block
 						e1.printStackTrace();
