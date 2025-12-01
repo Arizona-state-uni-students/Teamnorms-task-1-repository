@@ -20,8 +20,7 @@ import javafx.stage.Stage;
 
 
 /**
- * StaffHomePage class represents the user interface for the staff home page.
- * This page serves as a location where staff members can engage with other staff members.
+ * ReportedItems class represents the user interface for the reported item page.
  */
 public class ReportedItems {
 	private final DatabaseHelper databaseHelper;
@@ -37,7 +36,7 @@ public class ReportedItems {
 	
 	
 	/**
-	 * Displays the staff home page in the primary stage.
+	 * Displays the ReportedItems page in the primary stage.
 	 * @param primaryStage the primary stage where the scene will be displayed.
 	 * @param user User currently using system
 	 * @throws SQLException if database error occurs
@@ -125,7 +124,7 @@ public class ReportedItems {
     }
 	
 	/**
-	 * Loads all messages in database onto staff page.
+	 * Loads all objects in database onto reported items page.
 	 * 
 	 * @param user User currently using system.
 	 * @param messaages List of messages to load.
