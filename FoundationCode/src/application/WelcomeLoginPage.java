@@ -93,6 +93,18 @@ public class WelcomeLoginPage {
 				}
         });
         
+        Button Reported = new Button("Reported Items");
+        Reported.setStyle("-fx-font-size: 14px; -fx-padding: 5 20; -fx-background-color: #FF5722; -fx-text-fill: white;");
+        Reported.setOnAction(a -> {
+            try {
+				new ReportedItems(databaseHelper).show(primaryStage, user);
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+        });
+                
+        
         // Tickets button for Staff, Instructor, and Admin
         Button ticketsButton = new Button("Tickets");
         ticketsButton.setStyle("-fx-font-size: 14px; -fx-padding: 5 20; -fx-background-color: #FF5722; -fx-text-fill: white;");
@@ -130,7 +142,7 @@ public class WelcomeLoginPage {
         
         Separator sep1 = new Separator();
         sep1.setStyle("-fx-padding: 10 0;");
-        vbox.getChildren().addAll(hbox, sep1, messagesButton, qaButton, welcomeLabel, ticketsButton, logout);
+        vbox.getChildren().addAll(hbox, sep1, messagesButton, qaButton, welcomeLabel, Reported, ticketsButton, logout);
         vbox.setAlignment(Pos.TOP_CENTER);
         vbox.setPadding(new Insets(20));
         Scene welcomeScene = new Scene(vbox, 800, 400);
